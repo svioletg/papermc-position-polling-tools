@@ -1,0 +1,41 @@
+target-version = "py312"
+output-format = "concise"
+
+line-length = 120
+
+[lint]
+select = ["ALL"]
+fixable = [
+    "COM812",
+    "F401",
+    "I",
+    "Q003",
+    "RUF100",
+    "TC006",
+    "UP045",
+    "W292", "W293",
+]
+ignore = [
+    "ANN003",
+    "CPY001",
+    "D107", "D203", "D213", "D401",
+    "EM101", "EM102",
+    "FIX002",
+    "PTH123",
+    "PLR0912", "PLR0913",
+    "RET505",
+    "S311",
+    "TC002", "TC003",
+    "TRY003",
+    "UP015",
+]
+
+[lint.flake8-quotes]
+inline-quotes = "single"
+
+[lint.flake8-implicit-str-concat]
+allow-multiline = false
+
+[lint.per-file-ignores]
+"tests/*" = ["D100", "D103", "D104", "FBT001", "S101"]
+"tests/test_*" = ["D102"]
