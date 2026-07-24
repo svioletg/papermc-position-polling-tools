@@ -2,6 +2,7 @@
 .ipynb_checkpoints/
 __pycache__/
 out/
+logs/
 /_*
 *.ipynb
 *.db
