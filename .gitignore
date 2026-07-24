@@ -4,3 +4,5 @@ __pycache__/
 out/
 /_*
 *.ipynb
+*.db
+*.db.*
