@@ -3,8 +3,11 @@
 ``const`` must not import from any other module in this project.
 """
 import sys
-from enum import IntEnum
+from dataclasses import dataclass
+from enum import IntEnum, StrEnum
 from pathlib import Path
+from typing import Self
+from uuid import UUID
 
 from loguru import logger
 
@@ -82,3 +85,50 @@ def test_logs() -> None:
     logger.warning('WARNING')
     logger.error('ERROR')
     logger.critical('CRITICAL')
+
+class World(StrEnum):
+    """A vanilla Minecraft world identifier."""
+
+    OVERWORLD = 'minecraft:overworld'
+    NETHER = 'minecraft:the_nether'
+    END = 'minecraft:the_end'
+
+@dataclass
+class Entry:
+    """Represents one row of the plugin database's `player_positions` table."""
+
+    timestamp: float
+    player_uuid: UUID
+    world: World
+    x: float
+    y: float
+    z: float
+
+    def __sub__(self, other: 'Entry') -> 'Entry':
+        """Returns a new entry representing the difference between two entries.
+
+        Fields :data:`timestamp`, :data:`x`, :data:`y`:, and :data:`z` are subtracted. The rest are left intact.
+        """
+        if not isinstance(other, Entry):
+            return NotImplemented
+
+        return Entry(
+            self.timestamp - other.timestamp,
+            self.player_uuid,
+            self.world,
+            self.x - other.x,
+            self.y - other.y,
+            self.z - other.z,
+        )
+
+    @classmethod
+    def from_row(cls, row: tuple[float, str, str, float, float, float]) -> Self:
+        """Returns a new :class:`Entry` created from a raw row of the `player_positions` table."""
+        return cls(
+            timestamp=float(row[0]),
+            player_uuid=UUID(row[1]),
+            world=World(row[2]),
+            x=float(row[3]),
+            y=float(row[4]),
+            z=float(row[5]),
+        )
