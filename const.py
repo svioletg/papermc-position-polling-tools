@@ -19,6 +19,14 @@ LOG_MSG_FORMAT_UTC: str = '<level>[{time:YYYY-MM-DD HH:mm:ssZZ!UTC}] [{name}::{f
 LOG_MSG_FORMAT: str = LOG_MSG_FORMAT_UTC.replace('!UTC', '')
 LOG_FILE_FORMAT: str = '{time:YYYY-MM-DDTHHmmssZZ}.log'
 
+Y_RANGE: dict[str, tuple[int, int]] = {
+    'minecraft:overworld': (-64, 320),
+    'minecraft:the_nether': (0, 127),
+    'minecraft:the_end': (0, 255),
+}
+
+Y_HUE_RANGE = (0, 300)
+
 logger.remove()
 
 class LogLevel(IntEnum):  # noqa: D101
