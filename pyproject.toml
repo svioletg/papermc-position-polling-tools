@@ -1,0 +1,24 @@
+[project]
+name = "papermc-position-polling-tools"
+description = "Tools (primarily visualizations) for the PositionPolling Minecraft server plugin"
+authors = [
+    { name = "Seth 'Violet' Gibbs" }
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "loguru>=0.7.3",
+    "opencv-python>=5.0.0.93",
+    "pillow>=12.3.0",
+]
+dynamic = ["version"]
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "positionpolling/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["positionpolling"]

@@ -1,5 +1,0 @@
-git+https://github.com/svioletg/py-geometry-utils.git@v0.4.0
-opencv-python>=5.0.0.93
-loguru>=0.7.3
-pillow>=12.3.0
-python-dotenv>=1.2.2
