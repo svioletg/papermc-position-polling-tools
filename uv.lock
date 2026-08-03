@@ -101,6 +101,7 @@ dependencies = [
     { name = "loguru" },
     { name = "opencv-python" },
     { name = "pillow" },
+    { name = "py-geometry-utils" },
 ]
 
 [package.metadata]
@@ -108,6 +109,7 @@ requires-dist = [
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "opencv-python", specifier = ">=5.0.0.93" },
     { name = "pillow", specifier = ">=12.3.0" },
+    { name = "py-geometry-utils", specifier = ">=0.5.0" },
 ]
 
 [[package]]
@@ -179,6 +181,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/18/f0/a5595c1e8c3ae44b9828cb2f0fa8155e5095ef04d6327b8f61cf44a3df85/pillow-12.3.0-cp315-cp315t-win32.whl", hash = "sha256:1657923d2d45afb66526e5b933e5b3052e6bdea196c90d3abb2424e18c77dae8", size = 6474384, upload-time = "2026-07-01T11:56:18.855Z" },
     { url = "https://files.pythonhosted.org/packages/e4/04/62bcd9f844984c5938d3b05264a61d797a29d3e0812341a8204af70bbdee/pillow-12.3.0-cp315-cp315t-win_amd64.whl", hash = "sha256:8cd2f7bdda092d99c9fc2fb7391354f306d01443d22785d0cbfafa2e2c8bb418", size = 7243537, upload-time = "2026-07-01T11:56:21.214Z" },
     { url = "https://files.pythonhosted.org/packages/3d/68/1f3066acedf37673694a7141381d8f811ae97f30d34413d236abe7d489f1/pillow-12.3.0-cp315-cp315t-win_arm64.whl", hash = "sha256:06ff022112bc9cbf83b60f8e028d94ad87b60621706487e65f673de61610ab59", size = 2567491, upload-time = "2026-07-01T11:56:23.506Z" },
+]
+
+[[package]]
+name = "py-geometry-utils"
+version = "0.5.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/9e/a96a343c169367e84c87dfa5e65cacbe7a43bd66479ac947e8603de334c0/py_geometry_utils-0.5.0.tar.gz", hash = "sha256:f3a8ca73cc7a1dbe535bb0ae451002398624c6ca426fbaef5da81cda6cb8b383", size = 63765, upload-time = "2026-08-02T19:23:09.069Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6a/25/8ab5a7bcba04a0e1d984c25fc0c84ad82f60048018ff8a4eecdd3c4b7e61/py_geometry_utils-0.5.0-py3-none-any.whl", hash = "sha256:3a42805dcc2b304f9d016494618285167dd4beae7334ed7b86493746de12e7d3", size = 9376, upload-time = "2026-08-02T19:23:07.862Z" },
 ]
 
 [[package]]
