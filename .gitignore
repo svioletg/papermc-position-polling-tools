@@ -8,3 +8,5 @@ logs/
 *.ipynb
 *.db
 *.db.*
+.env
+env.py
