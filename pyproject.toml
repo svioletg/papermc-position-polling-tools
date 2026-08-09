@@ -1,6 +1,6 @@
 [project]
 name = "papermc-position-polling-tools"
-description = "Tools (primarily visualizations) for the PositionPolling Minecraft server plugin"
+description = "Tools (primarily visualizations) for the PositionPolling Minecraft server plugin."
 authors = [
     { name = "Seth 'Violet' Gibbs" }
 ]
