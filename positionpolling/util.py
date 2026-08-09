@@ -39,8 +39,8 @@ def assert_all(
         if not predicate(i):
             raise AssertionError(msg.format(i=i))
 
-def assert_true(condition: bool, *exc_args: object) -> None:  # noqa: FBT001
-    """Raises ``AssertionError`` if ``condition`` is ``False``, otherwise does nothing."""
+def assert_true(condition: object, *exc_args: object) -> None:
+    """Raises ``AssertionError`` if ``not condition``, otherwise does nothing."""
     if not condition:
         raise AssertionError(*exc_args)
 
