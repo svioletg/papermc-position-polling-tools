@@ -98,7 +98,9 @@ def fix_opencv_video(src: str | Path, dest: str | Path, *, same_file_ok: bool = 
     assert_true(src.is_file(), f'Source path does not exist or is not a file: {src}')
 
     run(
-        'ffmpeg', '-y', '-i', str(src), '-vcodec', 'libx264', '-pix_fmt', 'yuv420p', str(dest),
+        'ffmpeg', '-hide_banner', '-v', 'warning', '-y',
+        '-i', str(src), '-vcodec', 'libx264', '-pix_fmt', 'yuv420p', str(dest),
+        capture_output=False,
         raise_nonzero=True,
     )
 
