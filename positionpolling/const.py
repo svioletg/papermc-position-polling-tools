@@ -81,7 +81,7 @@ def setup_logger(
             level=file_level,
             format=msg_format,
             diagnose=True,
-            retention=20,
+            retention=10,
             delay=True,
             mode='w',
         )
