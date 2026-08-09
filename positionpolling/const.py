@@ -199,12 +199,15 @@ class RenderOpt:
     """Framerate of the rendered video."""
     v_time_factor: float | None = 0.25
     """
-    A multiplier which determines the length of the final video based on the timestamps of each
-    position log. At ``1.0``, each frame last the exact duration between it and the next log, effectively showing a
-    real-time recap of every movement. At ``0.5``, each frame lasts half the duration; at ``0.25``, each frame lasts
-    a quarter of the duration, and so on. Value must be greater than 0 if a number is given, otherwise
-    ``ValueError`` is raised. If ``None`` is given, timestamps are ignored and every position log gets exactly one
-    frame in sequence, meaning the length of the video will depend on :data:`v_fps`.
+    A multiplier which determines the length of the final video based on the timestamps of each position log. At
+    ``1.0``, each frame last the exact duration between it and the next log, effectively showing a real-time recap of
+    every movement. At ``0.5``, each frame lasts half the duration; at ``0.25``, each frame lasts a quarter of the
+    duration, and so on. If 0 or ``None`` is given, timestamps are ignored and every position log gets exactly one frame
+    in sequence, meaning the length of the video will depend on :data:`v_fps`.
+
+    .. note::
+        Frame duration is rounded to the closest integer after being calculated, the final duration may be slightly off
+        from what would be expected.
     """
 
 RENDER_OPT_DEFAULT = RenderOpt()
