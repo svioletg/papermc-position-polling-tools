@@ -102,6 +102,7 @@ dependencies = [
     { name = "opencv-python" },
     { name = "pillow" },
     { name = "py-geometry-utils" },
+    { name = "py-maybetype" },
     { name = "tqdm" },
     { name = "types-tqdm" },
 ]
@@ -111,7 +112,8 @@ requires-dist = [
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "opencv-python", specifier = ">=5.0.0.93" },
     { name = "pillow", specifier = ">=12.3.0" },
-    { name = "py-geometry-utils", specifier = ">=0.5.0" },
+    { name = "py-geometry-utils", specifier = ">=0.6.0" },
+    { name = "py-maybetype", specifier = ">=0.14.0" },
     { name = "tqdm", specifier = ">=4.70.0" },
     { name = "types-tqdm", specifier = ">=4.70.0.20260731" },
 ]
@@ -189,11 +191,20 @@ wheels = [
 
 [[package]]
 name = "py-geometry-utils"
-version = "0.5.0"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ea/9e/a96a343c169367e84c87dfa5e65cacbe7a43bd66479ac947e8603de334c0/py_geometry_utils-0.5.0.tar.gz", hash = "sha256:f3a8ca73cc7a1dbe535bb0ae451002398624c6ca426fbaef5da81cda6cb8b383", size = 63765, upload-time = "2026-08-02T19:23:09.069Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/89/842e70098e90f180058617f8188422f179506584949e728c52cd9ac5652b/py_geometry_utils-0.6.0.tar.gz", hash = "sha256:573157018c049d6a053e95f985d84f54f958bfed2df30429ec6e858ba1f24bf6", size = 68698, upload-time = "2026-08-08T20:30:50.097Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6a/25/8ab5a7bcba04a0e1d984c25fc0c84ad82f60048018ff8a4eecdd3c4b7e61/py_geometry_utils-0.5.0-py3-none-any.whl", hash = "sha256:3a42805dcc2b304f9d016494618285167dd4beae7334ed7b86493746de12e7d3", size = 9376, upload-time = "2026-08-02T19:23:07.862Z" },
+    { url = "https://files.pythonhosted.org/packages/83/7c/a4821749a8d8da480f40d76e1be929d36a847d614faf46462875ad95c1fb/py_geometry_utils-0.6.0-py3-none-any.whl", hash = "sha256:6c85975276d0331eb78e9eada57c3a9e55cc0feb5de7741e7cf97abdeb77459d", size = 12817, upload-time = "2026-08-08T20:30:48.752Z" },
+]
+
+[[package]]
+name = "py-maybetype"
+version = "0.14.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/34/6beb4faf2e2b70e2b8bf1f4f6b478b227c00bf930b97898c49b5a89d6a9b/py_maybetype-0.14.0.tar.gz", hash = "sha256:e44acf3fa5e605bced653bd1aa3ed660ed000ee10db799d6a55a157409d61691", size = 67920, upload-time = "2026-07-10T21:23:59.562Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f0/61/9956326d4a9e9d319bf2f2d01c8dec8f188400087eddca2b6f031b336416/py_maybetype-0.14.0-py3-none-any.whl", hash = "sha256:741d54b82c135573cefe218c1374accd40fcd0e9b69f1c3814bc088902a2a7a5", size = 10130, upload-time = "2026-07-10T21:23:58.327Z" },
 ]
 
 [[package]]
