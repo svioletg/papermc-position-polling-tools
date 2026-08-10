@@ -38,3 +38,6 @@ path = "positionpolling/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["positionpolling"]
+
+[project.scripts]
+positionpolling = "positionpolling.cli:main"
