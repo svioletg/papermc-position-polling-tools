@@ -2,7 +2,6 @@
 
 ``const`` must not import from any other module in this project.
 """
-import re
 from enum import IntEnum, StrEnum
 from pathlib import Path
 
@@ -35,8 +34,7 @@ class ConsoleHighlighter(Highlighter):
     """Custom highlighter class for the ``rich`` console."""
 
     def highlight(self, text: Text) -> None:  # noqa: D102
-        if m := re.search(fr'{str(Path.cwd()).replace('\\', '\\\\')}', str(text)):
-            text.stylize('cwd', m.start(0), m.end(0))
+        pass
 
 def setup_rich_console() -> Console:
     """Prepares a ``rich`` console and returns it."""
