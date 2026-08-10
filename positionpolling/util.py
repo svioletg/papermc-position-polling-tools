@@ -168,6 +168,29 @@ def group_by[K, V](it: Iterable[Mapping[K, V]], key: K, *, strict: bool = False)
 
     return d
 
+def group_by_attr[T, U](it: Iterable[T], name: str, typ: type[U] | None = None, *, strict: bool = False) \
+    -> dict[U, list[T]]:  # noqa: ARG001
+    """Like :func:`group_by`, but works on an iterable of any object and groups by attribute values.
+
+    Useful for things like dataclasses or models.
+
+    :param typ: Can be used to cast the key type of the resulting dictionary, not used otherwise and
+    :param strict: If ``False``, when one of the items in ``it`` does not have an attribute ``name``, it will be
+        skipped. Otherwise, ``AttributeError`` is raised.
+    """
+    d: dict[U, list[T]] = {}
+
+    for i in it:
+        if (not strict) and (not hasattr(i, name)):
+            continue
+        val = getattr(i, name)
+        if val not in d:
+            d[val] = [i]
+        else:
+            d[val].append(i)
+
+    return d
+
 def run(
         *args: str,
         capture_output: bool = True,
