@@ -80,7 +80,7 @@ def trail(  # noqa: C901, PLR0915
     frame_estimate: int = 0
     if video_path and opt.v_time_factor:
         video_duration_estimate = timedelta(seconds=total_entry_duration.total_seconds() * opt.v_time_factor)
-        # TODO(svioletg): Frame estimate overshoots by a fair bit
+        # TODO(svioletg): #4 frame estimate overshoots by a fair bit
         frame_estimate: int = round(video_duration_estimate.total_seconds() * opt.v_fps)
         logger.info(f'v_time_factor is {opt.v_time_factor}, final video should be roughly {video_duration_estimate}'
             + f' (~{frame_estimate} frames)')
