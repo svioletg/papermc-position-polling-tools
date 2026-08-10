@@ -1,9 +1,9 @@
 """Dataclasses and models for position polling tools."""
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Self
+from typing import Any, Self
 from uuid import UUID
 
 from geometry import Tuple4
@@ -114,5 +114,13 @@ class RenderOpt:
         Frame duration is rounded to the closest integer after being calculated, the final duration may be slightly off
         from what would be expected.
     """
+
+    def changed(self) -> dict[str, Any]:
+        """Returns a dictionary of this instance's attributes which are not set to their defaults."""
+        return {k:v for k, v in asdict(self).items() if v != getattr(RENDER_OPT_DEFAULT, k)}
+
+    def replace(self, new: dict[str, Any]) -> Self:
+        """Returns a new ``RenderOpt`` based on this instance, with its values replaced by the contents of ``new``."""
+        return self.__class__(**(asdict(self) | new))
 
 RENDER_OPT_DEFAULT = RenderOpt()
