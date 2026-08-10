@@ -20,9 +20,8 @@ cloning the repo and installing it with `pip install .`.
    - If you're unsure which method to use, pick "standalone installer"
 2. Open a terminal or command prompt and run
    `uv tool install git+https://github.com/svioletg/papermc-position-polling-scripts@main`
-3. Run `uvx positionpolling --help` to see a list of available commands and how
-   to use them. Remember to prefix these commands with `uvx`, e.g.
-   `uvx positionpolling trail (args...)`.
+3. Run `positionpolling --help` to see a list of available commands and how to
+   use them.
 
 </details>
 
