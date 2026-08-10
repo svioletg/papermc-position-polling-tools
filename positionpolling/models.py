@@ -51,13 +51,11 @@ class Entry:
             z=float(row[5]),
         )
 
+@dataclass(frozen=True)
 class PlayerPositions:
     """Dataclass for using player position :class:`Entry` data."""
 
     entries: tuple[Entry, ...]
-
-    def __init__(self, entries: tuple[Entry, ...] | None = None) -> None:
-        self.entries = entries or ()
 
     def __repr__(self) -> str:  # noqa: D105
         return f'<{self.__class__.__name__}; {len(self.entries)} entries>'
