@@ -11,7 +11,7 @@ from geometry import Tuple4
 from positionpolling.const import World
 
 
-@dataclass
+@dataclass(frozen=True)
 class Entry:
     """Represents one row of the plugin database's `player_positions` table."""
 
