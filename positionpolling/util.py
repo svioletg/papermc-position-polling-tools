@@ -2,7 +2,7 @@
 import shutil
 import subprocess
 import time
-from collections.abc import Callable, Generator, Iterable, Sequence
+from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Literal
@@ -128,6 +128,45 @@ def grid_from_entries(data: list[Entry], **grid_kwargs: Any) -> Grid2:  # noqa: 
         max(e.z for e in data),
         **grid_kwargs,
     )
+
+def group_by[K, V](it: Iterable[Mapping[K, V]], key: K, *, strict: bool = False) -> dict[V, list[Mapping[K, V]]]:
+    """Groups mappings together into a new dictionary by the value of a given key.
+
+    Example:
+
+    .. code-block:: python
+        items = [
+            {'title': 'Talking Book', 'artist': 'Stevie Wonder'},
+            {'title': 'Heroes', 'artist': 'David Bowie'},
+            {'title': 'Innervisions', 'artist': 'Stevie Wonder'},
+        ]
+
+        by_artist = group_by(items, 'artist')
+        assert by_artist == {
+            'Stevie Wonder': [
+                {'title': 'Talking Book', 'artist': 'Stevie Wonder'},
+                {'title': 'Innervisions', 'artist': 'Stevie Wonder'},
+            ],
+            'David Bowie': [
+                {'title': 'Heroes', 'artist': 'David Bowie'},
+            ]
+        }
+
+    :param strict: If ``False``, when ``key`` is not found in one of ``it`` 's mappings, the item is skipped. Otherwise,
+        ``KeyError`` is raised.
+    """
+    d: dict[V, list[Mapping[K, V]]] = {}
+
+    for i in it:
+        if (not strict) and (key not in i):
+            continue
+        val = i[key]
+        if val not in d:
+            d[val] = [i]
+        else:
+            d[val].append(i)
+
+    return d
 
 def run(
         *args: str,
