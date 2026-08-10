@@ -10,7 +10,7 @@ from typing import Any, Literal
 from geometry import Grid2
 from loguru import logger
 
-from .const import Entry
+from .models import Entry
 
 
 def ask(prompt: str, choices: Sequence[str], *, strict_case: bool = False) -> str:
