@@ -7,25 +7,22 @@ plugin.
 
 ## Setup
 
-First, either [download the repository source
-code](https://github.com/svioletg/papermc-position-polling-scripts/archive/refs/heads/main.zip)
-and extract it to your desired location, or `git clone` the repository
-somewhere. Python 3.12 or higher is required to run these scripts. If you don't
-know how to install Python or use a virtual environment/"venv", expand the
-section below.
+Python 3.12 or higher is required. If you aren't familiar with how to install
+Python or use a virtual environment/"venv", using `uv` is recommended (expand
+the section below). Otherwise, install Python 3.12 or higher, and install this
+repository as a package using either the url
+`git+https://github.com/svioletg/papermc-position-polling-scripts@main`, or by
+cloning the repo and installing it with `pip install .`.
 
 <details><summary>Setup with `uv`</summary>
 
 1. Install uv: <https://docs.astral.sh/uv/getting-started/installation>
    - If you're unsure which method to use, pick "standalone installer"
-2. Open a terminal or command prompt and run `uv python install 3`
-3. Still within the terminal, navigate to the folder you extracted or cloned the
-   repository contents to
-4. Run `uv venv`
-5. Run your desired script with `uv run <file>`, where `<file>` is the name of
-   the Python script file (ending in `.py`) to run
-   - Note that this will only work while you are in the directory you ran `uv
-    venv` in
+2. Open a terminal or command prompt and run
+   `uv tool install git+https://github.com/svioletg/papermc-position-polling-scripts@main`
+3. Run `uvx positionpolling --help` to see a list of available commands and how
+   to use them. Remember to prefix these commands with `uvx`, e.g.
+   `uvx positionpolling trail (args...)`.
 
 </details>
 
@@ -35,12 +32,6 @@ It is recommended to copy the database file from your server to somewhere easy
 to access on your machine, as accessing it while the server (and by extension
 the plugin) is running could cause issues.
 
-## Script reference
-
-### `heatmap.py`
-
-TODO
-
-### `trail.py`
+## Commands reference
 
 TODO
