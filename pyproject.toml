@@ -16,6 +16,12 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+dev = [
+    "ipython>=9.16.1",
+    "notebook>=7.6.1",
+]
+
 [build-system]
 requires = ["hatchling >= 1.26"]
 build-backend = "hatchling.build"
