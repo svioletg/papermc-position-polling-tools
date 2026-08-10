@@ -135,6 +135,7 @@ def group_by[K, V](it: Iterable[Mapping[K, V]], key: K, *, strict: bool = False)
     Example:
 
     .. code-block:: python
+
         items = [
             {'title': 'Talking Book', 'artist': 'Stevie Wonder'},
             {'title': 'Heroes', 'artist': 'David Bowie'},
