@@ -2,11 +2,18 @@
 
 ``const`` must not import from any other module in this project.
 """
+import re
 import sys
 from enum import IntEnum, StrEnum
 from pathlib import Path
 
 from loguru import logger
+from rich.console import Console
+from rich.highlighter import Highlighter
+from rich.text import Text
+from rich.theme import Theme
+
+logger.remove()
 
 SCRIPT_ROOT: Path = Path(__file__).absolute().parent
 
@@ -24,7 +31,34 @@ Y_RANGE: dict[str, tuple[int, int]] = {
 
 Y_HUE_RANGE = (0, 300)
 
-logger.remove()
+class ConsoleHighlighter(Highlighter):
+    """Custom highlighter class for the ``rich`` console."""
+
+    def highlight(self, text: Text) -> None:  # noqa: D102
+        if m := re.search(fr'{str(Path.cwd()).replace('\\', '\\\\')}', str(text)):
+            text.stylize('cwd', m.start(0), m.end(0))
+
+def setup_rich_console() -> Console:
+    """Prepares a ``rich`` console and returns it."""
+    theme = Theme({
+        'info': 'cyan',
+        'info2': 'bright_cyan',
+        'ok': 'bright_green',
+        'warn': 'yellow',
+        'err': 'red',
+        'dim': 'grey70',
+        'path': 'magenta',
+        'path2': 'bright_magenta',
+        'cwd': 'grey50',
+    })
+
+    return Console(
+        highlighter=ConsoleHighlighter(),
+        theme=theme,
+        emoji=False,
+    )
+
+console: Console = setup_rich_console()
 
 class LogLevel(IntEnum):  # noqa: D101
     TRACE   = 5
