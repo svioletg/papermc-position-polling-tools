@@ -10,3 +10,15 @@ This project uses [towncrier](https://towncrier.readthedocs.io) to generate rele
 ---
 
 <!-- towncrier release notes start -->
+
+## [0.1.0] - 2026-08-10
+
+Initial beta release.
+
+### Added
+
+- Added module `const`
+- Added module `cli`
+- Added module `models`
+- Added module `trail`
+- Added module `util`
