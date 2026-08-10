@@ -119,8 +119,12 @@ class RenderOpt:
         """Returns a dictionary of this instance's attributes which are not set to their defaults."""
         return {k:v for k, v in asdict(self).items() if v != getattr(RENDER_OPT_DEFAULT, k)}
 
-    def replace(self, new: dict[str, Any]) -> Self:
-        """Returns a new ``RenderOpt`` based on this instance, with its values replaced by the contents of ``new``."""
-        return self.__class__(**(asdict(self) | new))
+    def replace(self, new: 'RenderOpt | dict[str, Any]') -> Self:
+        """Returns a new ``RenderOpt`` based on this instance, with its values replaced by the contents of ``new``.
+
+        If ``new`` is another ``RenderOpt``, it is turned into a dictionary of its non-default values via
+        :meth:`changed`.
+        """
+        return self.__class__(**asdict(self) | (new.changed() if isinstance(new, RenderOpt) else new))
 
 RENDER_OPT_DEFAULT = RenderOpt()
