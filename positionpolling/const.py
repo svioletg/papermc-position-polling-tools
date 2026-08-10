@@ -3,13 +3,13 @@
 ``const`` must not import from any other module in this project.
 """
 import re
-import sys
 from enum import IntEnum, StrEnum
 from pathlib import Path
 
 from loguru import logger
 from rich.console import Console
 from rich.highlighter import Highlighter
+from rich.markup import escape
 from rich.text import Text
 from rich.theme import Theme
 
@@ -94,7 +94,7 @@ def setup_logger(
     msg_format: str = LOG_MSG_FORMAT_UTC if utc else LOG_MSG_FORMAT
 
     stdout_handle: int = logger.add(
-        sys.stdout,
+        lambda s: console.print(escape(s), end=''),
         level=stdout_level,
         format=msg_format,
         colorize=True,
