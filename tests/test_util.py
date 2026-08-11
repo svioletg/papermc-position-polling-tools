@@ -137,3 +137,14 @@ def test_group_by_attr() -> None:
 )
 def test_rgba(hexcolor: str, expected: Tuple4[int]) -> None:
     assert util.rgba(hexcolor) == expected
+
+def test_time_this() -> None:
+    times: list[float] = []
+    value: int = 0
+
+    for _ in range(100):
+        with util.time_this(times):
+            value += 1
+
+    assert len(times) == 100  # noqa: PLR2004
+    assert value == 100  # noqa: PLR2004
