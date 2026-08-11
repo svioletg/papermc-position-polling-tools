@@ -75,7 +75,10 @@ def convert_range(value: float, r_from: tuple[float, float], r_to: tuple[float, 
 
     >>> assert convert_range(50, (0, 100), (-100, 100)) == 0
     """
-    return max(r_to[0], min((((value - r_from[0]) * (r_to[1] - r_to[0])) / (r_from[1] - r_from[0])) + r_to[0], r_to[1]))
+    zero_dist_a, zero_dist_b = 0 - r_from[0], 0 - r_to[0]
+    pct: float = (value + zero_dist_a) / (r_from[1] + zero_dist_a)
+
+    return ((r_to[1] + zero_dist_b) * pct) - zero_dist_b
 
 # Videos made with opencv seem to be unable to play in browsers or other applications unless reprocessed via ffmpeg
 def fix_opencv_video(src: str | Path, dest: str | Path, *, same_file_ok: bool = False) -> None:
