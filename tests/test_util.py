@@ -56,3 +56,25 @@ def test_coerce[T](obj: object, typ: type[T], fn: Callable[[object], T] | None, 
     value = util.coerce(obj, typ, fn)
     assert isinstance(value, expected.__class__)
     assert value == expected
+
+@pytest.mark.parametrize(('value', 'r_from', 'r_to', 'expected'),
+    [
+        (-25, (0, 100), (0, 50), -12.5),
+        (0, (0, 100), (0, 50), 0),
+        (25, (0, 100), (0, 50), 12.5),
+        (50, (0, 100), (0, 50), 25),
+        (75, (0, 100), (0, 50), 37.5),
+        (100, (0, 100), (0, 50), 50),
+        (125, (0, 100), (0, 50), 62.5),
+
+        (-25, (0, 100), (10, 20), 7.5),
+        (0, (0, 100), (10, 20), 10),
+        (25, (0, 100), (10, 20), 12.5),
+        (50, (0, 100), (10, 20), 15),
+        (75, (0, 100), (10, 20), 17.5),
+        (100, (0, 100), (10, 20), 20),
+        (125, (0, 100), (10, 20), 22.5),
+    ],
+)
+def test_convert_range(value: float, r_from: tuple[float, float], r_to: tuple[float, float], expected: float) -> None:
+    assert util.convert_range(value, r_from, r_to) == expected
