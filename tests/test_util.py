@@ -125,3 +125,15 @@ def test_group_by_attr() -> None:
     entries = gen_pos_logs(10)
     assert all(all(i.player_uuid == k for i in v) for k, v in util.group_by_attr(entries, 'player_uuid').items())
     assert all(all(i.world == k for i in v) for k, v in util.group_by_attr(entries, 'world').items())
+
+@pytest.mark.parametrize(('hexcolor', 'expected'),
+    [
+        ('ff0000ff', (255, 0, 0, 255)),
+        ('ff0000aa', (255, 0, 0, 170)),
+        ('ff0000', (255, 0, 0, 255)),
+        ('0af', (0, 170, 255, 255)),
+        ('0afa', (0, 170, 255, 170)),
+    ],
+)
+def test_rgba(hexcolor: str, expected: Tuple4[int]) -> None:
+    assert util.rgba(hexcolor) == expected
