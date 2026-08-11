@@ -5,6 +5,7 @@ import pytest
 from geometry import Tuple4
 
 from positionpolling import util
+from tests import gen_pos_logs
 
 
 def test_assert_all() -> None:
@@ -88,3 +89,16 @@ def test_gradient() -> None:
 
     with pytest.raises(ValueError, match=r"gradient\(\) parameter 'steps' must be >=2: 1"):
         util.gradient(c1, c2, 1)
+
+def test_grid_from_entries() -> None:
+    entries = gen_pos_logs(100)
+
+    g = util.grid_from_entries(entries)
+    assert g.x1 == min(e.x for e in entries)
+    assert g.y1 == min(e.z for e in entries)
+    assert g.x2 == max(e.x for e in entries)
+    assert g.y2 == max(e.z for e in entries)
+
+    g = util.grid_from_entries(entries, step=(512, 512), origin=(0, 0))
+    assert g.step == (512, 512)
+    assert g.origin == (0, 0)
