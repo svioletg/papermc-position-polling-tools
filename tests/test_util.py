@@ -120,3 +120,8 @@ def test_group_by() -> None:
             {'title': 'Heroes', 'artist': 'David Bowie'},
         ],
     }
+
+def test_group_by_attr() -> None:
+    entries = gen_pos_logs(10)
+    assert all(all(i.player_uuid == k for i in v) for k, v in util.group_by_attr(entries, 'player_uuid').items())
+    assert all(all(i.world == k for i in v) for k, v in util.group_by_attr(entries, 'world').items())
