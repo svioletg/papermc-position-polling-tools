@@ -192,6 +192,28 @@ def group_by_attr[T, U](it: Iterable[T], name: str, typ: type[U] | None = None, 
 
     return d
 
+def rgba(hexcolor: str) -> tuple[int, int, int, int]:
+    """Converts a hexadecimal color string to an RGBA tuple.
+
+    Accepted formats are (all with or without a leading ``#``):
+      - ``ff0000ff`` (full RGBA hex code, returns ``(255, 0, 0, 255)``)
+      - ``ff0000`` (if not given, alpha value defaults to 255: ``(255, 0, 0, 255)``)
+      - ``0af`` (expands to ``00aaff``, and thus ``(0, 170, 255, 170)``)
+      - ``0afa`` (expands to ``00aaffaa``, and thus ``(0, 170, 255, 170)``)
+    """
+    hexcolor = hexcolor.lstrip('#')
+    match len(hexcolor):
+        case 3 | 4:
+            hexcolor = ''.join(i+i for i in hexcolor)
+
+    match len(hexcolor):
+        case 6:
+            return (int(hexcolor[0:2], 16), int(hexcolor[2:4], 16), int(hexcolor[4:6], 16), 255)
+        case 8:
+            return (int(hexcolor[0:2], 16), int(hexcolor[2:4], 16), int(hexcolor[4:6], 16), int(hexcolor[6:8], 16))
+
+    raise ValueError(f'Could not parse color: {hexcolor!r}')
+
 def run(
         *args: str,
         capture_output: bool = True,
