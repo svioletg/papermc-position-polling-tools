@@ -116,7 +116,11 @@ def fix_opencv_video(src: str | Path, dest: str | Path, *, same_file_ok: bool = 
 # https://github.com/thearchcoder/Hueforge/blob/4942bcfcfeef26f8065bbebe672dec62dabe877e/hueforge/algorithms/other.py#L39-L50
 def gradient(c1: tuple[int, int, int, int], c2: tuple[int, int, int, int], steps: int) \
     -> list[tuple[int, int, int, int]]:
-    """Returns a list of colors (length ``steps``) that smoothly transition from ``c1`` to ``c2``."""
+    """Returns a list of colors (length ``steps``) that smoothly transition from ``c1`` to ``c2``.
+
+    :raises ValueError:
+        ``steps`` is not >=2.
+    """
     if steps < 2:  # noqa: PLR2004
         raise ValueError(f"gradient() parameter 'steps' must be >=2: {steps!r}")
 
