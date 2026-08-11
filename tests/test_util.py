@@ -78,3 +78,13 @@ def test_coerce[T](obj: object, typ: type[T], fn: Callable[[object], T] | None, 
 )
 def test_convert_range(value: float, r_from: tuple[float, float], r_to: tuple[float, float], expected: float) -> None:
     assert util.convert_range(value, r_from, r_to) == expected
+
+def test_gradient() -> None:
+    c1 = (255,   0,   0, 255)
+    c2 = (  0,   0, 255, 255)
+    assert util.gradient(c1, c2, 10) == [util.blend_color(c1, c2, (n / (10 - 1)) * 100) for n in range(10)]
+    assert util.gradient(c1, c2, 5) == [util.blend_color(c1, c2, (n / (5 - 1)) * 100) for n in range(5)]
+    assert util.gradient(c1, c2, 2) == [util.blend_color(c1, c2, (n / (2 - 1)) * 100) for n in range(2)]
+
+    with pytest.raises(ValueError, match=r"gradient\(\) parameter 'steps' must be >=2: 1"):
+        util.gradient(c1, c2, 1)
