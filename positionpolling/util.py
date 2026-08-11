@@ -127,7 +127,7 @@ def gradient(c1: tuple[int, int, int, int], c2: tuple[int, int, int, int], steps
     return [blend_color(c1, c2, (n / (steps - 1)) * 100) for n in range(steps)]
 
 def grid_from_entries(data: list[Entry], **grid_kwargs: Any) -> Grid2:  # noqa: ANN401
-    """Returns a grid created from the maximum ``x`` and ``z`` values of ``data``'s entries."""
+    """Returns a grid created from the minimum and maximum ``x`` and ``z`` values of ``data``'s entries."""
     return Grid2(
         min(e.x for e in data),
         min(e.z for e in data),
