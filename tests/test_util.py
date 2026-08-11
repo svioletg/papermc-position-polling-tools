@@ -102,3 +102,21 @@ def test_grid_from_entries() -> None:
     g = util.grid_from_entries(entries, step=(512, 512), origin=(0, 0))
     assert g.step == (512, 512)
     assert g.origin == (0, 0)
+
+def test_group_by() -> None:
+    items = [
+        {'title': 'Talking Book', 'artist': 'Stevie Wonder'},
+        {'title': 'Heroes', 'artist': 'David Bowie'},
+        {'title': 'Innervisions', 'artist': 'Stevie Wonder'},
+    ]
+
+    by_artist = util.group_by(items, 'artist')
+    assert by_artist == {
+        'Stevie Wonder': [
+            {'title': 'Talking Book', 'artist': 'Stevie Wonder'},
+            {'title': 'Innervisions', 'artist': 'Stevie Wonder'},
+        ],
+        'David Bowie': [
+            {'title': 'Heroes', 'artist': 'David Bowie'},
+        ],
+    }
