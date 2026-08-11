@@ -131,6 +131,10 @@ class RenderOpt(BaseModel):
 
         return cls(**content)
 
+    def __or__(self, other: 'RenderOpt | dict[str, Any]') -> Self:
+        """Bitwise OR (``|``) implementation as shorthand for :meth:`replace`."""
+        return self.replace(other)
+
     def changed(self) -> dict[str, Any]:
         """Returns a dictionary of this instance's attributes which are not set to their defaults."""
         return {k:v for k, v in self.model_dump(mode='python').items() if v != getattr(RENDER_OPT_DEFAULT, k)}
