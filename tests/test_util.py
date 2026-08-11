@@ -1,3 +1,6 @@
+from collections.abc import Callable
+from datetime import datetime
+
 import pytest
 from geometry import Tuple4
 
@@ -41,3 +44,15 @@ def test_blend_color(a: Tuple4[int], b: Tuple4[int], delta: float, expected: Tup
     assert util.blend_color(a, b, delta) == expected
     assert util.blend_color(a, b, 0) == a
     assert util.blend_color(a, b, 100) == b
+
+@pytest.mark.parametrize(('obj', 'typ', 'fn', 'expected'),
+    [
+        (0, int, None, 0),
+        ('0', int, None, 0),
+        ('2023-08-31', datetime, datetime.fromisoformat, datetime(2023, 8, 31)),  # noqa: DTZ001
+    ],
+)
+def test_coerce[T](obj: object, typ: type[T], fn: Callable[[object], T] | None, expected: T) -> None:
+    value = util.coerce(obj, typ, fn)
+    assert isinstance(value, expected.__class__)
+    assert value == expected
