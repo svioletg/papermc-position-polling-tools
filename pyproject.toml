@@ -12,6 +12,7 @@ dependencies = [
     "pillow>=12.3.0",
     "py-geometry-utils>=0.6.0",
     "py-maybetype>=0.14.0",
+    "pydantic>=2.13.4",
     "python-dotenv>=1.2.2",
     "rich>=15.0.0",
 ]

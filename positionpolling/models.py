@@ -1,13 +1,14 @@
 """Dataclasses and models for position polling tools."""
 import json
 import sqlite3
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Self
 from uuid import UUID
 
 from geometry import Tuple4
+from pydantic import BaseModel, ConfigDict
 
 from positionpolling.const import World
 
@@ -85,12 +86,13 @@ class PlayerPositions:
 
         return grouped
 
-@dataclass(frozen=True)
-class RenderOpt:
+class RenderOpt(BaseModel):
     """Visualization rendering options.
 
     Attributes prefixed with ``v_`` are only used when rendering a video.
     """
+
+    model_config = ConfigDict(frozen=True)
 
     progress_bar: bool = False
     """Whether to show a progress bar while rendering."""
@@ -131,7 +133,7 @@ class RenderOpt:
 
     def changed(self) -> dict[str, Any]:
         """Returns a dictionary of this instance's attributes which are not set to their defaults."""
-        return {k:v for k, v in asdict(self).items() if v != getattr(RENDER_OPT_DEFAULT, k)}
+        return {k:v for k, v in self.model_dump(mode='python').items() if v != getattr(RENDER_OPT_DEFAULT, k)}
 
     def replace(self, new: 'RenderOpt | dict[str, Any]') -> Self:
         """Returns a new ``RenderOpt`` based on this instance, with its values replaced by the contents of ``new``.
@@ -139,6 +141,6 @@ class RenderOpt:
         If ``new`` is another ``RenderOpt``, it is turned into a dictionary of its non-default values via
         :meth:`changed`.
         """
-        return self.__class__(**asdict(self) | (new.changed() if isinstance(new, RenderOpt) else new))
+        return self.__class__(**self.model_dump(mode='python') | (new.changed() if isinstance(new, RenderOpt) else new))
 
 RENDER_OPT_DEFAULT = RenderOpt()
