@@ -1,4 +1,5 @@
 """Dataclasses and models for position polling tools."""
+import json
 import sqlite3
 from dataclasses import asdict, dataclass
 from functools import cached_property
@@ -114,6 +115,19 @@ class RenderOpt:
         Frame duration is rounded to the closest integer after being calculated, the final duration may be slightly off
         from what would be expected.
     """
+
+    @classmethod
+    def from_json(cls, fp: str | Path) -> Self:
+        """Returns a ``RenderOpt`` created from the contents of a JSON file."""
+        fp = Path(fp)
+
+        if not fp.is_file():
+            raise FileNotFoundError(f'Not a file or does not exist: {fp}')
+
+        with open(fp, 'r', encoding='utf-8') as f:
+            content = json.load(f)
+
+        return cls(**content)
 
     def changed(self) -> dict[str, Any]:
         """Returns a dictionary of this instance's attributes which are not set to their defaults."""
