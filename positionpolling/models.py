@@ -1,17 +1,52 @@
 """Dataclasses and models for position polling tools."""
 import json
 import sqlite3
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Self
+from typing import Annotated, Any, Self
 from uuid import UUID
 
 from geometry import Tuple4
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, BeforeValidator, ConfigDict, ValidationInfo
 
 from positionpolling.const import World
 
+type ValidatorFunc[T] = Callable[[object, ValidationInfo], T]
+
+def vld_none_ok[T](validator: ValidatorFunc[T]) \
+    -> Callable[[object, ValidationInfo], T | None]:
+    """Returns a validator wrapped with a ``value is None`` check that can return ``None``."""
+    def wrapped(value: object, info: ValidationInfo) -> T | None:
+        if value is None:
+            return None
+
+        return validator(value, info)
+
+    return wrapped
+
+def vld_tuple(value: object, _info: ValidationInfo) -> tuple:
+    """Attempts to coerce ``value`` to a tuple of the length described by ``info``.
+
+    Accepted values are:
+        - ``None`` (returns ``None``)
+        - a comma-delimited string
+        - an iterable
+
+    :raises TypeError:
+        Could not interperet ``value`` as a tuple and it is not ``None``.
+    :raises ValueError:
+        Tuple is not the correct length.
+    """
+    if isinstance(value, str):
+        value = tuple(float(s) for s in value.split(','))
+    elif isinstance(value, Iterable):
+        value = tuple(float(i) for i in value)
+    else:
+        raise TypeError(f'Could not interperet value as tuple: {value!r}')
+
+    return value
 
 @dataclass(frozen=True)
 class Entry:
@@ -93,6 +128,7 @@ class RenderOpt(BaseModel):
     """
 
     model_config = ConfigDict(frozen=True)
+    """:meta private:"""
 
     progress_bar: bool = False
     """Whether to show a progress bar while rendering."""
@@ -101,7 +137,7 @@ class RenderOpt(BaseModel):
 
     If 0, no progress logs are printed for rendering.
     """
-    world_crop: Tuple4[float] | None = None
+    world_crop: Annotated[Tuple4[float] | None, BeforeValidator(vld_none_ok(vld_tuple))] = None
     """A rectangle of the Minecraft world (use in-game coordinates) to crop the visualization to."""
     v_fps: int = 60
     """Framerate of the rendered video."""
