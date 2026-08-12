@@ -175,6 +175,19 @@ class RenderOpt(BaseModel):
         """Returns a dictionary of this instance's attributes which are not set to their defaults."""
         return {k:v for k, v in self.model_dump(mode='python').items() if v != getattr(RENDER_OPT_DEFAULT, k)}
 
+    def display(self, *, mark_changes: bool = True) -> str:
+        """Returns these render option values in a string format for displaying.
+
+        :param mark_changes: If ``True``, adds an asterisk to the end of field names whose values are not default.
+        """
+        changed: dict[str, Any] = self.changed()
+
+        lines: list[str] = ['Render options:']
+        for name, fld in self.model_dump(mode='python').items():
+            lines.append(f'    {name}{'*' if mark_changes and (name in changed) else ''} = {fld!r}')
+
+        return '\n'.join(lines)
+
     def replace(self, new: 'RenderOpt | dict[str, Any]') -> Self:
         """Returns a new ``RenderOpt`` based on this instance, with its values replaced by the contents of ``new``.
 
