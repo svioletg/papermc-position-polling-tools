@@ -192,7 +192,7 @@ class RenderOpt(BaseModel):
         """Returns a new ``RenderOpt`` based on this instance, with its values replaced by the contents of ``new``.
 
         If ``new`` is another ``RenderOpt``, it is turned into a dictionary of its non-default values via
-        :meth:`changed`.
+        :meth:`changed`. Keys not defined in ``RenderOpt`` are ignored.
         """
         return self.__class__(**self.model_dump(mode='python') | (new.changed() if isinstance(new, RenderOpt) else new))
 
