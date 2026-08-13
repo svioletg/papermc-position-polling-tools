@@ -98,6 +98,12 @@ def main() -> int:  # noqa: D103
 
     # Parse args
     args = main_parser.parse_args()
+
+    if args.version:
+        console.print(__version__)
+
+        return 0
+
     log_level = LogLevel[args.log_level]
     log_to_file: bool = args.log_to_file
 
@@ -114,11 +120,7 @@ def main() -> int:  # noqa: D103
 
     logger.trace(f'args: {args}')
 
-    if args.version:
-        console.print(__version__)
-
-        return 0
-    elif not args.action:
+    if not args.action:
         main_parser.print_help()
 
         return 0
