@@ -175,7 +175,7 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:
     Returns an exit code.
     """
     data = PlayerPositions.from_sql(args.source)
-    dest: Path = args.out
+    dest: Path = args.out.absolute()
     auto_confirm: bool = args.yes
 
     if (not auto_confirm) and dest.exists():
