@@ -20,6 +20,7 @@ DEFAULT_LOGS_DIR: Path = SCRIPT_ROOT / 'logs/'
 
 LOG_MSG_FORMAT_UTC: str = '<level>[{time:YYYY-MM-DD HH:mm:ssZZ!UTC}] [{name}::{function}/{level}]: {message}</level>'
 LOG_MSG_FORMAT: str = LOG_MSG_FORMAT_UTC.replace('!UTC', '')
+LOG_FILE_FORMAT_UTC: str = '{time:YYYY-MM-DDTHHmmssZZ!UTC}.log'
 LOG_FILE_FORMAT: str = '{time:YYYY-MM-DDTHHmmssZZ}.log'
 
 Y_RANGE: dict[str, tuple[int, int]] = {
@@ -99,11 +100,13 @@ def setup_logger(
         diagnose=True,
     )
 
+    log_file_format: str = LOG_FILE_FORMAT_UTC if utc else LOG_FILE_FORMAT
+
     file_handle: int | None = None
 
     if logs_dir:
         file_handle = logger.add(
-            Path(logs_dir, LOG_FILE_FORMAT),
+            Path(logs_dir, log_file_format),
             level=file_level,
             format=msg_format,
             colorize=False,
