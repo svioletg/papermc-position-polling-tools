@@ -2,7 +2,7 @@
 import json
 import sqlite3
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
 from typing import Annotated, Any, Self
@@ -47,6 +47,13 @@ def vld_tuple(value: object, _info: ValidationInfo) -> tuple:
         raise TypeError(f'Could not interperet value as tuple: {value!r}')
 
     return value
+
+@dataclass(frozen=True)
+class CliOpt:
+    """For use in ``RenderOpt`` field annotations to customize its corresponding command-line argument."""
+
+    names: list[str]
+    kwargs: dict[str, Any] = field(default_factory=dict)
 
 @dataclass(frozen=True)
 class Entry:
