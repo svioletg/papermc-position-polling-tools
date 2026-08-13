@@ -101,13 +101,14 @@ def main() -> int:  # noqa: D103
         case 'render':
             render_json: Path | None = args.render_json
 
-            logger.trace('Getting render options...')
-            logger.trace(f'RenderOpt JSON file: {render_json or '<none>'}')
+            logger.debug('Getting render options...')
+            logger.debug(f'RenderOpt JSON file: {render_json or '<none>'}')
 
             render_opt: RenderOpt = (RenderOpt.from_json(render_json) if render_json else RENDER_OPT_DEFAULT).replace(
                 {k:v for k, v in args.__dict__.items() if v is not None},
             )
 
+            logger.debug(repr(render_opt))
             logger.info('\n' + render_opt.display())
 
             render_type: str = args.render_type
