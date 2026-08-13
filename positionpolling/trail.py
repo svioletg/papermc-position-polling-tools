@@ -1,6 +1,7 @@
 """Visualizes logged positions as a trail, with lines connecting each pair of points."""
 import itertools as it
 import time
+from argparse import Namespace
 from datetime import timedelta
 from math import ceil
 from pathlib import Path
@@ -167,3 +168,30 @@ def trail(  # noqa: C901, PLR0915
         logger.info('Video reprocessed successfully')
 
     return Ok((img, video))
+
+def cli(render_opt: RenderOpt, args: Namespace) -> int:
+    """Function to be called when using the CLI interface launched by :func:`positionpolling.cli.main`.
+
+    Returns an exit code.
+    """
+    data = PlayerPositions.from_sql(args.source)
+    dest: Path = args.out
+    auto_confirm: bool = args.yes
+
+    if (not auto_confirm) and dest.exists():
+        if dest.is_dir():
+            raise IsADirectoryError(dest)
+        if ask(f'Destination file "{dest}" already exists. Overwrite? (y/n) ', 'yn') != 'y':
+            console.print('Aborting.')
+
+            return 1
+
+    trail(
+        data,
+        str(data.entries[0].player_uuid),
+        video_path=dest,
+        opt=render_opt,
+        confirm=not auto_confirm,
+    )
+
+    return 0
