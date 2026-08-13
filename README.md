@@ -53,6 +53,26 @@ Using `mcposlog --version` or `mcposlog -V` with no other arguments will print
 out the currently installed version number and exit. When given with other
 arguments/options, this does nothing.
 
+The logging level can be set with `--log-level` or `-l`. Only logs that are at
+a level equal to or higher than the set level are shown in terminal output. Can
+be any of these values:
+
+- `TRACE`: The lowest and most verbose log level. This can output a large volume
+  of logs and generally shouldn't have to be used unless DEBUG isn't giving
+  enough information to solve the issue, or you want very meticulous details.
+- `DEBUG`: Information that isn't typically relevant to the user, but may help
+  diagnose issues. Log files always operate at this level unless the log level
+  is set to TRACE, where it will use the TRACE level.
+- `INFO`: Default log level. Generally useful information and typically doesn't
+  clog too much of the output.
+- `WARNING`: A warning log indicates something that won't halt the script, but
+  could be an issue depending on the circumstances, e.g. warning you that the
+  resulting video file size may be very large.
+- `ERROR`: An error log indicates that something failed, usually resulting in
+  exiting the script.
+- `CRITICAL`: The highest log level, currently unused. Setting your log level
+  to this will result in no logs being printed whatsoever.
+
 ### Render options
 
 Rendering options can be provided either with command-line options or from a
