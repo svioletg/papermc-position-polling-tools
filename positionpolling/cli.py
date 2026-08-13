@@ -99,6 +99,8 @@ def main() -> int:  # noqa: D103
     if file_log:
         logger.debug(f'log directory: {file_log[1]}')
 
+    logger.trace(f'args: {args}')
+
     if args.version:
         console.print(__version__)
 
