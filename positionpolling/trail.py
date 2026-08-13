@@ -196,7 +196,7 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:
 
         return 1
 
-    trail(
+    result = trail(
         data,
         player,
         desat_per_frame=desat_per_frame,
@@ -204,5 +204,14 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:
         opt=render_opt,
         confirm=not auto_confirm,
     )
+
+    match result:
+        case Err(e):
+            # Cancellation is logged, no reason for a redundant error message
+            if e == 'Cancelled':
+                return 1
+            abort(f'Render failed: {e}')
+        case Ok((_img, _video_writer)):
+            pass
 
     return 0
