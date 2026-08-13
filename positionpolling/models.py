@@ -150,9 +150,9 @@ class RenderOpt(BaseModel):
     """
     world_crop: Annotated[Tuple4[float] | None, BeforeValidator(vld_none_ok(vld_tuple))] = None
     """A rectangle of the Minecraft world (use in-game coordinates) to crop the visualization to."""
-    v_fps: int = 60
+    v_fps: Annotated[int, CliOpt(['--fps'])] = 60
     """Framerate of the rendered video."""
-    v_time_factor: float = 0.25
+    v_time_factor: Annotated[float, CliOpt(['--time-factor', '-t'])] = 0.25
     """
     A multiplier which determines the length of the final video based on the timestamps of each position log. At
     ``1.0``, each frame last the exact duration between it and the next log, effectively showing a real-time recap of
