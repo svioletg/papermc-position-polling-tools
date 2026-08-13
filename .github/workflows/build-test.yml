@@ -35,8 +35,8 @@ jobs:
         pip install .
     #- name: Run
     #  run: (main project command)
-    - name: Install test dependencies
-      run: pip install .[dev]
+    - name: Install extras
+      run: pip install .[all]
     - name: Test
       run: |
         pytest -v --doctest-modules
