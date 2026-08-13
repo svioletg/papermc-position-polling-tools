@@ -38,7 +38,7 @@ def abort(err: str | Exception, *, log: bool = False, status: int = 1) -> Never:
 
     sys.exit(status)
 
-@logger.catch()
+@logger.catch(onerror=lambda _: sys.exit(1))
 def main() -> int:  # noqa: D103
     setup_logger('ERROR')
 
