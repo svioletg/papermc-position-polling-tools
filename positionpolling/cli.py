@@ -69,19 +69,19 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
 def main() -> int:  # noqa: D103
     setup_logger('ERROR')
 
-    parser = ArgumentParser()
+    main_parser = ArgumentParser()
 
-    parser.add_argument('--version', '-V', action='store_true',
+    main_parser.add_argument('--version', '-V', action='store_true',
         help='Shows the installed version and exits.')
-    parser.add_argument('--log-level', '-l', type=lambda s: s.upper(), choices=[i.name for i in LogLevel],
+    main_parser.add_argument('--log-level', '-l', type=lambda s: s.upper(), choices=[i.name for i in LogLevel],
         default='INFO',
         help='The logging level for this session. "DEBUG" shows more output and can be useful for diagnosing issues.'
             + ' "TRACE" is the most verbose setting and may result in a very large volume of logs, only use this if'
             + ' "DEBUG" hasn\'t helped enough. Log files always use level DEBUG, or TRACE if it is specified.')
-    parser.add_argument('--yes', '-y', action='store_true',
+    main_parser.add_argument('--yes', '-y', action='store_true',
         help='Skips confirmation prompts.')
 
-    subparsers = parser.add_subparsers(dest='action', required=False)
+    subparsers = main_parser.add_subparsers(dest='action', required=False)
 
     parser_render = subparsers.add_parser('render')
 
@@ -94,7 +94,7 @@ def main() -> int:  # noqa: D103
         render_subparsers.add_parser(k, parents=[v])
 
     # Parse args
-    args = parser.parse_args()
+    args = main_parser.parse_args()
     log_level = LogLevel[args.log_level]
 
     # Start logging
@@ -111,7 +111,7 @@ def main() -> int:  # noqa: D103
 
         return 0
     elif not args.action:
-        parser.print_help()
+        main_parser.print_help()
 
         return 0
 
