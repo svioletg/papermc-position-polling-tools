@@ -46,3 +46,4 @@ packages = ["positionpolling"]
 
 [project.scripts]
 positionpolling = "positionpolling.cli:main"
+mcposlog = "positionpolling.cli:main"
