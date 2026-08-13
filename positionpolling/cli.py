@@ -70,10 +70,11 @@ def main() -> int:  # noqa: D103
         help='Shows the installed version and exits.')
     parser.add_argument('--log-level', '-l', type=lambda s: s.upper(), choices=[i.name for i in LogLevel],
         default='INFO',
-        help='The logging level for this session.')
+        help='The logging level for this session. "DEBUG" shows more output and can be useful for diagnosing issues.'
+            + ' "TRACE" is the most verbose setting and may result in a very large volume of logs, only use this if'
+            + ' "DEBUG" hasn\'t helped enough. Log files always use level DEBUG, or TRACE if it is specified.')
     parser.add_argument('--yes', '-y', action='store_true',
         help='Skips confirmation prompts.')
-
 
     subparsers = parser.add_subparsers(dest='action', required=False)
 
@@ -89,7 +90,9 @@ def main() -> int:  # noqa: D103
 
     # Parse args
     args = parser.parse_args()
-    setup_logger(LogLevel[args.log_level])
+    log_level = LogLevel[args.log_level]
+
+    setup_logger(log_level, min(log_level, LogLevel.DEBUG))
     if args.version:
         console.print(__version__)
 
