@@ -44,7 +44,7 @@ def setup_rich_console() -> Console:
         'info2': 'bright_cyan',
         'ok': 'bright_green',
         'warn': 'yellow',
-        'err': 'red',
+        'err': 'bright_red',
         'dim': 'grey70',
         'path': 'magenta',
         'path2': 'bright_magenta',
@@ -93,7 +93,7 @@ def setup_logger(
     logger.level('DEBUG', color='<cyan>')
     logger.level('INFO', color='<normal>')
     logger.level('WARNING', color='<yellow>')
-    logger.level('ERROR', color='<red>')
+    logger.level('ERROR', color='<light-red>')
     logger.level('CRITICAL', color='<bold><white><RED>')
 
     msg_format: str = LOG_MSG_FORMAT_UTC if utc else LOG_MSG_FORMAT
