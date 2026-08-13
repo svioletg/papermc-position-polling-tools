@@ -72,12 +72,14 @@ def main() -> int:  # noqa: D103
     parser.add_argument('--yes', '-y', action='store_true',
         help='Skips confirmation prompts.')
 
-    # Dynamically add render options as CLI options
-    add_args_from_render_opt(parser)
 
     subparsers = parser.add_subparsers(dest='action', required=False)
 
     parser_render = subparsers.add_parser('render')
+
+    # Dynamically add render options as CLI options
+    add_args_from_render_opt(parser_render)
+
     render_subparsers = parser_render.add_subparsers(dest='render_type', required=True)
 
     for k, v in render_arg_parsers.items():
