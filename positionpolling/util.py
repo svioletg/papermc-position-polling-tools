@@ -80,6 +80,13 @@ def convert_range(value: float, r_from: tuple[float, float], r_to: tuple[float, 
 
     return ((r_to[1] + zero_dist_b) * pct) - zero_dist_b
 
+def expect[T](value: T | None, *exc_args: object) -> T:
+    """Returns ``value`` if not ``None``, otherwise raises ``ValueError``."""
+    if value is not None:
+        return value
+
+    raise ValueError(*exc_args or ('None',))
+
 # Videos made with opencv seem to be unable to play in browsers or other applications unless reprocessed via ffmpeg
 def fix_opencv_video(src: str | Path, dest: str | Path, *, same_file_ok: bool = False) -> None:
     """Runs a video created with ``cv2`` through FFmpeg to make it compatible with more players.
