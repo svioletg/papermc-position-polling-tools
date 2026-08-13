@@ -8,6 +8,7 @@
    readme.rst
    changelog.rst
    reference/index.rst
+   reference/cli.rst
    reference/const.rst
    reference/models.rst
    reference/trail.rst
