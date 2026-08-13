@@ -9,7 +9,7 @@ from loguru import logger
 from pydantic.fields import FieldInfo
 
 from positionpolling import __version__
-from positionpolling.const import PACKAGE_ROOT, LogLevel, console, setup_logger
+from positionpolling.const import DEFAULT_LOGS_DIR, PACKAGE_ROOT, LogLevel, console, setup_logger
 from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, RenderOpt
 from positionpolling.util import try_next
 
@@ -78,6 +78,9 @@ def main() -> int:  # noqa: D103
         help='The logging level for this session. "DEBUG" shows more output and can be useful for diagnosing issues.'
             + ' "TRACE" is the most verbose setting and may result in a very large volume of logs, only use this if'
             + ' "DEBUG" hasn\'t helped enough. Log files always use level DEBUG, or TRACE if it is specified.')
+    main_parser.add_argument('--no-logfile', dest='log_to_file', action='store_false',
+        help='Disables file logging; logs will only be sent to stdout. A log file may still be created if any errors'
+            + ' occur before arguments can be parsed.')
     main_parser.add_argument('--yes', '-y', action='store_true',
         help='Skips confirmation prompts.')
 
@@ -96,9 +99,14 @@ def main() -> int:  # noqa: D103
     # Parse args
     args = main_parser.parse_args()
     log_level = LogLevel[args.log_level]
+    log_to_file: bool = args.log_to_file
 
     # Start logging
-    _, file_log = setup_logger(log_level, min(log_level, LogLevel.DEBUG))
+    _, file_log = setup_logger(
+        log_level,
+        min(log_level, LogLevel.DEBUG),
+        logs_dir=DEFAULT_LOGS_DIR if log_to_file else None,
+    )
     logger.info(f'{PACKAGE_ROOT.name} v{__version__}')
     logger.debug(f'stdout log level is {log_level.name}')
     if file_log:
