@@ -28,18 +28,20 @@ render_arg_parsers: dict[str, ArgumentParser] = {
     'trail': parser_render_trail,
 }
 
-def abort(err: str | Exception, *, log: bool = False, status: int = 1) -> Never:
+def abort(err: str | Exception, *, log: bool = False, markup: bool = True, status: int = 1) -> Never:
     """Print an error message or exception without a full traceback and exit with code ``status``.
 
-    :param log: If ``False``, the message is printed using the ``rich`` console with ``[err]...[/]`` markup. If
-        ``True``, the message is logged with ``logger.error()``.
+    :param markup: If ``True``, wrap the message in ``[err][/]`` markup before printing, otherwise prints it as-is.
+        Ignored if ``log`` is ``True``, in which case markup is never added.
+    :param log: If ``True``, the message is logged with ``logger.error()``. Otherwise, the message is printed with the
+        ``rich`` console.
     """
     msg = err if isinstance(err, str) else f'{err.__class__.__name__}: {err}'
 
     if log:
         logger.error(msg)
     else:
-        console.print(f'[err]{msg}[/]')
+        console.print(f'[err]{msg}[/]' if markup else msg)
 
     sys.exit(status)
 
