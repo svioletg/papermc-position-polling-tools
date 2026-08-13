@@ -141,7 +141,7 @@ class RenderOpt(BaseModel):
 
     # Fields
 
-    progress_bar: bool = False
+    progress_bar: Annotated[bool, CliOpt(['--progress-bar', '-P'])] = False
     """Whether to show a progress bar while rendering."""
     progress_log_interval: int = 500
     """If >0, a log is printed once every time a multiple of this value of entries is processed.
