@@ -21,7 +21,7 @@ Python 3.12 or higher is required. If you aren't familiar with how to install
 Python or use a virtual environment/"venv", using `uv` is recommended (expand
 the section below). Otherwise, install Python 3.12 or higher, and install this
 repository as a package using either the url
-`git+https://github.com/svioletg/papermc-position-polling-scripts@main`, or by
+`git+https://github.com/svioletg/papermc-position-polling-tools@main`, or by
 cloning the repo and installing it with `pip install .`.
 
 <details><summary>Setup with `uv`</summary>
@@ -29,7 +29,7 @@ cloning the repo and installing it with `pip install .`.
 1. Install uv: <https://docs.astral.sh/uv/getting-started/installation>
    - If you're unsure which method to use, pick "standalone installer"
 2. Open a terminal or command prompt and run
-   `uv tool install git+https://github.com/svioletg/papermc-position-polling-scripts@main`
+   `uv tool install git+https://github.com/svioletg/papermc-position-polling-tools@main`
 3. Run `positionpolling --help` to see a list of available commands and how to
    use them.
 
