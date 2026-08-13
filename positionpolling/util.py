@@ -2,10 +2,10 @@
 import shutil
 import subprocess
 import time
-from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
+from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, overload
 
 from geometry import Grid2
 from loguru import logger
@@ -268,3 +268,14 @@ def time_this(dest: list[float]) -> Generator[None]:
         yield
     finally:
         dest.append(time.perf_counter() - ta)
+
+@overload
+def try_next[T, U](it: Iterator[T], default: U) -> T | U: ...
+@overload
+def try_next[T, U](it: Iterator[T], default: T | None = None) -> T | None: ...
+def try_next[T, U](it: Iterator[T], default: U | None = None) -> T | U | None:
+    """Tries to call ``next()`` on an iterator, returning ``default`` if ``StopIteration`` was raised."""
+    try:
+        return next(it)
+    except StopIteration:
+        return default

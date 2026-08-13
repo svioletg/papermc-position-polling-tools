@@ -148,3 +148,9 @@ def test_time_this() -> None:
 
     assert len(times) == 100  # noqa: PLR2004
     assert value == 100  # noqa: PLR2004
+
+def test_try_next() -> None:
+    assert util.try_next(i * 2 for i in range(5, 10)) == 10  # noqa: PLR2004
+    assert util.try_next(i * 2 for i in range(5, 10) if i < 5) is None  # noqa: PLR2004
+    assert util.try_next((i * 2 for i in range(5, 10)), -1) == 10  # noqa: PLR2004
+    assert util.try_next((i * 2 for i in range(5, 10) if i < 5), -1) == -1  # noqa: PLR2004
