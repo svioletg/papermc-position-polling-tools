@@ -67,6 +67,8 @@ def trail(  # noqa: C901, PLR0915
     :param confirm: Whether to ask the user for confirmation before beginning the render.
     """
     video_path = Path(video_path).absolute() if video_path else None
+    if video_path and not video_path.parent.exists():
+        raise FileNotFoundError(f'Directory does not exist: {video_path.parent}')
 
     data_by_player = data.by_player
     if player is None:
