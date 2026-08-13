@@ -118,7 +118,8 @@ def main() -> int:  # noqa: D103
     if file_log:
         logger.debug(f'log directory: {file_log[1]}')
 
-    logger.trace(f'args: {args}')
+    logger.trace(f'raw args: {sys.argv}')
+    logger.trace(f'parsed args: {args}')
 
     if not args.action:
         main_parser.print_help()
