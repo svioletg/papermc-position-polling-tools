@@ -16,6 +16,7 @@ from PIL import Image, ImageDraw, ImageEnhance
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TaskProgressColumn, TextColumn, TimeElapsedColumn
 from rich.table import Column
 
+from positionpolling.cli import abort
 from positionpolling.const import console
 from positionpolling.models import RENDER_OPT_DEFAULT, Entry, PlayerPositions, RenderOpt
 from positionpolling.util import ask, fix_opencv_video, grid_from_entries, time_this
@@ -178,13 +179,14 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:
     dest: Path = args.out.absolute()
     auto_confirm: bool = args.yes
 
-    if (not auto_confirm) and dest.exists():
-        if dest.is_dir():
-            raise IsADirectoryError(dest)
-        if ask(f'Destination file "{dest}" already exists. Overwrite? (y/n) ', 'yn') != 'y':
-            console.print('Aborting.')
+    if dest.is_dir():
+        abort(f'Output path cannot be a directory: {dest}')
 
-            return 1
+    if (not auto_confirm) and dest.exists() \
+        and (ask(f'Destination file "{dest}" already exists. Overwrite? (y/n) ', 'yn') != 'y'):
+        console.print('Aborting.')
+
+        return 1
 
     trail(
         data,
