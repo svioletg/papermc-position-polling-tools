@@ -18,7 +18,6 @@ parser_render_trail.add_argument('source', type=str,
     help='Path or URL to the SQL database to use.')
 parser_render_trail.add_argument('--out', '-o', type=Path, required=True,
     help='Where to save the rendered video.')
-parser_render_trail.add_argument('--time-factor', '-t', type=float)
 
 render_arg_parsers: dict[str, ArgumentParser] = {
     'trail': parser_render_trail,
