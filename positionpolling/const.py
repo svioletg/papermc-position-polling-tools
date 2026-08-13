@@ -106,6 +106,7 @@ def setup_logger(
             Path(logs_dir, LOG_FILE_FORMAT),
             level=file_level,
             format=msg_format,
+            colorize=False,
             diagnose=True,
             retention=10,
             delay=True,
