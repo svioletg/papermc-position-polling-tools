@@ -10,7 +10,8 @@ from pydantic.fields import FieldInfo
 
 from positionpolling import __version__
 from positionpolling.const import PACKAGE_ROOT, LogLevel, console, setup_logger
-from positionpolling.models import RENDER_OPT_DEFAULT, RenderOpt
+from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, RenderOpt
+from positionpolling.util import try_next
 
 parser_render_trail = ArgumentParser(add_help=False)
 parser_render_trail.add_argument('source', type=str,
@@ -38,6 +39,24 @@ def abort(err: str | Exception, *, log: bool = False, status: int = 1) -> Never:
 
     sys.exit(status)
 
+def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
+    """Adds arguments to an ``ArgumentParser`` object from the fields in :class:`models.RenderOpt`.
+
+    Returns the passed parser.
+    """
+    for name, fld in cast('dict[str, FieldInfo]', RenderOpt.model_fields).items():
+        kwargs: dict[str, Any] = {'dest': name, 'help': fld.description}
+
+        if fld.annotation is bool:
+            kwargs['action'] = BooleanOptionalAction
+
+        cli_meta: CliOpt = try_next(i for i in fld.metadata if isinstance(i, CliOpt)) \
+            or CliOpt([f'--{name.replace('_', '-')}'], kwargs)
+
+        parser.add_argument(*cli_meta.names, **kwargs | cli_meta.kwargs)
+
+    return parser
+
 @logger.catch(onerror=lambda _: sys.exit(1))
 def main() -> int:  # noqa: D103
     setup_logger('ERROR')
@@ -55,13 +74,7 @@ def main() -> int:  # noqa: D103
         help='Skips confirmation prompts.')
 
     # Dynamically add render options as CLI options
-    for name, fld in cast('dict[str, FieldInfo]', RenderOpt.model_fields).items():
-        kwargs: dict[str, Any] = {'help': fld.description}
-
-        if fld.annotation is bool:
-            kwargs['action'] = BooleanOptionalAction
-
-        parser.add_argument(f'--{name.replace('_', '-')}', **kwargs)
+    add_args_from_render_opt(parser)
 
     subparsers = parser.add_subparsers(dest='action', required=False)
 
