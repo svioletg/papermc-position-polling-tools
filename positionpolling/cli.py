@@ -3,7 +3,7 @@ import sys
 from argparse import ArgumentParser, BooleanOptionalAction
 from importlib import import_module
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Never, cast
 
 from loguru import logger
 from pydantic.fields import FieldInfo
@@ -22,6 +22,21 @@ parser_render_trail.add_argument('--time-factor', '-t', type=float)
 render_arg_parsers: dict[str, ArgumentParser] = {
     'trail': parser_render_trail,
 }
+
+def abort(err: str | Exception, *, log: bool = False, status: int = 1) -> Never:
+    """Print an error message or exception without a full traceback and exit with code ``status``.
+
+    :param log: If ``False``, the message is printed using the ``rich`` console with ``[err]...[/]`` markup. If
+        ``True``, the message is logged with ``logger.error()``.
+    """
+    msg = err if isinstance(err, str) else f'{err.__class__.__name__}: {err}'
+
+    if log:
+        logger.error(msg)
+    else:
+        console.print(f'[err]{msg}[/]')
+
+    sys.exit(status)
 
 @logger.catch()
 def main() -> int:  # noqa: D103
