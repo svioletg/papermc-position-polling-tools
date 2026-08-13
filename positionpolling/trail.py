@@ -181,6 +181,7 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:
     """
     data = PlayerPositions.from_sql(args.source)
     dest: Path = args.out.absolute()
+    desat_per_frame: float = args.desat_per_frame
     auto_confirm: bool = args.yes
 
     if dest.is_dir():
@@ -195,6 +196,7 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:
     trail(
         data,
         str(data.entries[0].player_uuid),
+        desat_per_frame=desat_per_frame,
         video_path=dest,
         opt=render_opt,
         confirm=not auto_confirm,

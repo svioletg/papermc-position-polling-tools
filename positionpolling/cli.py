@@ -18,6 +18,9 @@ parser_render_trail.add_argument('source', type=str,
     help='Path or URL to the SQL database to use.')
 parser_render_trail.add_argument('--out', '-o', type=Path, required=True,
     help='Where to save the rendered video.')
+parser_render_trail.add_argument('--desat-per-frame', type=float, default=0.95,
+    help='An amount that each previous frame of the video should be desaturated by, creating a fading effect as the'
+        + ' trail continues. , 0 makes the previous frame fully greyscale.')
 
 render_arg_parsers: dict[str, ArgumentParser] = {
     'trail': parser_render_trail,
