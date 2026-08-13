@@ -1,8 +1,10 @@
 # noqa: D100, INP001
 import re
+from typing import TYPE_CHECKING
 
-from sphinx.application import Sphinx
-from sphinx.ext.autodoc import Options
+if TYPE_CHECKING:
+    from sphinx.application import Sphinx
+    from sphinx.ext.autodoc import Options
 
 from positionpolling import __version__
 
@@ -71,14 +73,14 @@ autodoc_skip_regex: list[str | re.Pattern[str]] = [
 ]
 
 def autodoc_skip_member(  # noqa: D103
-        _app: Sphinx,
+        _app: 'Sphinx',
         _obj_type: str,
         name: str,
         _obj: object,
         _skip: bool,  # noqa: FBT001
-        _options: Options,
+        _options: 'Options',
     ) -> bool:
     return any(re.match(p, name) for p in autodoc_skip_regex)
 
-def setup(app: Sphinx) -> None:  # noqa: D103
+def setup(app: 'Sphinx') -> None:  # noqa: D103
     app.connect('autodoc-skip-member', autodoc_skip_member)
