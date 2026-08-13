@@ -97,6 +97,8 @@ def trail(  # noqa: C901, PLR0915
     logger.info(f'Image size: {imgrid.size}')
 
     if confirm and (ask('Start render? (y/n) ', 'yn') != 'y'):
+        logger.info('Render cancelled by user')
+
         return Err('Cancelled')
 
     img = img or Image.new('RGBA', size=(ceil(imgrid.width), ceil(imgrid.height)))
@@ -180,6 +182,7 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:
     Returns an exit code.
     """
     data = PlayerPositions.from_sql(args.source)
+    player: str | None = args.player
     dest: Path = args.out.absolute()
     desat_per_frame: float = args.desat_per_frame
     auto_confirm: bool = args.yes
@@ -195,7 +198,7 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:
 
     trail(
         data,
-        str(data.entries[0].player_uuid),
+        player,
         desat_per_frame=desat_per_frame,
         video_path=dest,
         opt=render_opt,
