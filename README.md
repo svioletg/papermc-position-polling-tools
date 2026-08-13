@@ -33,4 +33,23 @@ the plugin) is running could cause issues.
 
 ## Commands reference
 
-TODO
+The commands `positionpolling` and `mcposlog` are both available, they are
+aliases for eachother and will do the same thing. This documentation will use
+`mcposlog` for the sake of brevity.
+
+Use `mcposlog --help`/`mcposlog -h` to see a list of all arguments and options.
+`--help` can also be used after the action or render type to get help on those
+topics specifically (e.g. `mcposlog render --help`, `mcposlog render trail
+--help`)
+
+Using `mcposlog --version` or `mcposlog -V` with no other arguments will print
+out the currently installed version number and exit. When given with other
+arguments/options, this does nothing.
+
+### Render options
+
+Rendering options can be provided either with command-line options or from a
+JSON file. Use `mcposlog --help` to see all available options. To use a JSON
+file, use the option `--render-json=<PATH>` or `-j <PATH>`. CLI render options
+will always take precedence over JSON, e.g. if your JSON file defines `"v_fps":
+30`, but you run the command with `--v-fps 60`, the value will be 60.
