@@ -115,18 +115,25 @@ def main() -> int:  # noqa: D103
         min(log_level, LogLevel.DEBUG),
         logs_dir=DEFAULT_LOGS_DIR if log_to_file else None,
     )
-    logger.info(f'{PACKAGE_ROOT.name} v{__version__}')
-    logger.debug(f'stdout log level is {log_level.name}')
-    if file_log:
-        logger.debug(f'log directory: {file_log[1]}')
 
     logger.trace(f'raw args: {sys.argv}')
     logger.trace(f'parsed args: {args}')
 
-    if not args.action:
+    if len(sys.argv) == 1:
         main_parser.print_help()
 
         return 0
+
+    if not args.action:
+        abort(
+            f'[warn]Missing action. Run "{Path(sys.argv[0]).name} --help" to see a list of options.[/]',
+            markup=False,
+        )
+
+    logger.info(f'{PACKAGE_ROOT.name} v{__version__}')
+    logger.debug(f'stdout log level is {log_level.name}')
+    if file_log:
+        logger.debug(f'log directory: {file_log[1]}')
 
     match args.action:
         case 'render':
