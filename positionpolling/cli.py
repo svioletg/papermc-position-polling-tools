@@ -52,7 +52,8 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
     """
     parser.add_argument('--render-json', '-j', type=Path, metavar='PATH',
         help='Path to a JSON file defining render options to use. Individual render options will override these'
-            + ' settings.')
+            + ' settings. If a file named "render.json" exists in the current directory and this option was not used,'
+            + ' it will be automatically used for this value.')
 
     for name, fld in cast('dict[str, FieldInfo]', RenderOpt.model_fields).items():
         kwargs: dict[str, Any] = {'dest': name, 'help': fld.description}
@@ -138,6 +139,10 @@ def main() -> int:  # noqa: D103
     match args.action:
         case 'render':
             render_json: Path | None = args.render_json
+
+            # Automatically use file called "render.json" if present in current directory
+            if (render_json is None) and not (render_json := Path.cwd() / ('render.json')).is_file():
+                render_json = None
 
             logger.debug('Getting render options...')
             logger.debug(f'RenderOpt JSON file: {render_json or '<none>'}')
