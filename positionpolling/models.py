@@ -134,8 +134,12 @@ class RenderOpt(BaseModel):
     Attributes prefixed with ``v_`` are only used when rendering a video.
     """
 
+    # Pydantic setup
+
     model_config = ConfigDict(frozen=True, use_attribute_docstrings=True)
     """:meta private:"""
+
+    # Fields
 
     progress_bar: bool = False
     """Whether to show a progress bar while rendering."""
