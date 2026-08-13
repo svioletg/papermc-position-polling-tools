@@ -60,11 +60,12 @@ def setup_rich_console() -> Console:
 console: Console = setup_rich_console()
 
 class LogLevel(IntEnum):  # noqa: D101
-    TRACE   = 5
-    DEBUG   = 10
-    INFO    = 20
-    WARNING = 30
-    ERROR   = 40
+    TRACE    = 5
+    DEBUG    = 10
+    INFO     = 20
+    WARNING  = 30
+    ERROR    = 40
+    CRITICAL = 50
 
 def setup_logger(
         stdout_level: int | str = 'INFO',
