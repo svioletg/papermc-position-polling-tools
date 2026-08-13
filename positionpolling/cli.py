@@ -92,7 +92,13 @@ def main() -> int:  # noqa: D103
     args = parser.parse_args()
     log_level = LogLevel[args.log_level]
 
-    setup_logger(log_level, min(log_level, LogLevel.DEBUG))
+    # Start logging
+    _, file_log = setup_logger(log_level, min(log_level, LogLevel.DEBUG))
+    logger.info(f'{PACKAGE_ROOT.name} v{__version__}')
+    logger.debug(f'stdout log level is {log_level.name}')
+    if file_log:
+        logger.debug(f'log directory: {file_log[1]}')
+
     if args.version:
         console.print(__version__)
 
