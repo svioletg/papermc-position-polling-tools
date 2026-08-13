@@ -108,7 +108,7 @@ def main() -> int:  # noqa: D103
                 {k:v for k, v in args.__dict__.items() if v is not None},
             )
 
-            console.print(render_opt.display())
+            logger.info('\n' + render_opt.display())
 
             render_type: str = args.render_type
             render_modpath: str = f'{PACKAGE_ROOT.name}.{render_type}'
