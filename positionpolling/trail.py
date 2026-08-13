@@ -66,6 +66,8 @@ def trail(  # noqa: C901, PLR0915
     :param opt: Additional rendering options. See: :class:`positionpolling.const.RenderOpt`
     :param confirm: Whether to ask the user for confirmation before beginning the render.
     """
+    video_path = Path(video_path).absolute() if video_path else None
+
     data_by_player = data.by_player
     if player is None:
         if len(data_by_player.keys()) == 1:
