@@ -127,7 +127,7 @@ class RenderOpt(BaseModel):
     Attributes prefixed with ``v_`` are only used when rendering a video.
     """
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, use_attribute_docstrings=True)
     """:meta private:"""
 
     progress_bar: bool = False
