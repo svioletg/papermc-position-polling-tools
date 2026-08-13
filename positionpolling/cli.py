@@ -43,6 +43,10 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
 
     Returns the passed parser.
     """
+    parser.add_argument('--render-json', '-j', type=Path, metavar='PATH',
+        help='Path to a JSON file defining render options to use. Individual render options will override these'
+            + ' settings.')
+
     for name, fld in cast('dict[str, FieldInfo]', RenderOpt.model_fields).items():
         kwargs: dict[str, Any] = {'dest': name, 'help': fld.description}
 
@@ -67,8 +71,6 @@ def main() -> int:  # noqa: D103
     parser.add_argument('--log-level', '-l', type=lambda s: s.upper(), choices=[i.name for i in LogLevel],
         default='INFO',
         help='The logging level for this session.')
-    parser.add_argument('--render-json', '-j', type=Path, metavar='PATH',
-        help='Path to a JSON file defining render options to use.')
     parser.add_argument('--yes', '-y', action='store_true',
         help='Skips confirmation prompts.')
 
