@@ -2,7 +2,6 @@
 
 ``const`` must not import from any other module in this project.
 """
-import os
 from enum import IntEnum, StrEnum
 from pathlib import Path
 
@@ -77,8 +76,8 @@ def setup_logger(
     ) -> tuple[int, tuple[int, Path] | None]:
     """Adds stdout and file handles for the project logger and returns the added handlers.
 
-    Returns a tuple of the stdout handler ID and a tuple of the file handler ID and the path being logged to, if file
-    logging was enabled. If ``logs_dir`` is ``None``, the second tuple item is ``None`` instead.
+    Returns a tuple of the stdout handler ID and a tuple of the file handler ID and the log directory being used, if
+    file logging was enabled. If ``logs_dir`` is ``None``, the second tuple item is ``None`` instead.
 
     :param stdout_level: The maximum level of logs to show when logging to stdout.
     :param file_level: The maximum level of logs to show when logging to disk.
@@ -86,6 +85,8 @@ def setup_logger(
     :param utc: Whether log timestamps are saved in UTC. If ``False``, the system's local timezone is used instead.
     """
     logger.remove()
+
+    logs_dir = Path(logs_dir) if logs_dir else None
 
     # Set colors
     logger.level('TRACE', color='<dim><white>')
@@ -108,11 +109,12 @@ def setup_logger(
     log_file_format: str = LOG_FILE_FORMAT_UTC if utc else LOG_FILE_FORMAT
 
     file_handle: int = -1
-    file_sink = Path(os.devnull)
 
     if logs_dir:
+        file_sink = Path(logs_dir, log_file_format)
+
         file_handle = logger.add(
-            Path(logs_dir, log_file_format),
+            file_sink,
             level=file_level,
             format=msg_format,
             colorize=False,
@@ -122,7 +124,7 @@ def setup_logger(
             mode='w',
         )
 
-    return stdout_handle, ((file_handle, file_sink) if logs_dir else None)
+    return stdout_handle, ((file_handle, logs_dir) if logs_dir else None)
 
 def test_logs() -> None:
     """Sends a log message for every level."""
