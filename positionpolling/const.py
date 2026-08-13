@@ -14,9 +14,9 @@ from rich.theme import Theme
 
 logger.remove()
 
-SCRIPT_ROOT: Path = Path(__file__).absolute().parent
+PACKAGE_ROOT: Path = Path(__file__).absolute().parent
 
-DEFAULT_LOGS_DIR: Path = SCRIPT_ROOT / 'logs/'
+DEFAULT_LOGS_DIR: Path = PACKAGE_ROOT / 'logs/'
 
 LOG_MSG_FORMAT_UTC: str = '<level>[{time:YYYY-MM-DD HH:mm:ssZZ!UTC}] [{name}::{function}/{level}]: {message}</level>'
 LOG_MSG_FORMAT: str = LOG_MSG_FORMAT_UTC.replace('!UTC', '')
