@@ -53,3 +53,7 @@ JSON file. Use `mcposlog --help` to see all available options. To use a JSON
 file, use the option `--render-json=<PATH>` or `-j <PATH>`. CLI render options
 will always take precedence over JSON, e.g. if your JSON file defines `"v_fps":
 30`, but you run the command with `--v-fps 60`, the value will be 60.
+
+### `render trail`
+
+Example: `mcposlog render trail data.db -o trail.mp4`
