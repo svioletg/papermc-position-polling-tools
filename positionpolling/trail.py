@@ -171,7 +171,8 @@ def trail(  # noqa: C901, PLR0915
     if video and video_path:
         logger.info(f'Saving video to: {video_path}')
         video.release()
-        fix_opencv_video(video_path, video_path, same_file_ok=True)
+        if opt.v_fix:
+            fix_opencv_video(video_path, video_path, same_file_ok=True)
         logger.info('Video reprocessed successfully')
 
     return Ok((img, video))
