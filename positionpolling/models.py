@@ -150,6 +150,17 @@ class RenderOpt(BaseModel):
     """
     world_crop: Annotated[Tuple4[float] | None, BeforeValidator(vld_none_ok(vld_tuple))] = None
     """A rectangle of the Minecraft world (use in-game coordinates) to crop the visualization to."""
+    v_fix: Annotated[bool, CliOpt(['--fix-vid'])] = True
+    """Whether to use FFmpeg to reprocess the rendered video from mp4v into avc1.
+
+    Due to licensing, ``opencv`` can't use avc1 directly, so videos are created using mp4v instead. mp4v is not fully
+    supported by many browsers and other software, so the next best option is to re-process the video with FFmpeg
+    (which does support encoding to avc1/H.264) after it has been initially created. This process can take some time,
+    so if you know an mp4v-encoded video works fine for your needs, you can disable this for a faster render.
+
+    .. note::
+        This requires FFmpeg to be installed; it does not come bundled with this package.
+    """
     v_fps: Annotated[int, CliOpt(['--fps'])] = 60
     """Framerate of the rendered video."""
     v_time_factor: Annotated[float, CliOpt(['--time-factor', '-t'])] = 0.25
