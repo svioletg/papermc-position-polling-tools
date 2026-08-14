@@ -40,6 +40,11 @@ class ConsoleHighlighter(Highlighter):
 def setup_rich_console() -> Console:
     """Prepares a ``rich`` console and returns it."""
     theme = Theme({
+        'bar.complete': 'bright_blue',
+        'bar.finished': 'green',
+        'progress.description': 'cyan',
+        'progress.elapsed': '',
+
         'info': 'cyan',
         'info2': 'bright_cyan',
         'ok': 'bright_green',

@@ -13,7 +13,7 @@ from geometry import Coord2, Grid2
 from loguru import logger
 from maybetype import Err, Ok, Result
 from PIL import Image, ImageDraw, ImageEnhance
-from rich.progress import BarColumn, MofNCompleteColumn, Progress, TaskProgressColumn, TextColumn, TimeElapsedColumn
+from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn, TimeElapsedColumn
 from rich.table import Column
 
 from positionpolling.cli import abort
@@ -118,11 +118,18 @@ def trail(  # noqa: C901, PLR0915
     frame = img.copy()
     frame_count: int = 0
 
+    mofn_m_width: int = max(
+        len(str(frame_estimate)),
+        len(str(len(entries))),
+    )
+
     with Progress(
-            TextColumn('[progress.description]{task.description}', table_column=Column(ratio=1)),
-            MofNCompleteColumn(),
+            TextColumn('[progress.description]{task.description}'),
+            TextColumn(
+                '[[info2]{task.completed:>' + str(mofn_m_width) +'}/{task.total:<' + str(mofn_m_width) + '}[/]]',
+            ),
+            TaskProgressColumn('[[info2]{task.percentage:>3.0f}%[/]]'),
             BarColumn(bar_width=None, table_column=Column(ratio=2)),
-            TaskProgressColumn(),
             TimeElapsedColumn(),
             console=console,
             transient=True,
