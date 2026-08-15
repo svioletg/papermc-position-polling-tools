@@ -47,6 +47,9 @@ PACKAGE_ROOT: Path = Path(__file__).absolute().parent
 
 ENV_PREFIX: str = 'MCPOSLOG'
 
+NO_COLOR: bool = get_env_bool(f'{ENV_PREFIX}_NO_COLOR')
+"""Whether color should be disallowed in terminal output."""
+
 DEFAULT_LOGS_DIR: Path = PACKAGE_ROOT / 'logs/'
 
 LOG_MSG_FORMAT_UTC: str = '<level>[{time:YYYY-MM-DD HH:mm:ssZZ!UTC}] [{name}::{function}/{level}]: {message}</level>'
