@@ -4,6 +4,7 @@
 """
 import os
 import warnings
+from collections.abc import Mapping
 from enum import IntEnum, StrEnum
 from pathlib import Path
 
@@ -18,7 +19,7 @@ from positionpolling.errors import ValueWarning
 
 logger.remove()
 
-def get_env_bool(key: str, *, strict: bool = False) -> bool:
+def get_env_bool(key: str, *, strict: bool = False, env: Mapping[str, str] | None = None) -> bool:
     """Returns a boolean value for an environment variable.
 
     Returns ``True`` if the value is 1 or "true" (case-insensitive), returns ``False`` if 0 or "false".
@@ -26,7 +27,9 @@ def get_env_bool(key: str, *, strict: bool = False) -> bool:
     :param strict: If ``True``, ``ValueError`` is raised when the value of this variable is not an accepted boolean
         value. If ``False``, ``False`` is returned in this case along with emitting a :class:`errors.ValueWarning`.
     """
-    if not (value := os.environ.get(key)):
+    env = env if env is not None else os.environ
+
+    if not (value := env.get(key)):
         return False
 
     if value.lower() in ['1', 'true']:
