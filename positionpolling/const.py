@@ -2,6 +2,8 @@
 
 ``const`` must not import from any other module in this project.
 """
+import os
+import warnings
 from enum import IntEnum, StrEnum
 from pathlib import Path
 
@@ -12,7 +14,34 @@ from rich.markup import escape
 from rich.text import Text
 from rich.theme import Theme
 
+from positionpolling.errors import ValueWarning
+
 logger.remove()
+
+def get_env_bool(key: str, *, strict: bool = False) -> bool:
+    """Returns a boolean value for an environment variable.
+
+    Returns ``True`` if the value is 1 or "true" (case-insensitive), returns ``False`` if 0 or "false".
+
+    :param strict: If ``True``, ``ValueError`` is raised when the value of this variable is not an accepted boolean
+        value. If ``False``, ``False`` is returned in this case along with emitting a :class:`errors.ValueWarning`.
+    """
+    if not (value := os.environ.get(key)):
+        return False
+
+    if value.lower() in ['1', 'true']:
+        return True
+
+    if (value.lower() not in ['0', 'false']):
+        if strict:
+            raise ValueError(f'Boolean environment variable must be any of 1/true/0/false: {value!r}')
+        warnings.warn(
+            'Boolean environment variable expected to be any of 1/true/0/false; defaulting to false',
+            ValueWarning,
+            stacklevel=2,
+        )
+
+    return False
 
 PACKAGE_ROOT: Path = Path(__file__).absolute().parent
 
