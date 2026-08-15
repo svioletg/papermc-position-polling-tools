@@ -94,6 +94,7 @@ def setup_rich_console() -> Console:
         highlighter=ConsoleHighlighter(),
         theme=theme,
         emoji=False,
+        no_color=NO_COLOR,
     )
 
 console: Console = setup_rich_console()
