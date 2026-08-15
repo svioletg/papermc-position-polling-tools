@@ -13,7 +13,7 @@ from geometry import Coord2, Grid2
 from loguru import logger
 from maybetype import Err, Ok, Result
 from PIL import Image, ImageDraw, ImageEnhance
-from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn, TimeElapsedColumn
+from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 from rich.table import Column
 
 from positionpolling.cli import abort
@@ -92,7 +92,7 @@ def trail(  # noqa: C901, PLR0915
             + f' (~{frame_estimate} frames)')
 
     datagrid = grid_from_entries(entries)
-    imgrid = datagrid.translate_to((0, 0))
+    imgrid = datagrid.translate_to((0, 0)).round()
 
     logger.info(f'Image size: {imgrid.size}')
 
@@ -125,12 +125,11 @@ def trail(  # noqa: C901, PLR0915
 
     with Progress(
             TextColumn('[progress.description]{task.description}'),
+            TaskProgressColumn('[[info2]{task.percentage:>3.0f}%[/]]'),
+            BarColumn(bar_width=None, table_column=Column(ratio=2)),
             TextColumn(
                 '[[info2]{task.completed:>' + str(mofn_m_width) +'}/{task.total:<' + str(mofn_m_width) + '}[/]]',
             ),
-            TaskProgressColumn('[[info2]{task.percentage:>3.0f}%[/]]'),
-            BarColumn(bar_width=None, table_column=Column(ratio=2)),
-            TimeElapsedColumn(),
             console=console,
             transient=True,
             expand=True,
