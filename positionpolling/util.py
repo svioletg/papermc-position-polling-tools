@@ -5,12 +5,13 @@ import time
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Literal, overload
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from geometry import Grid2
 from loguru import logger
 
-from .models import Entry
+if TYPE_CHECKING:
+    from positionpolling.models import Entry
 
 
 def ask(prompt: str, choices: Sequence[str], *, strict_case: bool = False) -> str:
@@ -133,7 +134,7 @@ def gradient(c1: tuple[int, int, int, int], c2: tuple[int, int, int, int], steps
 
     return [blend_color(c1, c2, (n / (steps - 1)) * 100) for n in range(steps)]
 
-def grid_from_entries(data: Iterable[Entry], **grid_kwargs: Any) -> Grid2:  # noqa: ANN401
+def grid_from_entries(data: Iterable['Entry'], **grid_kwargs: Any) -> Grid2:  # noqa: ANN401
     """Returns a grid created from the minimum and maximum ``x`` and ``z`` values of ``data``'s entries."""
     return Grid2(
         min(e.x for e in data),
