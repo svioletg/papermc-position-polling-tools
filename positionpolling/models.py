@@ -107,10 +107,18 @@ class PlayerPositions:
     @classmethod
     def from_sql(cls, sql_db_path: str | Path) -> Self:
         """Creates an instance from an SQL database path."""
+        conn = sqlite3.connect(sql_db_path)
+        cursor = conn.cursor()
+
+        data = cursor.execute('SELECT * FROM player_positions').fetchall()
+
+        cursor.close()
+        conn.close()
+
         return cls(
             entries=tuple([
                 Entry.from_row(row)
-                for row in sqlite3.connect(sql_db_path).cursor().execute('SELECT * FROM player_positions').fetchall()
+                for row in data
             ]),
         )
 
