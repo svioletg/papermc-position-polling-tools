@@ -113,6 +113,7 @@ def setup_logger(
         logs_dir: str | Path | None = DEFAULT_LOGS_DIR,
         *,
         utc: bool = True,
+        no_color: bool | None = None,
     ) -> tuple[int, tuple[int, Path] | None]:
     """Adds stdout and file handles for the project logger and returns the added handlers.
 
@@ -123,6 +124,8 @@ def setup_logger(
     :param file_level: The maximum level of logs to show when logging to disk.
     :param logs_dir: Where to store log files. If ``None``, nothing is logged to disk.
     :param utc: Whether log timestamps are saved in UTC. If ``False``, the system's local timezone is used instead.
+    :param no_color: Whether to disallow colored logs in terminal output. If ``None``, falls back on the value of
+        :data:`NO_COLOR` set by the environment.
     """
     logger.remove()
 
@@ -142,7 +145,7 @@ def setup_logger(
         lambda s: console.print(escape(s), end=''),
         level=stdout_level,
         format=msg_format,
-        colorize=True,
+        colorize=not (no_color if no_color is not None else NO_COLOR),
         diagnose=True,
     )
 
