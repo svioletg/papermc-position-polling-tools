@@ -45,6 +45,8 @@ def get_env_bool(key: str, *, strict: bool = False) -> bool:
 
 PACKAGE_ROOT: Path = Path(__file__).absolute().parent
 
+ENV_PREFIX: str = 'MCPOSLOG'
+
 DEFAULT_LOGS_DIR: Path = PACKAGE_ROOT / 'logs/'
 
 LOG_MSG_FORMAT_UTC: str = '<level>[{time:YYYY-MM-DD HH:mm:ssZZ!UTC}] [{name}::{function}/{level}]: {message}</level>'
