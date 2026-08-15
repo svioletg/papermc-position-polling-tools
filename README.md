@@ -11,6 +11,7 @@ Documentation: <https://papermc-position-polling-tools.readthedocs.io/en/latest>
 
 - [Setup](#setup)
 - [Library](#library)
+- [Configuration](#configuration)
 - [Commands](#commands)
   - [Render options](#render-options)
   - [`render trail`](#render-trail)
@@ -49,6 +50,22 @@ after to wrap around its functionality. To use this as an API with your own
 project, install the package as described earlier and import from the
 `positionpolling` module. Full API docs can be found at
 <https://papermc-position-polling-tools.readthedocs.io/en/latest>.
+
+## Configuration
+
+The following environment variables are available:
+
+> [!NOTE]
+> Boolean env variables accept `1` or `true` (case-insensitive) as true values,
+> and `0` or `false` (case-insensitive) for false values.
+
+|Name|Type|Default|Description|
+|:--:|:--:|:-----:|:----------|
+|`MCPOSLOG_NO_COLOR`|Boolean|True|Disables colored terminal output.|
+
+To customize render output, see the documentation for
+[RenderOpt](https://papermc-position-polling-tools.readthedocs.io/en/dev/reference/models.html#positionpolling.models.RenderOpt)
+or use `mcposlog render --help`.
 
 ## Commands
 
