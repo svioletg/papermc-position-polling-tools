@@ -9,7 +9,7 @@ from loguru import logger
 from pydantic.fields import FieldInfo
 
 from positionpolling import __version__
-from positionpolling.const import DEFAULT_LOGS_DIR, PACKAGE_ROOT, LogLevel, console, setup_logger
+from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogLevel, console, setup_logger
 from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, RenderOpt
 from positionpolling.util import try_next
 
@@ -84,6 +84,8 @@ def main() -> int:  # noqa: D103
     main_parser.add_argument('--no-logfile', dest='log_to_file', action='store_false',
         help='Disables file logging; logs will only be sent to stdout. A log file may still be created if any errors'
             + ' occur before arguments can be parsed.')
+    main_parser.add_argument('--no-color', action='store_true',
+        help='Disables colored terminal output. This overrides the value set by MCPOSLOG_NO_COLOR.')
     main_parser.add_argument('--yes', '-y', action='store_true',
         help='Skips confirmation prompts.')
 
@@ -101,6 +103,9 @@ def main() -> int:  # noqa: D103
 
     # Parse args
     args = main_parser.parse_args()
+    no_color: bool = args.no_color
+
+    console.no_color = no_color or NO_COLOR
 
     if args.version:
         console.print(__version__)
@@ -115,6 +120,7 @@ def main() -> int:  # noqa: D103
         log_level,
         min(log_level, LogLevel.DEBUG),
         logs_dir=DEFAULT_LOGS_DIR if log_to_file else None,
+        no_color=no_color or NO_COLOR,
     )
 
     logger.trace(f'raw args: {sys.argv}')
