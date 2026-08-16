@@ -30,7 +30,6 @@ def vld_tuple_float(value: object, _info: ValidationInfo) -> tuple[float, ...]:
     """Attempts to coerce ``value`` to a tuple of ``float``.
 
     Accepted values are:
-        - ``None`` (returns ``None``)
         - a comma-delimited string
         - an iterable
 
