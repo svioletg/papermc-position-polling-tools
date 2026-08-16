@@ -65,6 +65,8 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
 
         if typ is bool:
             kwargs['action'] = BooleanOptionalAction
+        elif typ in [tuple, list]:
+            kwargs['type'] = comma_split
 
         cli_meta: CliOpt = try_next(i for i in fld.metadata if isinstance(i, CliOpt)) \
             or CliOpt([f'--{name.replace('_', '-')}'], kwargs)
