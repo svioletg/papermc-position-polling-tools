@@ -26,8 +26,8 @@ def vld_none_ok[T](validator: ValidatorFunc[T]) \
 
     return wrapped
 
-def vld_tuple(value: object, _info: ValidationInfo) -> tuple:
-    """Attempts to coerce ``value`` to a tuple.
+def vld_tuple_float(value: object, _info: ValidationInfo) -> tuple[float, ...]:
+    """Attempts to coerce ``value`` to a tuple of ``float``.
 
     Accepted values are:
         - ``None`` (returns ``None``)
@@ -154,7 +154,7 @@ class RenderOpt(BaseModel):
 
     If 0, no progress logs are printed for rendering.
     """
-    world_crop: Annotated[Tuple4[float] | None, BeforeValidator(vld_none_ok(vld_tuple))] = None
+    world_crop: Annotated[Tuple4[float] | None, BeforeValidator(vld_none_ok(vld_tuple_float))] = None
     """A rectangle of the Minecraft world (use in-game coordinates) to crop the visualization to."""
     v_fix: Annotated[bool, CliOpt(['--fix-vid'])] = True
     """Whether to use FFmpeg to reprocess the rendered video from mp4v into avc1.
