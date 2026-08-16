@@ -15,6 +15,7 @@ from pydantic_core import CoreSchema, core_schema
 from positionpolling.const import World
 
 type ValidatorFunc[T] = Callable[[object, ValidationInfo], T]
+type ValidatorFuncWithType[T] = Callable[[object, type, ValidationInfo], T]
 
 @dataclass(frozen=True)
 class AfterValidatorWithType[T, U]:
