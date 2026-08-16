@@ -1,11 +1,12 @@
 """Dataclasses and models for position polling tools."""
+import inspect
 import json
 import sqlite3
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
-from typing import Annotated, Any, Self
+from typing import Annotated, Any, Self, cast, overload
 from uuid import UUID
 
 from geometry import Tuple4
@@ -41,14 +42,29 @@ class BeforeValidatorWithType[T, U]:
 
         return core_schema.with_info_before_validator_function(wrapped, handler(source_type))
 
-def vld_none_ok[T](validator: ValidatorFunc[T]) \
-    -> Callable[[object, ValidationInfo], T | None]:
+@overload
+def vld_none_ok[T](validator: ValidatorFunc[T]) -> ValidatorFunc[T | None]: ...
+@overload
+def vld_none_ok[T](validator: ValidatorFuncWithType[T]) -> ValidatorFuncWithType[T | None]: ...
+def vld_none_ok[T](validator: ValidatorFunc[T] | ValidatorFuncWithType[T]) \
+    -> ValidatorFunc[T | None] | ValidatorFuncWithType[T | None]:
     """Returns a validator wrapped with a ``value is None`` check that can return ``None``."""
-    def wrapped(value: object, info: ValidationInfo) -> T | None:
-        if value is None:
-            return None
+    validator_param_count: int = len(inspect.signature(validator).parameters)
 
-        return validator(value, info)
+    # Use parameter count to check `validator` accepts an annotation argument or not
+    if validator_param_count == 2:  # noqa: PLR2004
+        def wrapped(value: object, info: ValidationInfo) -> T | None:
+            if value is None:
+                return None
+
+            return validator(value, info)  # ty: ignore[missing-argument, invalid-argument-type]
+    elif validator_param_count == 3:  # noqa: PLR2004
+        validator = cast('ValidatorFuncWithType', validator)
+        def wrapped(value: object, annotation: type, info: ValidationInfo) -> T | None:
+            if value is None:
+                return None
+
+            return validator(value, annotation, info)
 
     return wrapped
 
