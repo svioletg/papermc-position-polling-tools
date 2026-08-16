@@ -4,7 +4,8 @@ from argparse import ArgumentParser, BooleanOptionalAction
 from collections.abc import Callable
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Never, cast, overload
+from types import UnionType
+from typing import Annotated, Any, Never, cast, get_args, get_origin, overload
 
 from loguru import logger
 from pydantic.fields import FieldInfo
@@ -59,7 +60,10 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
     for name, fld in cast('dict[str, FieldInfo]', RenderOpt.model_fields).items():
         kwargs: dict[str, Any] = {'dest': name, 'help': fld.description}
 
-        if fld.annotation is bool:
+        typ = fld.annotation if get_origin(fld.annotation) not in [Annotated, UnionType] \
+            else get_args(fld.annotation)[0]
+
+        if typ is bool:
             kwargs['action'] = BooleanOptionalAction
 
         cli_meta: CliOpt = try_next(i for i in fld.metadata if isinstance(i, CliOpt)) \
