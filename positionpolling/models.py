@@ -9,11 +9,36 @@ from typing import Annotated, Any, Self
 from uuid import UUID
 
 from geometry import Tuple4
-from pydantic import BaseModel, BeforeValidator, ConfigDict, ValidationInfo
+from pydantic import BaseModel, BeforeValidator, ConfigDict, GetCoreSchemaHandler, ValidationInfo
+from pydantic_core import CoreSchema, core_schema
 
 from positionpolling.const import World
 
 type ValidatorFunc[T] = Callable[[object, ValidationInfo], T]
+
+@dataclass(frozen=True)
+class AfterValidatorWithType[T, U]:
+    """A ``pydantic`` validator class which passes the field's annotation to the validator function."""
+
+    validator: Callable[[T, U, ValidationInfo], T]
+
+    def __get_pydantic_core_schema__(self, source_type: U, handler: GetCoreSchemaHandler) -> CoreSchema:  # noqa: D105
+        def wrapped(value: T, info: ValidationInfo) -> T:
+            return self.validator(value, source_type, info)
+
+        return core_schema.with_info_after_validator_function(wrapped, handler(source_type))
+
+@dataclass(frozen=True)
+class BeforeValidatorWithType[T, U]:
+    """A ``pydantic`` validator class which passes the field's annotation to the validator function."""
+
+    validator: Callable[[T, U, ValidationInfo], T]
+
+    def __get_pydantic_core_schema__(self, source_type: U, handler: GetCoreSchemaHandler) -> CoreSchema:  # noqa: D105
+        def wrapped(value: T, info: ValidationInfo) -> T:
+            return self.validator(value, source_type, info)
+
+        return core_schema.with_info_before_validator_function(wrapped, handler(source_type))
 
 def vld_none_ok[T](validator: ValidatorFunc[T]) \
     -> Callable[[object, ValidationInfo], T | None]:
