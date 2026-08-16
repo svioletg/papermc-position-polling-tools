@@ -27,7 +27,7 @@ def vld_none_ok[T](validator: ValidatorFunc[T]) \
     return wrapped
 
 def vld_tuple(value: object, _info: ValidationInfo) -> tuple:
-    """Attempts to coerce ``value`` to a tuple of the length described by ``info``.
+    """Attempts to coerce ``value`` to a tuple.
 
     Accepted values are:
         - ``None`` (returns ``None``)
@@ -36,8 +36,6 @@ def vld_tuple(value: object, _info: ValidationInfo) -> tuple:
 
     :raises TypeError:
         Could not interperet ``value`` as a tuple and it is not ``None``.
-    :raises ValueError:
-        Tuple is not the correct length.
     """
     if isinstance(value, str):
         value = tuple(float(s) for s in value.split(','))
