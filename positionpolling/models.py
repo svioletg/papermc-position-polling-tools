@@ -2,7 +2,7 @@
 import inspect
 import json
 import sqlite3
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
@@ -10,7 +10,7 @@ from typing import Annotated, Any, Self, cast, overload
 from uuid import UUID
 
 from geometry import Tuple4
-from pydantic import BaseModel, BeforeValidator, ConfigDict, GetCoreSchemaHandler, ValidationInfo
+from pydantic import BaseModel, ConfigDict, GetCoreSchemaHandler, ValidationInfo
 from pydantic_core import CoreSchema, core_schema
 
 from positionpolling.const import World
@@ -67,25 +67,6 @@ def vld_none_ok[T](validator: ValidatorFunc[T] | ValidatorFuncWithType[T]) \
             return validator(value, annotation, info)
 
     return wrapped
-
-def vld_tuple_float(value: object, _info: ValidationInfo) -> tuple[float, ...]:
-    """Attempts to coerce ``value`` to a tuple of ``float``.
-
-    Accepted values are:
-        - a comma-delimited string
-        - an iterable
-
-    :raises TypeError:
-        Could not interperet ``value`` as a tuple and it is not ``None``.
-    """
-    if isinstance(value, str):
-        value = tuple(float(s) for s in value.split(','))
-    elif isinstance(value, Iterable):
-        value = tuple(float(i) for i in value)
-    else:
-        raise TypeError(f'Could not interperet value as tuple: {value!r}')
-
-    return value
 
 @dataclass(frozen=True)
 class CliOpt:
@@ -195,7 +176,7 @@ class RenderOpt(BaseModel):
 
     If 0, no progress logs are printed for rendering.
     """
-    world_crop: Annotated[Tuple4[float] | None, BeforeValidator(vld_none_ok(vld_tuple_float))] = None
+    world_crop: Tuple4[float] | None = None
     """A rectangle of the Minecraft world (use in-game coordinates) to crop the visualization to."""
     v_fix: Annotated[bool, CliOpt(['--fix-vid'])] = True
     """Whether to use FFmpeg to reprocess the rendered video from mp4v into avc1.
