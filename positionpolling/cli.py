@@ -1,9 +1,10 @@
 """Command-line interface for positionpolling."""
 import sys
 from argparse import ArgumentParser, BooleanOptionalAction
+from collections.abc import Callable
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Never, cast
+from typing import Any, Never, cast, overload
 
 from loguru import logger
 from pydantic.fields import FieldInfo
@@ -67,6 +68,19 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
         parser.add_argument(*cli_meta.names, **kwargs | cli_meta.kwargs)
 
     return parser
+
+@overload
+def comma_split[T](s: str, fn: Callable[[list[str]], T], *, strip: bool = False) -> T: ...
+@overload
+def comma_split[T](s: str, fn: None = None, *, strip: bool = False) -> list[str]: ...
+def comma_split[T](s: str, fn: Callable[[list[str]], T] | None = None, *, strip: bool = False) -> T | list[str]:
+    """Splits a string by commas and returns ``typ`` called with the split list.
+
+    If ``typ`` is ``None``, the list is returned. Strips whitespace if ``strip=True``.
+    """
+    split: list[str] = s.split(',') if not strip else [i.strip() for i in s.split(',')]
+
+    return split if not fn else fn(split)
 
 @logger.catch(onerror=lambda _: sys.exit(1))
 def main() -> int:  # noqa: D103
