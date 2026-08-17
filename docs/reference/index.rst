@@ -1,9 +1,12 @@
-.. py:module:: positionpolling
-.. py:currentmodule:: positionpolling
+API Reference
+=============
 
-:py:mod:`~positionpolling` module
-========================================
+.. toctree::
+    maxdepth: 2
 
-.. automodule:: positionpolling
-   :members:
-   :special-members:
+    module
+    cli
+    const
+    models
+    trail
+    util
