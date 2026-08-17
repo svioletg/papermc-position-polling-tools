@@ -57,6 +57,10 @@ DEFAULT_LOGS_DIR: Path = PACKAGE_ROOT / 'logs/'
 
 LOG_MSG_FORMAT_UTC: str = '<level>[{time:YYYY-MM-DD HH:mm:ssZZ!UTC}] [{name}::{function}/{level}]: {message}</level>'
 LOG_MSG_FORMAT: str = LOG_MSG_FORMAT_UTC.replace('!UTC', '')
+LOG_MSG_FORMAT_STDOUT_UTC: str = '<level>[{time:HH:mm:ss!UTC}] [{name}::{function}/{level}]: {message}</level>'
+"""Log message format used for the stdout sink, which omits the full date but still includes the time."""
+LOG_MSG_FORMAT_STDOUT: str = LOG_MSG_FORMAT_STDOUT_UTC.replace('!UTC', '')
+"""The same as :data:`LOG_MSG_FORMAT_STDOUT_UTC`, but in local time."""
 LOG_FILE_FORMAT_UTC: str = '{time:YYYY-MM-DDTHHmmssZZ!UTC}.log'
 LOG_FILE_FORMAT: str = '{time:YYYY-MM-DDTHHmmssZZ}.log'
 
@@ -142,12 +146,10 @@ def setup_logger(
     logger.level('ERROR', color='<light-red>')
     logger.level('CRITICAL', color='<bold><white><RED>')
 
-    msg_format: str = LOG_MSG_FORMAT_UTC if utc else LOG_MSG_FORMAT
-
     stdout_handle: int = logger.add(
         lambda s: console.print(escape(s), end=''),
         level=stdout_level,
-        format=msg_format,
+        format=LOG_MSG_FORMAT_STDOUT_UTC if utc else LOG_MSG_FORMAT_STDOUT,
         colorize=not (no_color if no_color is not None else NO_COLOR),
         diagnose=True,
     )
@@ -162,7 +164,7 @@ def setup_logger(
         file_handle = logger.add(
             file_sink,
             level=file_level,
-            format=msg_format,
+            format=LOG_MSG_FORMAT_UTC if utc else LOG_MSG_FORMAT,
             colorize=False,
             diagnose=True,
             retention=10,
