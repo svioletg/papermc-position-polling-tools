@@ -193,7 +193,6 @@ def main() -> int:  # noqa: D103, PLR0915
                     'RenderOpt validation failed; full traceback below'
                     + f'\n{''.join(traceback.format_exception(e))}',
                 )
-                logger.debug(f'Raw args: {sys.argv[1:]}')
                 logger.error('Failed to parse render options; check your log file for a full traceback')
                 console.print('-' * 80)
                 abort(e)
