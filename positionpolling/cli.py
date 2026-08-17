@@ -2,6 +2,7 @@
 import json
 import sys
 import time
+import traceback
 from argparse import ArgumentParser, BooleanOptionalAction
 from collections import OrderedDict
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -13,6 +14,7 @@ from typing import Annotated, Any, Literal, Never, TypeAliasType, cast, get_args
 from uuid import UUID
 
 from loguru import logger
+from pydantic import ValidationError
 from pydantic.fields import FieldInfo
 from tabulate import tabulate
 
@@ -359,9 +361,23 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, D103, PLR0915
             logger.debug('Getting render options...')
             logger.debug(f'RenderOpt JSON file: {render_json or '<none>'}')
 
-            render_opt: RenderOpt = (RenderOpt.from_json(render_json) if render_json else RENDER_OPT_DEFAULT).replace(
-                {k:v for k, v in args.__dict__.items() if v is not None},
-            )
+            try:
+                # Separate these steps out for clarity
+                _base_render_opt: RenderOpt = RenderOpt.from_json(render_json) if render_json else RENDER_OPT_DEFAULT
+                render_opt: RenderOpt = _base_render_opt.replace(
+                    {k:v for k, v in args.__dict__.items() if v is not None},
+                )
+
+                del _base_render_opt
+            except ValidationError as e:
+                logger.debug(
+                    'RenderOpt validation failed; full traceback below'
+                    + f'\n{''.join(traceback.format_exception(e))}',
+                )
+                logger.debug(f'Raw args: {sys.argv[1:]}')
+                logger.error('Failed to parse render options; check your log file for a full traceback')
+                console.print('-' * 80)
+                abort(e)
 
             logger.debug(repr(render_opt))
             logger.info('\n' + render_opt.display())
