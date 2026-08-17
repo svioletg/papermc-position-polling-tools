@@ -178,8 +178,15 @@ def trail(  # noqa: C901, PLR0915
         logger.info(f'Saving video to: {video_path}')
         video.release()
         if opt.v_fix:
-            fix_opencv_video(video_path, video_path, same_file_ok=True)
-        logger.info('Video reprocessed successfully')
+            # Log warning and continue on if FFmpeg isn't installed instead of raising an error
+            try:
+                fix_opencv_video(video_path, video_path, same_file_ok=True)
+                logger.info('Video reprocessed successfully')
+            except FileNotFoundError as e:
+                if 'ffmpeg could not be found' in str(e):
+                    logger.warning('FFmpeg is not installed, skipping fix_opencv_video step')
+                else:
+                    raise
 
     return Ok((img, video))
 

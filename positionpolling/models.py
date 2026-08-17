@@ -187,7 +187,8 @@ class RenderOpt(BaseModel):
     so if you know an mp4v-encoded video works fine for your needs, you can disable this for a faster render.
 
     .. note::
-        This requires FFmpeg to be installed; it does not come bundled with this package.
+        This requires that FFmpeg is installed, which does not come bundled with this package. If this option is used
+        and FFmpeg is not found, a warning is logged and this step is skipped.
     """
     v_fps: Annotated[int, CliOpt(['--fps'])] = 60
     """Framerate of the rendered video."""
