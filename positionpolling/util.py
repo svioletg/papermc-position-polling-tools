@@ -210,6 +210,13 @@ def group_by_attr[T, U](it: Iterable[T], name: str, typ: type[U] | None = None, 
 
     return d
 
+def require_ffmpeg() -> str:
+    """Returns the binary path for FFmpeg or raises :class:`FileNotFoundError` if it could not be found."""
+    if not (ffmpeg := shutil.which('ffmpeg')):
+        raise FileNotFoundError('ffmpeg could not be found and is required for this operation')
+
+    return ffmpeg
+
 def rgba(hexcolor: str) -> tuple[int, int, int, int]:
     """Converts a hexadecimal color string to an RGBA tuple.
 
