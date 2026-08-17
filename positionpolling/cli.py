@@ -266,8 +266,8 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, D103, PLR0915
         no_color=no_color or NO_COLOR,
     )
 
-    logger.trace(f'raw args: {argv}')
-    logger.trace(f'parsed args: {args}')
+    logger.debug(f'raw args: {argv}')
+    logger.debug(f'parsed args: {args}')
 
     if (len(argv) == 0) or (not args.action):
         if len(argv) > 0:
