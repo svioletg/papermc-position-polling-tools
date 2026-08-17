@@ -53,6 +53,7 @@ html_static_path = ['_static']
 
 rst_prolog = f"""
 .. |project| replace:: {project}
+.. |requires-ffmpeg| replace:: Requires FFmpeg; :class:`FileNotFoundError` will be raised if it is not found.
 """
 
 # Subclasses of pydantic's BaseModel seem to make autodoc include a bunch of stuff that doesn't need to be documented

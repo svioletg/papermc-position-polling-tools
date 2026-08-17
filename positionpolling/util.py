@@ -92,8 +92,8 @@ def expect[T](value: T | None, *exc_args: object) -> T:
 def fix_opencv_video(src: str | Path, dest: str | Path, *, same_file_ok: bool = False) -> None:
     """Runs a video created with ``cv2`` through FFmpeg to make it compatible with more players.
 
-    .. note::
-        This requires FFmpeg to be installed; it does not come bundled with this package.
+    .. important::
+        |requires-ffmpeg|
 
     :param same_file_ok: Whether ``src`` and ``dest`` are allowed to be the same path. If ``False``,
         ``shutil.SameFileError`` is raised, otherwise the source file is overwritten. Note that nothing is done to
