@@ -7,6 +7,7 @@
 
    readme.rst
    changelog.rst
+   requires-ffmpeg.rst
    reference/index.rst
    reference/cli.rst
    reference/const.rst
