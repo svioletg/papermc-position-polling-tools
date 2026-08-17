@@ -31,6 +31,7 @@ extensions = [
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
+    'maybetype': ('https://py-maybetype.readthedocs.io/en/latest/', None),
 }
 
 myst_enable_extensions = [
