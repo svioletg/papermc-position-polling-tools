@@ -100,6 +100,8 @@ def fix_opencv_video(src: str | Path, dest: str | Path, *, same_file_ok: bool = 
         prevent overwriting ``dest`` if it exists but is not the same path as ``src``, check for this before calling the
         function if needed.
     """
+    ffmpeg: str = require_ffmpeg()
+
     src = Path(src).absolute()
     dest = Path(dest).absolute()
 
@@ -112,7 +114,7 @@ def fix_opencv_video(src: str | Path, dest: str | Path, *, same_file_ok: bool = 
     assert_true(src.is_file(), f'Source path does not exist or is not a file: {src}')
 
     run(
-        'ffmpeg', '-hide_banner', '-v', 'warning', '-y',
+        ffmpeg, '-hide_banner', '-v', 'warning', '-y',
         '-i', str(src), '-vcodec', 'libx264', '-pix_fmt', 'yuv420p', str(dest),
         capture_output=False,
         raise_nonzero=True,
