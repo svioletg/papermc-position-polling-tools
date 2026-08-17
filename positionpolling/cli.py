@@ -149,8 +149,8 @@ def main() -> int:  # noqa: D103, PLR0915
         no_color=no_color or NO_COLOR,
     )
 
-    logger.trace(f'raw args: {sys.argv}')
-    logger.trace(f'parsed args: {args}')
+    logger.debug(f'raw args: {sys.argv}')
+    logger.debug(f'parsed args: {args}')
 
     if len(sys.argv) == 1:
         main_parser.print_help()
