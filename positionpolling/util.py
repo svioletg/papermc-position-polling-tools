@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Literal, overload
 
 from geometry import Grid2
 from loguru import logger
+from maybetype import Err, Ok, Result
 
 if TYPE_CHECKING:
     from positionpolling.models import Entry
@@ -89,7 +90,8 @@ def expect[T](value: T | None, *exc_args: object) -> T:
     raise ValueError(*exc_args or ('None',))
 
 # Videos made with opencv seem to be unable to play in browsers or other applications unless reprocessed via ffmpeg
-def fix_opencv_video(src: str | Path, dest: str | Path, *, same_file_ok: bool = False) -> None:
+def fix_opencv_video(src: str | Path, dest: str | Path, *, same_file_ok: bool = False) \
+    -> Result[Path, subprocess.CompletedProcess]:
     """Runs a video created with ``cv2`` through FFmpeg to make it compatible with more players.
 
     .. important::
@@ -113,17 +115,24 @@ def fix_opencv_video(src: str | Path, dest: str | Path, *, same_file_ok: bool = 
 
     assert_true(src.is_file(), f'Source path does not exist or is not a file: {src}')
 
-    run(
+    proc = run(
         ffmpeg, '-hide_banner', '-v', 'warning', '-y',
         '-i', str(src), '-vcodec', 'libx264', '-pix_fmt', 'yuv420p', str(dest),
         capture_output=False,
-        raise_nonzero=True,
+        raise_nonzero=False,
     )
+
+    if proc.returncode != 0:
+        return Err(proc)
 
     assert_true(dest.is_file(), f'Expected destination file at "{dest}"')
 
     if same_file_ok:
         shutil.move(dest, src)
+        # So that we return the right destination path if we're overwriting
+        dest = src
+
+    return Ok(dest)
 
 # modified from:
 # https://github.com/thearchcoder/Hueforge/blob/4942bcfcfeef26f8065bbebe672dec62dabe877e/hueforge/algorithms/other.py#L39-L50
