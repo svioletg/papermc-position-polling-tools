@@ -115,6 +115,17 @@ class Entry:
             z=float(row[5]),
         )
 
+    def to_row(self) -> tuple[float, str, str, float, float, float]:
+        """Converts this instance to a tuple of SQL-ready values."""
+        return (
+            self.timestamp,
+            str(self.player_uuid),
+            self.world.value,
+            self.x,
+            self.y,
+            self.z,
+        )
+
 @dataclass(frozen=True)
 class PlayerPositions:
     """Dataclass for using player position :class:`Entry` data."""
