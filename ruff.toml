@@ -38,4 +38,4 @@ allow-multiline = false
 
 [lint.per-file-ignores]
 "tests/*" = ["D100", "D103", "D104", "FBT001", "S101"]
-"tests/test_*" = ["D102"]
+"tests/test_*" = ["D102", "N802"]
