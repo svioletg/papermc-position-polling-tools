@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    name: Lint and test
+    name: "Type-check & lint: ${{ matrix.python-version }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:

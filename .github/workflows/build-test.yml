@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    name: Build & test project on ${{ matrix.os }}, Python ${{ matrix.python-version }}
+    name: "Build & test project: ${{ matrix.os }} + Python ${{ matrix.python-version }}"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
