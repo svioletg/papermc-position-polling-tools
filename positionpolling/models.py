@@ -15,6 +15,9 @@ from pydantic_core import CoreSchema, core_schema
 
 from positionpolling.const import World
 
+type EntryRowTuple = tuple[float, str, str, float, float, float]
+"""Type alias for the simple type tuple form of :class:`Entry`."""
+
 type ValidatorFunc[T] = Callable[[object, ValidationInfo], T]
 type ValidatorFuncWithType[T] = Callable[[object, type, ValidationInfo], T]
 
@@ -104,7 +107,7 @@ class Entry:
         )
 
     @classmethod
-    def from_row(cls, row: tuple[float, str, str, float, float, float]) -> Self:
+    def from_row(cls, row: EntryRowTuple) -> Self:
         """Returns a new :class:`Entry` created from a raw row of the `player_positions` table."""
         return cls(
             timestamp=float(row[0]),
@@ -115,7 +118,7 @@ class Entry:
             z=float(row[5]),
         )
 
-    def to_row(self) -> tuple[float, str, str, float, float, float]:
+    def to_row(self) -> EntryRowTuple:
         """Converts this instance to a tuple of SQL-ready values."""
         return (
             self.timestamp,
