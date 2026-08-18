@@ -1,4 +1,5 @@
 import random
+from pathlib import Path
 from uuid import UUID, uuid4
 
 from geometry import Tuple4
@@ -7,6 +8,10 @@ from positionpolling.const import Y_RANGE, World
 from positionpolling.models import Entry
 from positionpolling.util import coerce
 
+TESTS_DIR: Path = Path(__file__).absolute().parent
+TESTS_DATA_DIR: Path = TESTS_DIR / 'data'
+
+TESTS_DATA_DIR.mkdir(exist_ok=True)
 
 def gen_pos_logs(
         n: int,
