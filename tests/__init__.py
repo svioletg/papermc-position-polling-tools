@@ -57,7 +57,7 @@ def tempdb(
     :param data: Dictionary mapping table name strings to rows (lists) of column values to insert.
     """
     with NamedTemporaryFile('wb', dir=TESTS_DATA_TMP_DIR, delete=True, delete_on_close=False) as f:
-        # sqlite3.connect() will need to open it again, and it can't be opened while open on a non-POSIX system
+        # sqlite3.connect() will need to open this again, and it can't be opened while open on a non-POSIX system
         f.close()
 
         conn = sqlite3.connect(f.name)
