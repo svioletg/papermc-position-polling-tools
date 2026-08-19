@@ -15,8 +15,10 @@ from positionpolling.util import coerce
 
 TESTS_DIR: Path = Path(__file__).absolute().parent
 TESTS_DATA_DIR: Path = TESTS_DIR / 'data'
+TESTS_DATA_TMP_DIR: Path = TESTS_DATA_DIR / 'tmp'
 
 TESTS_DATA_DIR.mkdir(exist_ok=True)
+TESTS_DATA_TMP_DIR.mkdir(exist_ok=True)
 
 def gen_pos_logs(
         n: int,
@@ -54,7 +56,7 @@ def tempdb(
     :param setup: Initial statement to execute before inserting data.
     :param data: Dictionary mapping table name strings to rows (lists) of column values to insert.
     """
-    with NamedTemporaryFile('wb', delete=True, delete_on_close=False) as f:
+    with NamedTemporaryFile('wb', dir=TESTS_DATA_TMP_DIR, delete=True, delete_on_close=False) as f:
         # sqlite3.connect() will need to open it again, and it can't be opened while open on a non-POSIX system
         f.close()
 
