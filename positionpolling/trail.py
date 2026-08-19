@@ -169,6 +169,15 @@ def trail(  # noqa: C901, PLR0915
     logger.info('Render finished')
     if video:
         logger.info(f'Wrote {frame_count} frame(s) to video')
+        frame_estimate_diff: int = frame_estimate - frame_count
+        if frame_estimate_diff == 0:
+            logger.debug(f'No difference from frame estimate: est. {frame_estimate}, actual {frame_count}')
+        elif frame_estimate_diff > 0:
+            diff_pct: float = 1 - (frame_count / frame_estimate)
+            logger.debug(f'Frame estimate overshot by {frame_estimate_diff} (+{diff_pct:.1%})')
+        elif frame_estimate_diff < 0:
+            diff_pct: float = 1 - (frame_estimate / frame_count)
+            logger.debug(f'Frame estimate undershot by {abs(frame_estimate_diff)} (-{diff_pct:.1%})')
 
     logger.info(f'Took {time.perf_counter() - total_time:.4f}s for {len(entries)} data points'
           + f' (average iteration {sum(itimes) / len(itimes):.4f}s; min {min(itimes):.4f}s; max {max(itimes):.4f}s)')
