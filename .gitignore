@@ -4,6 +4,7 @@
 __pycache__/
 out/
 logs/
+tmp/
 /_*
 *.ipynb
 *.db
