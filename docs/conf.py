@@ -36,6 +36,7 @@ extensions = [
 ]
 
 intersphinx_mapping = {
+    'geometry': ('https://py-geometry-utils.readthedocs.io/en/stable/', None),
     'PIL': ('https://pillow.readthedocs.io/en/stable/', None),
     'python': ('https://docs.python.org/3', None),
     'maybetype': ('https://py-maybetype.readthedocs.io/en/latest/', None),
