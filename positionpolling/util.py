@@ -28,6 +28,15 @@ def ask(prompt: str, choices: Sequence[str], *, strict_case: bool = False) -> st
         if (choice if strict_case else (choice := choice.lower())) in choices:
             return choice
 
+def ask_overwrite(path: Path) -> bool:
+    """Checks whether ``path`` exists and, if it does, shows a y/n prompt to overwrite it.
+
+    Returns ``True`` for a response ``'y'``, ``False`` otherwise. If ``path`` does not exist, returns ``True`` and skips
+    the prompt.
+    """
+    return True if not path.exists() else \
+        ask(f'Destination file "{path}" already exists. Overwrite? (y/n) ', 'yn') == 'y'
+
 def assert_all(
         values: Iterable[object],
         predicate: Callable[[object], bool] = bool,
