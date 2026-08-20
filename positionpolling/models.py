@@ -205,10 +205,10 @@ class RenderOpt(BaseModel):
 
     progress_bar: Annotated[bool, CliOpt(['--progress-bar', '-P'])] = False
     """Whether to show a progress bar while rendering."""
-    progress_log_interval: int = 500
-    """If >0, a log is printed once every time a multiple of this value of entries is processed.
+    progress_log_interval: float = 0.1
+    """Fraction rate at which render progress should be logged, writing a log every X% complete (e.g. 0.1 = 10%).
 
-    If 0, no progress logs are printed for rendering.
+    Value will be clamped to be between 0 and 1. If 0, no progress logs are printed for rendering.
     """
     world_crop: Tuple4[float] | None = None
     """A rectangle of the Minecraft world (use in-game coordinates) to crop the visualization to."""
