@@ -10,7 +10,7 @@ from typing import Annotated, Any, Literal, Self, cast, overload
 from uuid import UUID
 
 from geometry import Tuple4
-from pydantic import BaseModel, ConfigDict, GetCoreSchemaHandler, ValidationInfo
+from pydantic import AfterValidator, BaseModel, ConfigDict, GetCoreSchemaHandler, ValidationInfo
 from pydantic_core import CoreSchema, core_schema
 
 from positionpolling.const import World
@@ -205,10 +205,10 @@ class RenderOpt(BaseModel):
 
     progress_bar: Annotated[bool, CliOpt(['--progress-bar', '-P'])] = False
     """Whether to show a progress bar while rendering."""
-    progress_log_interval: float = 0.1
+    progress_log_interval: Annotated[float, AfterValidator(vld_range(0, 1, 'raise'))] = 0.1
     """Fraction rate at which render progress should be logged, writing a log every X% complete (e.g. 0.1 = 10%).
 
-    Value will be clamped to be between 0 and 1. If 0, no progress logs are printed for rendering.
+    Value cannot be less than 0 or more than 1. If 0, no progress logs are printed for rendering.
     """
     world_crop: Tuple4[float] | None = None
     """A rectangle of the Minecraft world (use in-game coordinates) to crop the visualization to."""
