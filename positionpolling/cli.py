@@ -18,8 +18,10 @@ from positionpolling.util import try_next
 parser_render_trail = ArgumentParser(add_help=False)
 parser_render_trail.add_argument('source', type=str,
     help='Path or URL to the SQL database to use.')
-parser_render_trail.add_argument('--out', '-o', type=Path, required=True,
-    help='Where to save the rendered video.')
+parser_render_trail.add_argument('--out', '-o', type=Path, required=False,
+    help='Where to save the rendered image.')
+parser_render_trail.add_argument('--video', '-v', type=Path, required=False,
+    help='Whether to render a video, and if so, where to save it to. Video rendering is skipped.')
 parser_render_trail.add_argument('--player', type=str,
     help='UUID of the player whose data should be used.')
 parser_render_trail.add_argument('--desat-per-frame', type=float, default=0.95,
