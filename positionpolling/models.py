@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
-from typing import Annotated, Any, Self, cast, overload
+from typing import Annotated, Any, Literal, Self, cast, overload
 from uuid import UUID
 
 from geometry import Tuple4
@@ -70,6 +70,26 @@ def vld_none_ok[T](validator: ValidatorFunc[T] | ValidatorFuncWithType[T]) \
             return validator(value, annotation, info)
 
     return wrapped
+
+def vld_range[T: (int, float)](
+        minimum: T,
+        maximum: T,
+        action: Literal['raise', 'clamp'] = 'raise',
+    ) -> Callable[[T, ValidationInfo], T]:
+    """Returns a validator checking if a number value is within the given range.
+
+    :param action: What to do when the value is not in range. ``'raise'`` raises :class:`ValueError`, ``'clamp'``
+        clamps the value to either the minimum or maximum and returns it.
+    """
+    def validate(n: T, _info: ValidationInfo) -> T:
+        if minimum <= n <= maximum:
+            return n
+        elif action == 'clamp':
+            return min(max(minimum, n), maximum)
+
+        raise ValueError(f'Value must be >={minimum} and <={maximum}: {n!r}')
+
+    return validate
 
 @dataclass(frozen=True)
 class CliOpt:

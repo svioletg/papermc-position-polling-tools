@@ -42,6 +42,19 @@ def test_vld_none_ok() -> None:
     with pytest.raises(ValueError, match=r'Value must be positive'):
         fn(-1, mock)
 
+def test_vld_range() -> None:
+    mock = Mock()
+
+    validate = models.vld_range(0, 100)
+    validate_clamp = models.vld_range(0, 100, 'clamp')
+    for n in range(-50, 150, 10):
+        if 0 <= n <= 100:  # noqa: PLR2004
+            assert validate(n, mock) == validate_clamp(n, mock)
+        else:
+            with pytest.raises(ValueError, match='Value must be >=0 and <=100:'):
+                assert validate(n, mock) == min(max(0, n), 100)
+            assert validate_clamp(n, mock) == min(max(0, n), 100)
+
 def test_Entry_from_to_row() -> None:
     row: models.EntryRowTuple = (0, str(uuid4()), 'minecraft:overworld', 100, 70, 200)
     entry: models.Entry = models.Entry.from_row(row)
