@@ -20,7 +20,7 @@ from rich.table import Column
 from positionpolling.cli import abort
 from positionpolling.const import console
 from positionpolling.models import RENDER_OPT_DEFAULT, Entry, PlayerPositions, RenderOpt
-from positionpolling.util import ask, fix_opencv_video, grid_from_entries, time_this
+from positionpolling.util import ask, fix_opencv_video, grid_from_entries, log_progress, time_this
 
 
 def draw_pos_line(
@@ -139,6 +139,13 @@ def trail(  # noqa: C901, PLR0915
         task_video = pbar.add_task('Writing video...', completed=0, total=frame_estimate) if video_path else None
         task_data = pbar.add_task('Processing entries...', completed=-1, total=len(entries))
 
+        progress_log_desc_ljust: int = max(len(s) for s in (
+            'Processing entries... ',
+            'Writing video... ',
+        ))
+        progress_log_thresh_data: float = opt.progress_log_interval
+        progress_log_thresh_video: float = opt.progress_log_interval
+
         for n, (a, b) in enumerate(it.pairwise(entries)):
             logger.trace(f'{n}: (X {a.x:.1f} Z {a.z:.1f}) -> (X {b.x:.1f} Z {b.z:.1f})')
             pbar.update(task_data, advance=1)
@@ -162,9 +169,14 @@ def trail(  # noqa: C901, PLR0915
                     if desat_per_frame < 1:
                         frame = ImageEnhance.Color(frame).enhance(desat_per_frame)
 
-                if (opt.progress_log_interval > 0) and (n % opt.progress_log_interval == 0):
-                    progress = n / len(entries)
-                    logger.info(f'RENDER({f'{progress:.0%}':>4}): {n} entries processed')
+                if (opt.progress_log_interval > 0):
+                    if n / len(entries) > progress_log_thresh_data:
+                        log_progress(n, len(entries), 'Processing entries... '.ljust(progress_log_desc_ljust))
+                        progress_log_thresh_data += opt.progress_log_interval
+
+                    if frame_count / frame_estimate > progress_log_thresh_video:
+                        log_progress(frame_count, frame_estimate, 'Writing video... '.ljust(progress_log_desc_ljust))
+                        progress_log_thresh_video += opt.progress_log_interval
 
     logger.info('Render finished')
     if video:
