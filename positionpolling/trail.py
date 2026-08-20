@@ -20,7 +20,7 @@ from rich.table import Column
 from positionpolling.cli import abort
 from positionpolling.const import console
 from positionpolling.models import RENDER_OPT_DEFAULT, Entry, PlayerPositions, RenderOpt
-from positionpolling.util import ask, fix_opencv_video, grid_from_entries, log_progress, time_this
+from positionpolling.util import ask, ask_overwrite, fix_opencv_video, grid_from_entries, log_progress, time_this
 
 
 def draw_pos_line(
@@ -220,31 +220,38 @@ def trail(  # noqa: C901, PLR0915
 
     return Ok((img, video))
 
-def cli(render_opt: RenderOpt, args: Namespace) -> int:
+def cli(render_opt: RenderOpt, args: Namespace) -> int:  # noqa: C901
     """Function to be called when using the CLI interface launched by :func:`positionpolling.cli.main`.
 
     Returns an exit code.
     """
     data = PlayerPositions.from_sql(args.source)
     player: str | None = args.player
-    dest: Path = args.out.absolute()
+    img_dest: Path | None = args.out and args.out.absolute()
+    video_dest: Path | None = args.video and args.video.absolute()
     desat_per_frame: float = args.desat_per_frame
     auto_confirm: bool = args.yes
 
-    if dest.is_dir():
-        abort(f'Output path cannot be a directory: {dest}')
+    if img_dest is video_dest is None:
+        abort('One or both of [info]--out[/] and/or [info]--video[/] must be specified.')
 
-    if (not auto_confirm) and dest.exists() \
-        and (ask(f'Destination file "{dest}" already exists. Overwrite? (y/n) ', 'yn') != 'y'):
-        console.print('Aborting.')
+    if img_dest and img_dest.is_dir():
+        abort(f'--out option value exists and is a directory: {img_dest}')
+    if video_dest and video_dest.is_dir():
+        abort(f'--video option value exists and is a directory: {video_dest}')
 
-        return 1
+    for path in (img_dest, video_dest):
+        if path is None:
+            continue
+
+        if (not auto_confirm) and path.exists() and not ask_overwrite(path):
+            abort('Aborting.')
 
     result = trail(
         data,
         player,
         desat_per_frame=desat_per_frame,
-        video_path=dest,
+        video_path=video_dest,
         opt=render_opt,
         confirm=not auto_confirm,
     )
@@ -255,7 +262,9 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:
             if e == 'Cancelled':
                 return 1
             abort(f'Render failed: {e}')
-        case Ok((_img, _video_writer)):
-            pass
+        case Ok((img, _video_writer)):
+            if img_dest:
+                logger.info(f'Saving image to: {img_dest}')
+                img.save(img_dest)
 
     return 0
