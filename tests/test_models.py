@@ -113,7 +113,7 @@ def test_RenderOpt_ensure_frozen() -> None:
 def test_RenderOpt_json() -> None:
     opt_dict: dict[str, Any] = {
         'progress_bar': True,
-        'progress_log_interval': 100,
+        'progress_log_interval': 0.25,
         'world_crop': (-100, -100, 100, 100),
         'v_fix': False,
         'v_fps': 30,
