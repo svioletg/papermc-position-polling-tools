@@ -1,5 +1,7 @@
 from collections.abc import Callable
 from datetime import datetime
+from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 from geometry import Tuple4
@@ -7,8 +9,25 @@ from loguru import logger
 
 from positionpolling import util
 from positionpolling.const import LogLevel
-from tests import gen_pos_logs
+from tests import TESTS_DATA_TMP_DIR, gen_pos_logs
 
+
+def test_ask_overwrite() -> None:
+    mock_input = Mock(input)
+
+    path: Path = TESTS_DATA_TMP_DIR / 'file.txt'
+    assert util.ask_overwrite(path) is True
+
+    path.touch()
+
+    with patch('builtins.input', mock_input):
+        mock_input.return_value = 'y'
+        assert util.ask_overwrite(path) is True
+        assert mock_input.call_count == 1
+
+        mock_input.return_value = 'n'
+        assert util.ask_overwrite(path) is False
+        assert mock_input.call_count == 2  # noqa: PLR2004
 
 def test_assert_all() -> None:
     util.assert_all((1, 'true', True, [1]))
