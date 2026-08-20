@@ -3,8 +3,10 @@ from datetime import datetime
 
 import pytest
 from geometry import Tuple4
+from loguru import logger
 
 from positionpolling import util
+from positionpolling.const import LogLevel
 from tests import gen_pos_logs
 
 
@@ -125,6 +127,21 @@ def test_group_by_attr() -> None:
     entries = gen_pos_logs(10)
     assert all(all(i.player_uuid == k for i in v) for k, v in util.group_by_attr(entries, 'player_uuid').items())
     assert all(all(i.world == k for i in v) for k, v in util.group_by_attr(entries, 'world').items())
+
+@pytest.mark.parametrize('pct_digits', [0, 1, 2, 3, 4])
+@pytest.mark.parametrize('level', [i.name for i in LogLevel])
+def test_log_progress(monkeypatch: pytest.MonkeyPatch, pct_digits: int, level: str) -> None:
+    logs: list[tuple[str, str]] = []
+
+    monkeypatch.setattr(logger, 'log', lambda level, msg: logs.append((level, msg)))
+
+    for n in range(101):
+        util.log_progress(n, 100, pct_digits=pct_digits, level=level)
+
+    # Assert that the right level was used
+    assert all(lev == level for lev, _ in logs)
+    # Assert that every log is the same width
+    assert len({len(s[1]) for s in logs}) == 1
 
 @pytest.mark.parametrize(('hexcolor', 'expected'),
     [

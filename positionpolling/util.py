@@ -221,6 +221,36 @@ def group_by_attr[T, U](it: Iterable[T], name: str, typ: type[U] | None = None, 
 
     return d
 
+def log_progress(
+        completed: float,
+        total: float,
+        description: str = 'Progress: ',
+        *,
+        pct_digits: int = 1,
+        level: int | str = 'INFO',
+    ) -> None:
+    """Writes a log in the format ``'{description} p% (m/n) complete'`` using the values given.
+
+    The ``completed`` value will be aligned to the right according to the width of ``total``, the percentage is aligned
+    to the right so as to fit ``100%`` plus any number of precision digits used.
+
+    :param description: Text to add before the progress values.
+    :param pct_digits: How many digits of precision to format the percentage with. Must be >=0. 0 rounds to the nearest
+        integer. 1 = ``100.0%``, 2 = ``100.00%``, etc.
+
+    :raises ValueError:
+        ``pct_digits`` is less than 0.
+    """
+    if pct_digits < 0:
+        raise ValueError(f'pct_digits value must be positive: {pct_digits!r}')
+
+    total_width: int = len(str(total))
+    pct_width: int = 4 if pct_digits == 0 else 5 + pct_digits
+    progress: float = completed / total
+    logger.log(
+        level, f'{description}{progress:>{pct_width}.{pct_digits}%} ({completed:>{total_width}}/{total}) complete',
+    )
+
 def require_ffmpeg() -> str:
     """Returns the binary path for FFmpeg or raises :class:`FileNotFoundError` if it could not be found."""
     if not (ffmpeg := shutil.which('ffmpeg')):
