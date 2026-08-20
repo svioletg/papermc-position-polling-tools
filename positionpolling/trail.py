@@ -84,7 +84,7 @@ def trail(  # noqa: C901, PLR0915
     total_entry_duration = timedelta(seconds=entries[-1].timestamp - entries[0].timestamp)
 
     logger.info(f'There are {len(entries)} entries to go through, covering a span of {total_entry_duration}')
-    frame_estimate: int = 0
+    frame_estimate: int = 1
     if video_path and opt.v_time_factor:
         video_duration_estimate = timedelta(seconds=total_entry_duration.total_seconds() * opt.v_time_factor)
         # TODO(svioletg): #4 frame estimate overshoots by a fair bit
@@ -174,7 +174,7 @@ def trail(  # noqa: C901, PLR0915
                         log_progress(n, len(entries), 'Processing entries... '.ljust(progress_log_desc_ljust))
                         progress_log_thresh_data += opt.progress_log_interval
 
-                    if frame_count / frame_estimate > progress_log_thresh_video:
+                    if video_path and (frame_count / frame_estimate > progress_log_thresh_video):
                         log_progress(frame_count, frame_estimate, 'Writing video... '.ljust(progress_log_desc_ljust))
                         progress_log_thresh_video += opt.progress_log_interval
 
