@@ -8,5 +8,6 @@ API Reference
     cli
     const
     models
+    rich
     trail
     util
