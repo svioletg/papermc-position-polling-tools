@@ -36,6 +36,7 @@ extensions = [
 ]
 
 intersphinx_mapping = {
+    'PIL': ('https://pillow.readthedocs.io/en/stable/', None),
     'python': ('https://docs.python.org/3', None),
     'maybetype': ('https://py-maybetype.readthedocs.io/en/latest/', None),
 }
