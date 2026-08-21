@@ -35,7 +35,7 @@ def test_vld_none_ok() -> None:
 
         return value
 
-    fn: ValidatorFunc[int | None] = models.vld_none_ok(vld_positive)
+    fn: ValidatorFunc[int | None] = models.vld_nullable(vld_positive)
 
     assert fn(1, mock) == 1
     assert fn(None, mock) is None

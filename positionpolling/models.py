@@ -46,10 +46,10 @@ class BeforeValidatorWithType[T, U]:
         return core_schema.with_info_before_validator_function(wrapped, handler(source_type))
 
 @overload
-def vld_none_ok[T](validator: ValidatorFunc[T]) -> ValidatorFunc[T | None]: ...
+def vld_nullable[T](validator: ValidatorFunc[T]) -> ValidatorFunc[T | None]: ...
 @overload
-def vld_none_ok[T](validator: ValidatorFuncWithType[T]) -> ValidatorFuncWithType[T | None]: ...
-def vld_none_ok[T](validator: ValidatorFunc[T] | ValidatorFuncWithType[T]) \
+def vld_nullable[T](validator: ValidatorFuncWithType[T]) -> ValidatorFuncWithType[T | None]: ...
+def vld_nullable[T](validator: ValidatorFunc[T] | ValidatorFuncWithType[T]) \
     -> ValidatorFunc[T | None] | ValidatorFuncWithType[T | None]:
     """Returns a validator wrapped with a ``value is None`` check that can return ``None``."""
     validator_param_count: int = len(inspect.signature(validator).parameters)
