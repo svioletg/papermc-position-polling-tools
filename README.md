@@ -114,11 +114,16 @@ Rendering options can be provided either with command-line options or from a
 JSON file. Use `mcposlog --help` to see all available options. To use a JSON
 file, use the option `--render-json=<PATH>` or `-j <PATH>`. CLI render options
 will always take precedence over JSON, e.g. if your JSON file defines `"v_fps":
-30`, but you run the command with `--v-fps 60`, the value will be 60.
+30`, but you run the command with `--fps 60`, the value will be 60.
+
+> [!NOTE]
+> Some render options differ slightly in name from their JSON keys, e.g. most
+> `v_`-prefixed keys do not have this prefix in CLI option form. Use `--help`
+> to list out all options.
 
 If a file called `render.json` exists in the current directory, it will be
 automatically used if `--render-json` was not specified otherwise.
 
 ### `render trail`
 
-Example: `mcposlog render trail data.db -o trail.mp4`
+Example: `mcposlog render trail data.db -v trail.mp4`
