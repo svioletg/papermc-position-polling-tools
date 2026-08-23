@@ -15,6 +15,26 @@ from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogL
 from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, RenderOpt
 from positionpolling.util import try_next
 
+main_parser = ArgumentParser()
+main_parser.add_argument('--version', '-V', action='store_true',
+    help='Shows the installed version and exits.')
+main_parser.add_argument('--log-level', '-l', type=lambda s: s.upper(), choices=[i.name for i in LogLevel],
+    default='INFO',
+    help='The logging level for this session. "DEBUG" shows more output and can be useful for diagnosing issues.'
+        + ' "TRACE" is the most verbose setting and may result in a very large volume of logs, only use this if'
+        + ' "DEBUG" hasn\'t helped enough. Log files always use level DEBUG, or TRACE if it is specified.')
+main_parser.add_argument('--logfile', dest='log_file', type=Path, default=DEFAULT_LOGS_DIR,
+    help='Log file path to use for this run, or a directory to save this log to. This path will be treated as a'
+        + ' directory if it does not end in ".log". If given a directory, a log file is created based on the'
+        + " current time and date and stored inside it. Defaults to the package's logs directory.")
+main_parser.add_argument('--no-logfile', dest='log_file', action='store_false',
+    help='Disables file logging; logs will only be sent to stdout. A log file may still be created if any errors'
+        + ' occur before arguments can be parsed.')
+main_parser.add_argument('--no-color', action='store_true',
+    help='Disables colored terminal output. This overrides the value set by MCPOSLOG_NO_COLOR.')
+main_parser.add_argument('--yes', '-y', action='store_true',
+    help='Skips confirmation prompts.')
+
 parser_render_trail = ArgumentParser(add_help=False)
 parser_render_trail.add_argument('source', type=str,
     help='Path or URL to the SQL database to use.')
@@ -93,27 +113,6 @@ def comma_split[T](s: str, fn: Callable[[list[str]], T] | None = None, *, strip:
 @logger.catch(onerror=lambda _: sys.exit(1))
 def main() -> int:  # noqa: D103
     setup_logger('ERROR')
-
-    main_parser = ArgumentParser()
-
-    main_parser.add_argument('--version', '-V', action='store_true',
-        help='Shows the installed version and exits.')
-    main_parser.add_argument('--log-level', '-l', type=lambda s: s.upper(), choices=[i.name for i in LogLevel],
-        default='INFO',
-        help='The logging level for this session. "DEBUG" shows more output and can be useful for diagnosing issues.'
-            + ' "TRACE" is the most verbose setting and may result in a very large volume of logs, only use this if'
-            + ' "DEBUG" hasn\'t helped enough. Log files always use level DEBUG, or TRACE if it is specified.')
-    main_parser.add_argument('--logfile', dest='log_file', type=Path, default=DEFAULT_LOGS_DIR,
-        help='Log file path to use for this run, or a directory to save this log to. This path will be treated as a'
-            + ' directory if it does not end in ".log". If given a directory, a log file is created based on the'
-            + " current time and date and stored inside it. Defaults to the package's logs directory.")
-    main_parser.add_argument('--no-logfile', dest='log_file', action='store_false',
-        help='Disables file logging; logs will only be sent to stdout. A log file may still be created if any errors'
-            + ' occur before arguments can be parsed.')
-    main_parser.add_argument('--no-color', action='store_true',
-        help='Disables colored terminal output. This overrides the value set by MCPOSLOG_NO_COLOR.')
-    main_parser.add_argument('--yes', '-y', action='store_true',
-        help='Skips confirmation prompts.')
 
     subparsers = main_parser.add_subparsers(dest='action', required=False)
 
