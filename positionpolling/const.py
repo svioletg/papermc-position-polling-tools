@@ -121,6 +121,7 @@ def setup_logger(
         *,
         utc: bool = True,
         no_color: bool | None = None,
+        wrap_stdout: bool = False,
     ) -> tuple[int, tuple[int, Path] | None]:
     """Adds stdout and file handles for the project logger and returns the added handlers.
 
@@ -133,6 +134,7 @@ def setup_logger(
     :param utc: Whether log timestamps are saved in UTC. If ``False``, the system's local timezone is used instead.
     :param no_color: Whether to disallow colored logs in terminal output. If ``None``, falls back on the value of
         :data:`NO_COLOR` set by the environment.
+    :param wrap_stdout: Whether to wrap stdout log lines.
     """
     logger.remove()
 
@@ -147,7 +149,7 @@ def setup_logger(
     logger.level('CRITICAL', color='<bold><white><RED>')
 
     stdout_handle: int = logger.add(
-        lambda s: console.print(escape(s), end=''),
+        lambda s: console.print(escape(s), end='', soft_wrap=not wrap_stdout),
         level=stdout_level,
         format=LOG_MSG_FORMAT_STDOUT_UTC if utc else LOG_MSG_FORMAT_STDOUT,
         colorize=not (no_color if no_color is not None else NO_COLOR),
