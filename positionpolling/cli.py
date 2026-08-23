@@ -5,7 +5,7 @@ from collections.abc import Callable
 from importlib import import_module
 from pathlib import Path
 from types import UnionType
-from typing import Annotated, Any, Never, cast, get_args, get_origin, overload
+from typing import Annotated, Any, Literal, Never, cast, get_args, get_origin, overload
 
 from loguru import logger
 from pydantic.fields import FieldInfo
@@ -103,7 +103,11 @@ def main() -> int:  # noqa: D103
         help='The logging level for this session. "DEBUG" shows more output and can be useful for diagnosing issues.'
             + ' "TRACE" is the most verbose setting and may result in a very large volume of logs, only use this if'
             + ' "DEBUG" hasn\'t helped enough. Log files always use level DEBUG, or TRACE if it is specified.')
-    main_parser.add_argument('--no-logfile', dest='log_to_file', action='store_false',
+    main_parser.add_argument('--logfile', dest='log_file', type=Path, default=DEFAULT_LOGS_DIR,
+        help='Log file path to use for this run, or a directory to save this log to. This path will be treated as a'
+            + ' directory if it does not end in ".log". If given a directory, a log file is created based on the'
+            + " current time and date and stored inside it. Defaults to the package's logs directory.")
+    main_parser.add_argument('--no-logfile', dest='log_file', action='store_false',
         help='Disables file logging; logs will only be sent to stdout. A log file may still be created if any errors'
             + ' occur before arguments can be parsed.')
     main_parser.add_argument('--no-color', action='store_true',
@@ -135,13 +139,13 @@ def main() -> int:  # noqa: D103
         return 0
 
     log_level = LogLevel[args.log_level]
-    log_to_file: bool = args.log_to_file
+    log_file: Path | Literal[False] = args.log_file
 
     # Start logging
-    _, file_log = setup_logger(
+    _, (log_file_return) = setup_logger(
         log_level,
         min(log_level, LogLevel.DEBUG),
-        log_path=DEFAULT_LOGS_DIR if log_to_file else None,
+        log_path=log_file or None,
         no_color=no_color or NO_COLOR,
     )
 
@@ -161,8 +165,8 @@ def main() -> int:  # noqa: D103
 
     logger.info(f'{PACKAGE_ROOT.name} v{__version__}')
     logger.debug(f'stdout log level is {log_level.name}')
-    if file_log:
-        logger.debug(f'log directory: {file_log[1]}')
+    if log_file_return:
+        logger.debug(f'Log file: {log_file_return[1]}')
 
     match args.action:
         case 'render':
