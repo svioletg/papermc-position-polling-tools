@@ -170,7 +170,7 @@ def test_log_progress(monkeypatch: pytest.MonkeyPatch, pct_digits: int, level: s
     assert len({len(s[1]) for s in logs}) == 1
 
 def test_log_progress_show_count(capsys: pytest.CaptureFixture[str]) -> None:
-    setup_logger('INFO', logs_dir=None, no_color=True, wrap_stdout=False)
+    setup_logger('INFO', no_color=True, wrap_stdout=False)
 
     util.log_progress(25, 100, show_count=True)
     captured = capsys.readouterr()
