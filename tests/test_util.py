@@ -8,7 +8,7 @@ from geometry import Tuple4
 from loguru import logger
 
 from positionpolling import util
-from positionpolling.const import LogLevel
+from positionpolling.const import LogLevel, setup_logger
 from tests import TESTS_DATA_TMP_DIR, gen_pos_logs
 
 
@@ -152,7 +152,14 @@ def test_group_by_attr() -> None:
 def test_log_progress(monkeypatch: pytest.MonkeyPatch, pct_digits: int, level: str) -> None:
     logs: list[tuple[str, str]] = []
 
-    monkeypatch.setattr(logger, 'log', lambda level, msg: logs.append((level, msg)))
+    class MockLoggerOpt:
+        def __init__(self, depth: int) -> None:
+            assert depth == 1
+
+        def log(self, level: str, msg: str) -> None:
+            logs.append((level, msg))
+
+    monkeypatch.setattr(logger, 'opt', MockLoggerOpt)
 
     for n in range(101):
         util.log_progress(n, 100, pct_digits=pct_digits, level=level)
@@ -161,6 +168,17 @@ def test_log_progress(monkeypatch: pytest.MonkeyPatch, pct_digits: int, level: s
     assert all(lev == level for lev, _ in logs)
     # Assert that every log is the same width
     assert len({len(s[1]) for s in logs}) == 1
+
+def test_log_progress_show_count(capsys: pytest.CaptureFixture[str]) -> None:
+    setup_logger('INFO', logs_dir=None, no_color=True, wrap_stdout=False)
+
+    util.log_progress(25, 100, show_count=True)
+    captured = capsys.readouterr()
+    assert '( 25/100)' in captured.out.splitlines()[0], repr(captured.out)
+
+    util.log_progress(25, 100, show_count=False)
+    captured = capsys.readouterr()
+    assert '( 25/100)' not in captured.out.splitlines()[0], repr(captured.out)
 
 @pytest.mark.parametrize(('hexcolor', 'expected'),
     [
