@@ -236,6 +236,7 @@ def log_progress(
         description: str = 'Progress: ',
         *,
         pct_digits: int = 1,
+        show_count: bool = True,
         level: int | str = 'INFO',
     ) -> None:
     """Writes a log in the format ``'{description}p% (m/n) complete'`` using the values given.
@@ -249,6 +250,7 @@ def log_progress(
     :param description: Text to add before the progress values.
     :param pct_digits: How many digits of precision to format the percentage with. Must be >=0. 0 rounds to the nearest
         integer. 1 = ``100.0%``, 2 = ``100.00%``, etc.
+    :param show_count: If ``False``, the ``(m/n)`` portion of the message is omitted, leaving only the percentage.
 
     :raises ValueError:
         ``pct_digits`` is less than 0.
@@ -260,7 +262,10 @@ def log_progress(
     pct_width: int = 4 if pct_digits == 0 else 5 + pct_digits
     progress: float = completed / total
     logger.opt(depth=1).log(
-        level, f'{description}{progress:>{pct_width}.{pct_digits}%} ({completed:>{total_width}}/{total}) complete',
+        level,
+        f'{description}{progress:>{pct_width}.{pct_digits}%}'
+        + (f' ({completed:>{total_width}}/{total})' if show_count else '')
+        + ' complete',
     )
 
 def require_ffmpeg() -> str:
