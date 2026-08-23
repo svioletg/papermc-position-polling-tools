@@ -141,7 +141,7 @@ def main() -> int:  # noqa: D103
     _, file_log = setup_logger(
         log_level,
         min(log_level, LogLevel.DEBUG),
-        logs_dir=DEFAULT_LOGS_DIR if log_to_file else None,
+        log_path=DEFAULT_LOGS_DIR if log_to_file else None,
         no_color=no_color or NO_COLOR,
     )
 
