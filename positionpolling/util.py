@@ -238,10 +238,13 @@ def log_progress(
         pct_digits: int = 1,
         level: int | str = 'INFO',
     ) -> None:
-    """Writes a log in the format ``'{description} p% (m/n) complete'`` using the values given.
+    """Writes a log in the format ``'{description}p% (m/n) complete'`` using the values given.
 
     The ``completed`` value will be aligned to the right according to the width of ``total``, the percentage is aligned
     to the right so as to fit ``100%`` plus any number of precision digits used.
+
+    Will be logged with a ``depth`` of 1, meaning the function given to the log record will be the caller of this
+    function and won't show as ``log_progress``.
 
     :param description: Text to add before the progress values.
     :param pct_digits: How many digits of precision to format the percentage with. Must be >=0. 0 rounds to the nearest
@@ -256,7 +259,7 @@ def log_progress(
     total_width: int = len(str(total))
     pct_width: int = 4 if pct_digits == 0 else 5 + pct_digits
     progress: float = completed / total
-    logger.log(
+    logger.opt(depth=1).log(
         level, f'{description}{progress:>{pct_width}.{pct_digits}%} ({completed:>{total_width}}/{total}) complete',
     )
 
