@@ -11,6 +11,73 @@ This project uses [towncrier](https://towncrier.readthedocs.io) to generate rele
 
 <!-- towncrier release notes start -->
 
+## [0.3.0] - 2026-08-23
+
+### Added
+
+- Added type alias `models.ValidatorFuncWithType` (#16)
+- Added class `models.AfterValidatorWithType` (#16)
+- Added class `models.BeforeValidatorWithType` (#16)
+- Added CLI option `--logfile` to specify a file or directory to save the logs
+  of the current run to (#35)
+- Added CLI option `--video` for `render trail` to optionally specify video
+  output path (#31)
+- Added parameter `log_path` to `const.setup_logger()` to replace `logs_dir`
+  (#35)
+- Added constant `TESTS_DATA_DIR` to tests/__init__.py
+- Added constant `TESTS_DIR` to tests/__init__.py
+- Added constant `const.LOG_MSG_FORMAT_STDOUT_UTC`
+- Added constant `const.LOG_MSG_FORMAT_STDOUT`
+- Added documentation page listing every function which requires FFmpeg
+- Added function `cli.comma_split()`
+- Added function `models.vld_range()`
+- Added function `util.ask_overwrite()`
+- Added function `util.log_progress()`
+- Added function `util.require_ffmpeg()`
+- Added method `models.Entry.to_row()`
+- Added module `rich` for customized `rich` renderables and subclasses
+- Added parameter `show_count` to `util.log_progress()` to optionally omit the
+  `(m/n)` part of its output
+- Added parameter `wrap_stdout` to `const.setup_logger()`
+- Added type alias `models.EntryRowTuple`
+- Render video time estimate now shows FPS value
+- `cli.add_args_from_render_opt()` now handles Annotated and Union types, only
+  using the first type argument of them
+
+### Changed
+
+- `models.RenderOpt.progress_log_interval` now expects a float value between 0
+  and 1, interval is now based on percentage rather than concrete amount (#8)
+- `models.vld_none_ok` now accepts a validator function which expects an
+  annotation argument (#16)
+- `trail.trail()` now emits logs depending on the success of the video fixing
+  step, skipping it without exiting if it failed (#22)
+- `util.fix_opencv_video()` now returns `Result[pathlib.Path,
+  subprocess.CompletedProcess]` (#22)
+- CLI option `--out` for `render trail` is now used for the image destionation
+  path, video now specified by `--video` (at least one of these two must be
+  used) (#31)
+- Log message format is now different for stdout, omits date and only shows
+  HH:MM:SS
+- Move tuple string handling to `cli.add_args_from_render_opt()` to add
+  comma-delimited string support to all tuple or list fields automatically
+- Renamed function `models.vld_none_ok()` to `vld_nullable()`
+- The main CLI `ArgumentParser` object has been moved out of `cli.main()` into
+  the module itself as `cli.main_parser`
+- `trail.trail()` will now log a warning and skip the video reprocessing step
+  if FFmpeg is not installed, rather than raising an error
+
+### Removed
+
+- Removed parameter `logs_dir` from `const.setup_logger()`, replaced by
+  `log_path` (#35)
+- Removed function `models.vld_tuple_float()`
+
+### Fixed
+
+- Fixed `ZeroDivisionError` in `trail.trail()` from frame estimate defaulting
+  to 0 when no video is rendered
+
 ## [0.2.0] - 2026-08-15
 
 ### Added
