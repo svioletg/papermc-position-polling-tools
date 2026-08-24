@@ -113,6 +113,8 @@ class Entry:
         """Returns a new entry representing the difference between two entries.
 
         Fields :data:`timestamp`, :data:`x`, :data:`y`:, and :data:`z` are subtracted. The rest are left intact.
+
+        .. include
         """
         if not isinstance(other, Entry):
             return NotImplemented
@@ -253,7 +255,10 @@ class RenderOpt(BaseModel):
         return cls(**content)
 
     def __or__(self, other: 'RenderOpt | dict[str, Any]') -> Self:
-        """Bitwise OR (``|``) implementation as shorthand for :meth:`replace`."""
+        """Bitwise OR (``|``) implementation as shorthand for :meth:`replace`.
+
+        .. include
+        """
         return self.replace(other)
 
     def changed(self) -> dict[str, Any]:
