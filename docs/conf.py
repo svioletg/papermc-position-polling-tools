@@ -65,32 +65,6 @@ rst_prolog = f"""
 .. |requires-ffmpeg| replace:: Requires FFmpeg; :class:`FileNotFoundError` will be raised if it is not found.
 """
 
-# Subclasses of pydantic's BaseModel seem to make autodoc include a bunch of stuff that doesn't need to be documented
-# and isn't documented for other classes, so they have to be explicitly ignored with a hook
-autodoc_skip_regex: list[str | re.Pattern[str]] = [
-    r'__pydantic.*',
-    '_abc_impl',
-    '__abstractmethods__',
-    '__annotations__',
-    '__class_vars__',
-    '__dataclass_fields__',
-    '__dataclass_params__',
-    '__delattr__',
-    '__dict__',
-    '__doc__',
-    '__getattr__',
-    '__get_pydantic_core_schema__',
-    '__module__',
-    '__orig_bases__',
-    '__parameters__',
-    '__private_attributes__',
-    '__setattr__',
-    '__signature__',
-    '__type_params__',
-    # This is already in autodoc_default_options.exclude-members but BaseModel subclasses don't care
-    '__weakref__',
-]
-
 class FFmpegFunctionFinder(cst.CSTVisitor):
     """Node visitor which saves functions that have ``|requires-ffmpeg|`` in their docstrings."""
 
@@ -156,11 +130,14 @@ def autodoc_skip_member(  # noqa: D103
         _app: 'Sphinx',
         _obj_type: str,
         name: str,
-        _obj: object,
-        _skip: bool,  # noqa: FBT001
+        obj: object,
+        skip: bool,  # noqa: FBT001
         _options: 'Options',
     ) -> bool:
-    return any(re.match(p, name) for p in autodoc_skip_regex)
+    if name.startswith('__'):
+        return not bool(re.search(r'^\s*.. include$', obj.__doc__ or '', flags=re.MULTILINE))
+
+    return skip
 
 def setup(app: 'Sphinx') -> None:  # noqa: D103
     app.connect('source-read', source_read)
