@@ -52,11 +52,11 @@ render_arg_parsers: dict[str, ArgumentParser] = {
     'trail': parser_render_trail,
 }
 
-def abort(err: str | Exception, *, log: bool = False, markup: bool = True, status: int = 1) -> Never:
+def abort(err: str | Exception, *, log: bool = True, markup: bool = True, status: int = 1) -> Never:
     """Print an error message or exception without a full traceback and exit with code ``status``.
 
-    :param markup: If ``True``, wrap the message in ``[err][/]`` markup before printing, otherwise prints it as-is.
-        Ignored if ``log`` is ``True``, in which case markup is never added.
+    :param markup: If ``True`` and ``log`` is ``False``, wrap the message in ``[err][/]`` markup before printing,
+        otherwise print the string as-is.
     :param log: If ``True``, the message is logged with ``logger.error()``. Otherwise, the message is printed with the
         ``rich`` console.
     """
