@@ -162,7 +162,7 @@ def setup_logger(
         level=stdout_level,
         format=LOG_MSG_FORMAT_STDOUT_UTC if utc else LOG_MSG_FORMAT_STDOUT,
         colorize=not (no_color if no_color is not None else NO_COLOR),
-        diagnose=True,
+        diagnose=False,
     )
 
     log_file_format: str = LOG_FILE_FORMAT_UTC if utc else LOG_FILE_FORMAT
