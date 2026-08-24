@@ -14,12 +14,13 @@ from geometry import Coord2, Grid2
 from loguru import logger
 from maybetype import Err, Ok, Result
 from PIL import Image, ImageDraw, ImageEnhance
-from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
+from rich.progress import Progress, TaskProgressColumn, TextColumn
 from rich.table import Column
 
 from positionpolling.cli import abort
 from positionpolling.const import console
 from positionpolling.models import RENDER_OPT_DEFAULT, Entry, PlayerPositions, RenderOpt
+from positionpolling.rich import CustomBarColumn
 from positionpolling.util import ask, ask_overwrite, fix_opencv_video, grid_from_entries, log_progress, time_this
 
 
@@ -127,7 +128,7 @@ def trail(  # noqa: C901, PLR0915
     with Progress(
             TextColumn('[progress.description]{task.description}'),
             TaskProgressColumn('[[info2]{task.percentage:>3.0f}%[/]]'),
-            BarColumn(bar_width=None, table_column=Column(ratio=2)),
+            CustomBarColumn(bar_width=None, table_column=Column(ratio=2)),
             TextColumn(
                 '[[info2]{task.completed:>' + str(mofn_m_width) +'}/{task.total:<' + str(mofn_m_width) + '}[/]]',
             ),
