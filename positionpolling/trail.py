@@ -233,6 +233,9 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:  # noqa: C901
     desat_per_frame: float = args.desat_per_frame
     auto_confirm: bool = args.yes
 
+    if player and (player not in data.by_player):
+        abort(f'Found no entries in the given data for player: {player}')
+
     if img_dest is video_dest is None:
         abort('One or both of [info]--out[/] and/or [info]--video[/] must be specified.')
 
