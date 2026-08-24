@@ -140,5 +140,6 @@ def autodoc_skip_member(  # noqa: D103
     return skip
 
 def setup(app: 'Sphinx') -> None:  # noqa: D103
+    app.add_js_file('version-alert.js')
     app.connect('source-read', source_read)
     app.connect('autodoc-skip-member', autodoc_skip_member)
