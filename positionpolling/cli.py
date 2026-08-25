@@ -15,42 +15,6 @@ from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogL
 from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, RenderOpt
 from positionpolling.util import try_next
 
-main_parser = ArgumentParser()
-main_parser.add_argument('--version', '-V', action='store_true',
-    help='Shows the installed version and exits.')
-main_parser.add_argument('--log-level', '-l', type=lambda s: s.upper(), choices=[i.name for i in LogLevel],
-    default='INFO',
-    help='The logging level for this session. "DEBUG" shows more output and can be useful for diagnosing issues.'
-        + ' "TRACE" is the most verbose setting and may result in a very large volume of logs, only use this if'
-        + ' "DEBUG" hasn\'t helped enough. Log files always use level DEBUG, or TRACE if it is specified.')
-main_parser.add_argument('--logfile', dest='log_file', type=Path, default=DEFAULT_LOGS_DIR,
-    help='Log file path to use for this run, or a directory to save this log to. This path will be treated as a'
-        + ' directory if it does not end in ".log". If given a directory, a log file is created based on the'
-        + " current time and date and stored inside it. Defaults to the package's logs directory.")
-main_parser.add_argument('--no-logfile', dest='log_file', action='store_false',
-    help='Disables file logging; logs will only be sent to stdout. A log file may still be created if any errors'
-        + ' occur before arguments can be parsed.')
-main_parser.add_argument('--no-color', action='store_true',
-    help='Disables colored terminal output. This overrides the value set by MCPOSLOG_NO_COLOR.')
-main_parser.add_argument('--yes', '-y', action='store_true',
-    help='Skips confirmation prompts.')
-
-parser_render_trail = ArgumentParser(add_help=False)
-parser_render_trail.add_argument('source', type=str,
-    help='Path or URL to the SQL database to use.')
-parser_render_trail.add_argument('--out', '-o', type=Path, required=False,
-    help='Where to save the rendered image.')
-parser_render_trail.add_argument('--video', '-v', type=Path, required=False,
-    help='Whether to render a video, and if so, where to save it to. Video rendering is skipped.')
-parser_render_trail.add_argument('--player', type=str,
-    help='UUID of the player whose data should be used.')
-parser_render_trail.add_argument('--desat-per-frame', type=float, default=0.95,
-    help='An amount that each previous frame of the video should be desaturated by, creating a fading effect as the'
-        + ' trail continues. , 0 makes the previous frame fully greyscale.')
-
-render_arg_parsers: dict[str, ArgumentParser] = {
-    'trail': parser_render_trail,
-}
 
 def abort(err: str | Exception, *, log: bool = True, markup: bool = True, status: int = 1) -> Never:
     """Print an error message or exception without a full traceback and exit with code ``status``.
@@ -110,21 +74,55 @@ def comma_split[T](s: str, fn: Callable[[list[str]], T] | None = None, *, strip:
 
     return split if not fn else fn(split)
 
+main_parser = ArgumentParser()
+main_parser.add_argument('--version', '-V', action='store_true',
+    help='Shows the installed version and exits.')
+main_parser.add_argument('--log-level', '-l', type=lambda s: s.upper(), choices=[i.name for i in LogLevel],
+    default='INFO',
+    help='The logging level for this session. "DEBUG" shows more output and can be useful for diagnosing issues.'
+        + ' "TRACE" is the most verbose setting and may result in a very large volume of logs, only use this if'
+        + ' "DEBUG" hasn\'t helped enough. Log files always use level DEBUG, or TRACE if it is specified.')
+main_parser.add_argument('--logfile', dest='log_file', type=Path, default=DEFAULT_LOGS_DIR,
+    help='Log file path to use for this run, or a directory to save this log to. This path will be treated as a'
+        + ' directory if it does not end in ".log". If given a directory, a log file is created based on the'
+        + " current time and date and stored inside it. Defaults to the package's logs directory.")
+main_parser.add_argument('--no-logfile', dest='log_file', action='store_false',
+    help='Disables file logging; logs will only be sent to stdout. A log file may still be created if any errors'
+        + ' occur before arguments can be parsed.')
+main_parser.add_argument('--no-color', action='store_true',
+    help='Disables colored terminal output. This overrides the value set by MCPOSLOG_NO_COLOR.')
+main_parser.add_argument('--yes', '-y', action='store_true',
+    help='Skips confirmation prompts.')
+
+subparsers = main_parser.add_subparsers(dest='action', required=False)
+
+parser_render = add_args_from_render_opt(subparsers.add_parser('render'))
+
+parser_render_trail = ArgumentParser(add_help=False)
+parser_render_trail.add_argument('source', type=str,
+    help='Path or URL to the SQL database to use.')
+parser_render_trail.add_argument('--out', '-o', type=Path, required=False,
+    help='Where to save the rendered image.')
+parser_render_trail.add_argument('--video', '-v', type=Path, required=False,
+    help='Whether to render a video, and if so, where to save it to. Video rendering is skipped.')
+parser_render_trail.add_argument('--player', type=str,
+    help='UUID of the player whose data should be used.')
+parser_render_trail.add_argument('--desat-per-frame', type=float, default=0.95,
+    help='An amount that each previous frame of the video should be desaturated by, creating a fading effect as the'
+        + ' trail continues. , 0 makes the previous frame fully greyscale.')
+
+render_arg_parsers: dict[str, ArgumentParser] = {
+    'trail': parser_render_trail,
+}
+
+render_subparsers = parser_render.add_subparsers(dest='render_type', required=True)
+
+for k, v in render_arg_parsers.items():
+    render_subparsers.add_parser(k, parents=[v])
+
 @logger.catch(onerror=lambda _: sys.exit(1))
 def main() -> int:  # noqa: D103
     setup_logger('ERROR')
-
-    subparsers = main_parser.add_subparsers(dest='action', required=False)
-
-    parser_render = subparsers.add_parser('render')
-
-    # Dynamically add render options as CLI options
-    add_args_from_render_opt(parser_render)
-
-    render_subparsers = parser_render.add_subparsers(dest='render_type', required=True)
-
-    for k, v in render_arg_parsers.items():
-        render_subparsers.add_parser(k, parents=[v])
 
     # Parse args
     args = main_parser.parse_args()
