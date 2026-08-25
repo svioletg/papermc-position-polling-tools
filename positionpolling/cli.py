@@ -165,7 +165,8 @@ def main() -> int:  # noqa: D103
     logger.info(f'{PACKAGE_ROOT.name} v{__version__}')
     logger.debug(f'stdout log level is {log_level.name}')
     if log_file_return:
-        logger.debug(f'Log file: {log_file_return[1]}')
+        log_file = log_file_return[1]
+        logger.debug(f'Log file: {log_file}')
 
     match args.action:
         case 'render':
