@@ -124,7 +124,7 @@ for k, v in render_arg_parsers.items():
     render_subparsers.add_parser(k, parents=[v])
 
 @logger.catch(onerror=lambda _: sys.exit(1))
-def main() -> int:  # noqa: D103, PLR0915
+def main() -> int:  # noqa: D103
     setup_logger('ERROR')
 
     # Parse args
