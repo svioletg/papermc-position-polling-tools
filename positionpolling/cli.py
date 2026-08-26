@@ -21,7 +21,7 @@ from tabulate import tabulate
 from positionpolling import __version__
 from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogLevel, console, setup_logger
 from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, PlayerPositions, RenderOpt
-from positionpolling.util import parse_players, try_next
+from positionpolling.util import parse_players
 
 DEFAULT_PLAYER_MAP_PATH: Path = Path('players.json')
 
@@ -75,8 +75,7 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
         else:
             kwargs['type'] = typ
 
-        cli_meta: CliOpt = try_next(i for i in fld.metadata if isinstance(i, CliOpt)) \
-            or CliOpt([f'--{name.replace('_', '-')}'], kwargs)
+        cli_meta: CliOpt = RenderOpt.cli_meta().get(name, CliOpt([f'--{name.replace('_', '-')}'], kwargs))
 
         parser.add_argument(*cli_meta.names, **kwargs | cli_meta.kwargs)
 

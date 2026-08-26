@@ -4,9 +4,9 @@ import json
 import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from functools import cached_property
+from functools import cache, cached_property
 from pathlib import Path
-from typing import Annotated, Any, Literal, Self, cast, overload
+from typing import Annotated, Any, ClassVar, Literal, Self, cast, overload
 from uuid import UUID
 
 from geometry import Tuple4
@@ -14,6 +14,7 @@ from pydantic import AfterValidator, BaseModel, ConfigDict, GetCoreSchemaHandler
 from pydantic_core import CoreSchema, core_schema
 
 from positionpolling.const import World
+from positionpolling.util import try_next
 
 type EntryRowTuple = tuple[float, str, str, float, float, float]
 """Type alias for the simple type tuple form of :class:`Entry`."""
@@ -198,6 +199,8 @@ class RenderOpt(BaseModel):
     Attributes prefixed with ``v_`` are only used when rendering a video.
     """
 
+    _cli_meta: ClassVar[dict[str, CliOpt] | None] = None
+
     # Pydantic setup
 
     model_config = ConfigDict(frozen=True, use_attribute_docstrings=True)
@@ -240,6 +243,19 @@ class RenderOpt(BaseModel):
         Frame duration is rounded to the closest integer after being calculated, the final duration may be slightly off
         from what would be expected.
     """
+
+    @classmethod
+    @cache
+    def cli_meta(cls) -> dict[str, CliOpt]:
+        """Dictionary of field names to their respective :class:`CliOpt` instances."""
+        if cls._cli_meta is None:
+            cls._cli_meta = {
+                name:opt
+                for name, fld in cls.model_fields.items()
+                if (opt := try_next(i for i in fld.metadata if isinstance(i, CliOpt)))
+            }
+
+        return cls._cli_meta
 
     @classmethod
     def from_json(cls, fp: str | Path) -> Self:
