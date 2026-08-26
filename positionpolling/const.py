@@ -3,6 +3,7 @@
 ``const`` must not import from any other module in this project.
 """
 import os
+import re
 import warnings
 from collections.abc import Mapping
 from enum import IntEnum, StrEnum
@@ -64,6 +65,7 @@ LOG_MSG_FORMAT_STDOUT: str = LOG_MSG_FORMAT_STDOUT_UTC.replace('!UTC', '')
 """The same as :data:`LOG_MSG_FORMAT_STDOUT_UTC`, but in local time."""
 LOG_FILE_FORMAT_UTC: str = '{time:YYYY-MM-DDTHHmmssZZ!UTC}.log'
 LOG_FILE_FORMAT: str = '{time:YYYY-MM-DDTHHmmssZZ}.log'
+LOG_FILE_REGEX: re.Pattern[str] = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{6}\+\d{4}\.log$')
 
 Y_RANGE: dict[str, tuple[int, int]] = {
     'minecraft:overworld': (-64, 320),
@@ -114,6 +116,16 @@ class LogLevel(IntEnum):  # noqa: D101
     WARNING  = 30
     ERROR    = 40
     CRITICAL = 50
+
+def clear_old_logs(keep: int, logs_dir: str | Path = DEFAULT_LOGS_DIR) -> None:
+    """Deletes all but the ``keep`` most recent log files in the given directory matching :data:`LOG_FILE_REGEX`."""
+    for n, fp in enumerate(sorted(
+            (fp for fp in Path(logs_dir).glob('*.log') if LOG_FILE_REGEX.match(fp.name)),
+            key=lambda fp: fp.stat().st_ctime_ns,
+            reverse=True,
+        )):
+        if n > keep:
+            fp.unlink()
 
 def setup_logger(
         stdout_level: int | str = 'INFO',
@@ -182,7 +194,7 @@ def setup_logger(
             format=LOG_MSG_FORMAT_UTC if utc else LOG_MSG_FORMAT,
             colorize=False,
             diagnose=True,
-            retention=10,
+            retention=lambda _: clear_old_logs(10),
             delay=True,
             mode='w',
         )
