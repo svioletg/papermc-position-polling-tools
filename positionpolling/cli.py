@@ -2,8 +2,9 @@
 import sys
 from argparse import ArgumentParser
 from importlib import import_module
+from os import get_terminal_size
 from pathlib import Path
-from typing import Literal, Never
+from typing import Literal, Never, cast
 
 from loguru import logger
 from pydantic import ValidationError
@@ -46,18 +47,15 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
 
     return parser
 
-@overload
-def comma_split[T](s: str, fn: Callable[[list[str]], T], *, strip: bool = False) -> T: ...
-@overload
-def comma_split[T](s: str, fn: None = None, *, strip: bool = False) -> list[str]: ...
-def comma_split[T](s: str, fn: Callable[[list[str]], T] | None = None, *, strip: bool = False) -> T | list[str]:
-    """Splits a string by commas and returns ``typ`` called with the split list.
+def cli_format_validation_error(exc: ValidationError) -> str:
+    """Formats a ``pydantic.ValidationError`` into a string for CLI output."""
+    message: list[str] = []
+    for e in exc.errors():
+        field: str = cast('str', e['loc'][0])
+        names: str = '/'.join(RenderOpt.cli_meta()[field].names)
+        message.append(f'{names}: {e['msg']}\n    (value: {e['input']!r})')
 
-    If ``typ`` is ``None``, the list is returned. Strips whitespace if ``strip=True``.
-    """
-    split: list[str] = s.split(',') if not strip else [i.strip() for i in s.split(',')]
-
-    return split if not fn else fn(split)
+    return '\n'.join(message)
 
 main_parser = ArgumentParser()
 main_parser.add_argument('--version', '-V', action='store_true',
@@ -109,6 +107,8 @@ for k, v in render_arg_parsers.items():
 @logger.catch(onerror=lambda _: sys.exit(1))
 def main() -> int:  # noqa: D103
     setup_logger('ERROR')
+
+    term_width: int = get_terminal_size().columns
 
     # Parse args
     args = main_parser.parse_args()
@@ -172,13 +172,13 @@ def main() -> int:  # noqa: D103
 
                 del _base_render_opt
             except ValidationError as e:
-                logger.debug(
-                    'RenderOpt validation failed; full traceback below'
-                    + f'\n{''.join(traceback.format_exception(e))}',
-                )
-                logger.error('Failed to parse render options; check your log file for a full traceback')
-                console.print('-' * 80)
-                abort(e)
+                logger.opt(exception=e).debug('RenderOpt validation failed; full traceback below')
+                logger.error('Failed to parse some render options')
+                if log_file:
+                    logger.error(f'Full traceback at: {log_file}')
+                console.print('-' * min(term_width, round(term_width * 0.75)))
+
+                abort(cli_format_validation_error(e), log=False)
 
             logger.debug(repr(render_opt))
             logger.info('\n' + render_opt.display())
