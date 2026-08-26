@@ -10,6 +10,8 @@ from pydantic import ValidationError, ValidationInfo
 
 from positionpolling import models
 from positionpolling.const import World
+from positionpolling.models import CliOpt
+from positionpolling.util import try_next
 from tests import TESTS_DATA_TMP_DIR, gen_pos_logs, tempdb
 
 if TYPE_CHECKING:
@@ -132,6 +134,11 @@ def test_RenderOpt_json() -> None:
 def test_RenderOpt_changed() -> None:
     opt = models.RenderOpt(progress_bar=True)
     assert opt.changed() == {'progress_bar': True}
+
+def test_RenderOpt_cli_meta() -> None:
+    for name, fld in models.RenderOpt.model_fields.items():
+        cli_meta: CliOpt | None = try_next(i for i in fld.metadata if isinstance(i, CliOpt))
+        assert models.RenderOpt.cli_meta().get(name) == cli_meta
 
 def test_RenderOpt_display() -> None:
     opt = models.RenderOpt()

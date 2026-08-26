@@ -15,7 +15,6 @@ from pydantic.fields import FieldInfo
 from positionpolling import __version__
 from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogLevel, console, setup_logger
 from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, RenderOpt
-from positionpolling.util import try_next
 
 
 def abort(err: str | Exception, *, log: bool = True, markup: bool = True, status: int = 1) -> Never:
@@ -56,8 +55,7 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
         elif typ in [tuple, list]:
             kwargs['type'] = comma_split
 
-        cli_meta: CliOpt = try_next(i for i in fld.metadata if isinstance(i, CliOpt)) \
-            or CliOpt([f'--{name.replace('_', '-')}'], kwargs)
+        cli_meta: CliOpt = RenderOpt.cli_meta().get(name, CliOpt([f'--{name.replace('_', '-')}'], kwargs))
 
         parser.add_argument(*cli_meta.names, **kwargs | cli_meta.kwargs)
 
