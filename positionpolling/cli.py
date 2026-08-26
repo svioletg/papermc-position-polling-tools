@@ -1,12 +1,10 @@
 """Command-line interface for positionpolling."""
 import sys
-import traceback
 from argparse import ArgumentParser, BooleanOptionalAction
-from collections.abc import Callable
 from importlib import import_module
 from pathlib import Path
 from types import UnionType
-from typing import Annotated, Any, Literal, Never, cast, get_args, get_origin, overload
+from typing import Annotated, Any, Literal, Never, cast, get_args, get_origin
 
 from loguru import logger
 from pydantic import ValidationError
@@ -15,6 +13,7 @@ from pydantic.fields import FieldInfo
 from positionpolling import __version__
 from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogLevel, console, setup_logger
 from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, RenderOpt
+from positionpolling.util import comma_split
 
 
 def abort(err: str | Exception, *, log: bool = True, markup: bool = True, status: int = 1) -> Never:

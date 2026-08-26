@@ -81,6 +81,19 @@ def coerce[T](obj: object, typ: type[T], fn: Callable[[object], T] | None = None
     """
     return obj if isinstance(obj, typ) else (fn or typ)(obj)  # ty: ignore[too-many-positional-arguments]
 
+@overload
+def comma_split[T](s: str, fn: Callable[[list[str]], T], *, strip: bool = False) -> T: ...
+@overload
+def comma_split[T](s: str, fn: None = None, *, strip: bool = False) -> list[str]: ...
+def comma_split[T](s: str, fn: Callable[[list[str]], T] | None = None, *, strip: bool = False) -> T | list[str]:
+    """Splits a string by commas and returns ``fn`` called with the split list.
+
+    If ``fn`` is ``None``, the list is returned unchanged. Strips whitespace before calling ``fn` if ``strip=True``.
+    """
+    split: list[str] = s.split(',') if not strip else [i.strip() for i in s.split(',')]
+
+    return split if not fn else fn(split)
+
 def convert_range(value: float, r_from: tuple[float, float], r_to: tuple[float, float]) -> float:
     """Returns a value relative to ``r_to`` as it is to ``r_from``.
 
