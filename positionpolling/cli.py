@@ -9,19 +9,17 @@ from collections.abc import Iterable, Mapping, Sequence
 from enum import StrEnum
 from importlib import import_module
 from pathlib import Path
-from types import UnionType
-from typing import Annotated, Any, Literal, Never, TypeAliasType, cast, get_args, get_origin
+from typing import Literal, Never
 from uuid import UUID
 
 from loguru import logger
 from pydantic import ValidationError
-from pydantic.fields import FieldInfo
 from tabulate import tabulate
 
 from positionpolling import __version__
 from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogLevel, console, setup_logger
 from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, PlayerPositions, RenderOpt
-from positionpolling.util import comma_split, parse_players
+from positionpolling.util import parse_players
 
 DEFAULT_PLAYER_MAP_PATH: Path = Path('players.json')
 
@@ -54,30 +52,14 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
 
     Returns the passed parser.
     """
-    for name, fld in cast('dict[str, FieldInfo]', RenderOpt.model_fields).items():
-        kwargs: dict[str, Any] = {'dest': name, 'help': (fld.description or '').replace('%', '%%')}
+    parser.add_argument('--render-json', '-j', type=Path, metavar='PATH',
+        help='Path to a JSON file defining render options to use. Individual render options will override these'
+            + ' settings. If a file named "render.json" exists in the current directory and this option was not used,'
+            + ' it will be automatically used for this value.')
 
-        typ = fld.annotation
-        while t_args := get_args(typ):
-            if t_args:
-                t_origin = get_origin(typ)
-                # Making an assumption here that we only ever care about the first argument of a union
-                # RenderOpt really shouldn't have any union types that aren't T | None, so this is fine
-                typ = t_args[0] if t_origin in [Annotated, UnionType] else t_origin
-
-            if isinstance(typ, TypeAliasType):
-                typ = typ.__value__
-
-        if typ is bool:
-            kwargs['action'] = BooleanOptionalAction
-        elif typ in [tuple, list]:
-            kwargs['type'] = comma_split
-        else:
-            kwargs['type'] = typ
-
-        cli_meta: CliOpt = RenderOpt.cli_meta().get(name, CliOpt([f'--{name.replace('_', '-')}'], kwargs))
-
-        parser.add_argument(*cli_meta.names, **kwargs | cli_meta.kwargs)
+    for name in RenderOpt.model_fields:
+        cli_meta: CliOpt = RenderOpt.cli_meta()[name]
+        parser.add_argument(*cli_meta.names, **cli_meta.kwargs)
 
     return parser
 

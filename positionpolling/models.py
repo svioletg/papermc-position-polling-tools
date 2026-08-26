@@ -2,11 +2,13 @@
 import inspect
 import json
 import sqlite3
+from argparse import BooleanOptionalAction
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from functools import cache, cached_property
 from pathlib import Path
-from typing import Annotated, Any, ClassVar, Literal, Self, cast, overload
+from types import UnionType
+from typing import Annotated, Any, ClassVar, Literal, Self, TypeAliasType, cast, get_args, get_origin, overload
 from uuid import UUID
 
 from geometry import Tuple4
@@ -14,7 +16,7 @@ from pydantic import AfterValidator, BaseModel, ConfigDict, GetCoreSchemaHandler
 from pydantic_core import CoreSchema, core_schema
 
 from positionpolling.const import World
-from positionpolling.util import try_next
+from positionpolling.util import comma_split, try_next
 
 type EntryRowTuple = tuple[float, str, str, float, float, float]
 """Type alias for the simple type tuple form of :class:`Entry`."""
@@ -92,7 +94,7 @@ def vld_range[T: (int, float)](
 
     return validate
 
-@dataclass(frozen=True)
+@dataclass
 class CliOpt:
     """For use in ``RenderOpt`` field annotations to customize its corresponding command-line argument."""
 
@@ -249,11 +251,33 @@ class RenderOpt(BaseModel):
     def cli_meta(cls) -> dict[str, CliOpt]:
         """Dictionary of field names to their respective :class:`CliOpt` instances."""
         if cls._cli_meta is None:
-            cls._cli_meta = {
-                name:opt
-                for name, fld in cls.model_fields.items()
-                if (opt := try_next(i for i in fld.metadata if isinstance(i, CliOpt)))
-            }
+            cls._cli_meta = {}
+            for name, fld in cls.model_fields.items():
+                kwargs: dict[str, Any] = {'dest': name, 'help': (fld.description or '').replace('%', '%%')}
+
+                typ = fld.annotation
+                while t_args := get_args(typ):
+                    if t_args:
+                        t_origin = get_origin(typ)
+                        # Making an assumption here that we only ever care about the first argument of a union
+                        # RenderOpt really shouldn't have any union types that aren't T | None, so this is fine
+                        typ = t_args[0] if t_origin in [Annotated, UnionType] else t_origin
+
+                    if isinstance(typ, TypeAliasType):
+                        typ = typ.__value__
+
+                if typ is bool:
+                    kwargs['action'] = BooleanOptionalAction
+                elif typ in [tuple, list]:
+                    kwargs['type'] = comma_split
+                else:
+                    kwargs['type'] = typ
+
+                cli_meta: CliOpt | None = try_next(i for i in fld.metadata if isinstance(i, CliOpt))
+                if cli_meta:
+                    cli_meta.kwargs = kwargs | cli_meta.kwargs
+
+                cls._cli_meta[name] = cli_meta or CliOpt([f'--{name.replace('_', '-')}'], kwargs)
 
         return cls._cli_meta
 
