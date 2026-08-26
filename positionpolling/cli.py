@@ -2,14 +2,14 @@
 import json
 import sys
 import time
-import traceback
 from argparse import ArgumentParser, BooleanOptionalAction
 from collections import OrderedDict
 from collections.abc import Iterable, Mapping, Sequence
 from enum import StrEnum
 from importlib import import_module
+from os import get_terminal_size
 from pathlib import Path
-from typing import Literal, Never
+from typing import Literal, Never, cast
 from uuid import UUID
 
 from loguru import logger
@@ -62,6 +62,16 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
         parser.add_argument(*cli_meta.names, **cli_meta.kwargs)
 
     return parser
+
+def cli_format_validation_error(exc: ValidationError) -> str:
+    """Formats a ``pydantic.ValidationError`` into a string for CLI output."""
+    message: list[str] = []
+    for e in exc.errors():
+        field: str = cast('str', e['loc'][0])
+        names: str = '/'.join(RenderOpt.cli_meta()[field].names)
+        message.append(f'{names}: {e['msg']}\n    (value: {e['input']!r})')
+
+    return '\n'.join(message)
 
 def format_inspect_data(table: Iterable[Iterable[object]], fmt: str | InspectFormat, headers: Sequence[str] = ()) \
     -> str:
@@ -212,6 +222,8 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, D103, PLR0915
     # Omit the command name since we're not using it and so usage of sys.argv vs. a passed list will be consistent
     argv = sys.argv[1:] if argv is None else argv
 
+    term_width: int = get_terminal_size().columns
+
     # Parse args
     args = main_parser.parse_args(argv)
     no_color: bool = args.no_color
@@ -338,13 +350,13 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, D103, PLR0915
 
                 del _base_render_opt
             except ValidationError as e:
-                logger.debug(
-                    'RenderOpt validation failed; full traceback below'
-                    + f'\n{''.join(traceback.format_exception(e))}',
-                )
-                logger.error('Failed to parse render options; check your log file for a full traceback')
-                console.print('-' * 80)
-                abort(e)
+                logger.opt(exception=e).debug('RenderOpt validation failed; full traceback below')
+                logger.error('Failed to parse some render options')
+                if log_file:
+                    logger.error(f'Full traceback at: {log_file}')
+                console.print('-' * min(term_width, round(term_width * 0.75)))
+
+                abort(cli_format_validation_error(e), log=False)
 
             logger.debug(repr(render_opt))
             logger.info('\n' + render_opt.display())
