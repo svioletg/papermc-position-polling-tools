@@ -5,12 +5,12 @@ import time
 import traceback
 from argparse import ArgumentParser, BooleanOptionalAction
 from collections import OrderedDict
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from enum import StrEnum
 from importlib import import_module
 from pathlib import Path
 from types import UnionType
-from typing import Annotated, Any, Literal, Never, TypeAliasType, cast, get_args, get_origin, overload
+from typing import Annotated, Any, Literal, Never, TypeAliasType, cast, get_args, get_origin
 from uuid import UUID
 
 from loguru import logger
@@ -21,7 +21,7 @@ from tabulate import tabulate
 from positionpolling import __version__
 from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogLevel, console, setup_logger
 from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, PlayerPositions, RenderOpt
-from positionpolling.util import parse_players
+from positionpolling.util import comma_split, parse_players
 
 DEFAULT_PLAYER_MAP_PATH: Path = Path('players.json')
 
@@ -80,19 +80,6 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
         parser.add_argument(*cli_meta.names, **kwargs | cli_meta.kwargs)
 
     return parser
-
-@overload
-def comma_split[T](s: str, fn: Callable[[list[str]], T], *, strip: bool = False) -> T: ...
-@overload
-def comma_split[T](s: str, fn: None = None, *, strip: bool = False) -> list[str]: ...
-def comma_split[T](s: str, fn: Callable[[list[str]], T] | None = None, *, strip: bool = False) -> T | list[str]:
-    """Splits a string by commas and returns ``typ`` called with the split list.
-
-    If ``typ`` is ``None``, the list is returned. Strips whitespace if ``strip=True``.
-    """
-    split: list[str] = s.split(',') if not strip else [i.strip() for i in s.split(',')]
-
-    return split if not fn else fn(split)
 
 def format_inspect_data(table: Iterable[Iterable[object]], fmt: str | InspectFormat, headers: Sequence[str] = ()) \
     -> str:
