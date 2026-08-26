@@ -1,19 +1,16 @@
 """Command-line interface for positionpolling."""
 import sys
-from argparse import ArgumentParser, BooleanOptionalAction
+from argparse import ArgumentParser
 from importlib import import_module
 from pathlib import Path
-from types import UnionType
-from typing import Annotated, Any, Literal, Never, cast, get_args, get_origin
+from typing import Literal, Never
 
 from loguru import logger
 from pydantic import ValidationError
-from pydantic.fields import FieldInfo
 
 from positionpolling import __version__
 from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogLevel, console, setup_logger
 from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, RenderOpt
-from positionpolling.util import comma_split
 
 
 def abort(err: str | Exception, *, log: bool = True, markup: bool = True, status: int = 1) -> Never:
@@ -43,20 +40,9 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
             + ' settings. If a file named "render.json" exists in the current directory and this option was not used,'
             + ' it will be automatically used for this value.')
 
-    for name, fld in cast('dict[str, FieldInfo]', RenderOpt.model_fields).items():
-        kwargs: dict[str, Any] = {'dest': name, 'help': (fld.description or '').replace('%', '%%')}
-
-        typ = fld.annotation if get_origin(fld.annotation) not in [Annotated, UnionType] \
-            else get_args(fld.annotation)[0]
-
-        if typ is bool:
-            kwargs['action'] = BooleanOptionalAction
-        elif typ in [tuple, list]:
-            kwargs['type'] = comma_split
-
-        cli_meta: CliOpt = RenderOpt.cli_meta().get(name, CliOpt([f'--{name.replace('_', '-')}'], kwargs))
-
-        parser.add_argument(*cli_meta.names, **kwargs | cli_meta.kwargs)
+    for name in RenderOpt.model_fields:
+        cli_meta: CliOpt = RenderOpt.cli_meta()[name]
+        parser.add_argument(*cli_meta.names, **cli_meta.kwargs)
 
     return parser
 
