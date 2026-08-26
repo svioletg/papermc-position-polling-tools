@@ -44,7 +44,7 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
             + ' it will be automatically used for this value.')
 
     for name, fld in cast('dict[str, FieldInfo]', RenderOpt.model_fields).items():
-        kwargs: dict[str, Any] = {'dest': name, 'help': fld.description}
+        kwargs: dict[str, Any] = {'dest': name, 'help': (fld.description or '').replace('%', '%%')}
 
         typ = fld.annotation if get_origin(fld.annotation) not in [Annotated, UnionType] \
             else get_args(fld.annotation)[0]
@@ -96,7 +96,8 @@ main_parser.add_argument('--yes', '-y', action='store_true',
 
 subparsers = main_parser.add_subparsers(dest='action', required=False)
 
-parser_render = add_args_from_render_opt(subparsers.add_parser('render'))
+parser_render = subparsers.add_parser('render')
+add_args_from_render_opt(parser_render)
 
 parser_render_trail = ArgumentParser(add_help=False)
 parser_render_trail.add_argument('source', type=str,
