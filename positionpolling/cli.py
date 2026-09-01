@@ -1,7 +1,8 @@
 """Command-line interface for positionpolling."""
 import sys
+import time
 from argparse import ArgumentParser, BooleanOptionalAction
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from importlib import import_module
 from pathlib import Path
 from types import UnionType
@@ -12,7 +13,7 @@ from pydantic.fields import FieldInfo
 
 from positionpolling import __version__
 from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogLevel, console, setup_logger
-from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, RenderOpt
+from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, Entry, PlayerPositions, RenderOpt
 from positionpolling.util import try_next
 
 
@@ -121,8 +122,19 @@ render_subparsers = parser_render.add_subparsers(dest='render_type', required=Tr
 for k, v in render_arg_parsers.items():
     render_subparsers.add_parser(k, parents=[v])
 
+parser_inspect = subparsers.add_parser('inspect')
+parser_inspect.add_argument('--input', '-i', dest='source', type=str, required=True,
+    help='Path or URL to the SQL database to use.')
+
+inspect_subparsers = parser_inspect.add_subparsers(dest='inspect_action', required=True)
+parser_inspect_count = ArgumentParser(add_help=False)
+parser_inspect_count.add_argument('--player', type=str,
+    help='UUID of the player whose entries will be counted. Omit to count all entries.')
+
+inspect_subparsers.add_parser('count', parents=[parser_inspect_count])
+
 @logger.catch(onerror=lambda _: sys.exit(1))
-def main() -> int:  # noqa: D103
+def main() -> int:  # noqa: D103, PLR0915
     setup_logger('ERROR')
 
     # Parse args
@@ -168,6 +180,26 @@ def main() -> int:  # noqa: D103
         logger.debug(f'Log file: {log_file}')
 
     match args.action:
+        case 'inspect':
+            logger.info(f'Loading position data from: {args.source}')
+            ta = time.perf_counter()
+            data = PlayerPositions.from_sql(args.source)
+            logger.debug(f'Load took {time.perf_counter() - ta:.2f}s')
+            del ta
+
+            match args.inspect_action:
+                case 'count':
+                    player: str | None = args.player
+
+                    if player:
+                        entries: Sequence[Entry] = data.by_player.get(player, ()) if player else data.entries
+                        logger.info(f'Entries for player "{player}": {len(entries)}')
+                    else:
+                        logger.info(f'Total entries for {len(data.by_player)} player(s): {len(data.entries)}')
+
+                    return 0
+                case _:
+                    raise ValueError(f'Invalid inspect action: {args.inspect_action!r}')
         case 'render':
             render_json: Path | None = args.render_json
 
