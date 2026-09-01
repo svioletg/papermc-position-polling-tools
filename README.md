@@ -19,6 +19,7 @@ Documentation: <https://papermc-position-polling-tools.readthedocs.io/en/stable>
 - [Commands](#commands)
   - [Render options](#render-options)
   - [`render trail`](#render-trail)
+  - [`inspect count`](#inspect-count)
 
 ## Setup
 
@@ -131,3 +132,10 @@ automatically used if `--render-json` was not specified otherwise.
 ### `render trail`
 
 Example: `mcposlog render trail data.db -v trail.mp4`
+
+### `inspect count`
+
+Example: `mcposlog inspect -i data.db count --player 01234567-89ab-cdef-0123-456789abcdef`
+
+Shows how many rows of entries are present for a given player, or for all players if `--player` is
+not used.
