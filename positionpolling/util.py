@@ -91,6 +91,25 @@ def convert_range(value: float, r_from: tuple[float, float], r_to: tuple[float, 
 
     return ((r_to[1] + zero_dist_b) * pct) - zero_dist_b
 
+def dict_entries[K, V](d: Mapping[K, V], labels: tuple[str, str] = ('key', 'value')) -> list[dict[str, K | V]]:
+    """Transforms a key-value dictionary into a list of dictionaries with the keys and values as separate fields.
+
+    >>> d = {'a': 1, 'b': 2, 'c': 3}
+    >>> assert dict_entries(d) == [
+    ...     {'key': 'a', 'value': 1},
+    ...     {'key': 'b', 'value': 2},
+    ...     {'key': 'c', 'value': 3},
+    ... ]
+    >>> assert dict_entries(d, ('letter', 'number')) == [
+    ...     {'letter': 'a', 'number': 1},
+    ...     {'letter': 'b', 'number': 2},
+    ...     {'letter': 'c', 'number': 3},
+    ... ]
+    """
+    key, value = labels
+
+    return [{key:k, value:v} for k, v in d.items()]
+
 def expect[T](value: T | None, *exc_args: object) -> T:
     """Returns ``value`` if not ``None``, otherwise raises ``ValueError``."""
     if value is not None:
