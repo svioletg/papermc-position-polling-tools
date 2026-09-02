@@ -125,10 +125,11 @@ for k, v in render_arg_parsers.items():
 parser_inspect = subparsers.add_parser('inspect')
 parser_inspect.add_argument('--input', '-i', dest='source', type=str, required=True,
     help='Path or URL to the SQL database to use.')
+parser_inspect.add_argument('--format', '-f', type=str)
 
 inspect_subparsers = parser_inspect.add_subparsers(dest='inspect_action', required=True)
 parser_inspect_count = ArgumentParser(add_help=False)
-parser_inspect_count.add_argument('--player', type=str,
+parser_inspect_count.add_argument('--player', type=str, nargs='*', action='extend',
     help='UUID of the player whose entries will be counted. Omit to count all entries.')
 
 inspect_subparsers.add_parser('count', parents=[parser_inspect_count])
@@ -189,13 +190,23 @@ def main() -> int:  # noqa: D103, PLR0915
 
             match args.inspect_action:
                 case 'count':
-                    player: str | None = args.player
+                    players: list[str] | None = args.player
+                    table: dict[str, int] = {}
+                    total: int = 0
 
-                    if player:
-                        entries: Sequence[Entry] = data.by_player.get(player, ()) if player else data.entries
-                        logger.info(f'Entries for player "{player}": {len(entries)}')
-                    else:
-                        logger.info(f'Total entries for {len(data.by_player)} player(s): {len(data.entries)}')
+                    for player in players or data.by_player:
+                        count: int = len(data.by_player.get(player, ()))
+                        table[player] = count
+                        total += count
+
+                    out_str: str = tabulate(
+                        itertools.chain(table.items(), [SEPARATING_LINE, ('total', total)]),
+                        headers=('Player', 'Entries'),
+                        tablefmt='simple',
+                        numalign='left',
+                    )
+
+                    console.print(out_str)
 
                     return 0
                 case _:
