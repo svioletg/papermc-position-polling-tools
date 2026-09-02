@@ -17,8 +17,10 @@ Documentation: <https://papermc-position-polling-tools.readthedocs.io/en/stable>
 - [Library](#library)
 - [Configuration](#configuration)
 - [Commands](#commands)
+- [Commands: `render`](#commands-render)
   - [Render options](#render-options)
   - [`render trail`](#render-trail)
+- [Commands: `inspect`](#commands-inspect)
   - [`inspect count`](#inspect-count)
 
 ## Setup
@@ -113,6 +115,11 @@ be any of these values:
 - `CRITICAL`: The highest log level, currently unused. Setting your log level
   to this will result in no logs being printed whatsoever.
 
+## Commands: `render`
+
+`render` is the primary subcommand for this package, providing the ability to
+render position data into various formats.
+
 ### Render options
 
 Rendering options can be provided either with command-line options or from a
@@ -132,6 +139,11 @@ automatically used if `--render-json` was not specified otherwise.
 ### `render trail`
 
 Example: `mcposlog render trail data.db -v trail.mp4`
+
+## Commands: `inspect`
+
+`inspect` allows you to query certain aspects of position data, like printing
+how many entries are in a database for all or a given player.
 
 ### `inspect count`
 
