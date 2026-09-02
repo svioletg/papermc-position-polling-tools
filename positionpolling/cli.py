@@ -100,7 +100,7 @@ parser_render = subparsers.add_parser('render')
 add_args_from_render_opt(parser_render)
 
 parser_render_trail = ArgumentParser(add_help=False)
-parser_render_trail.add_argument('source', type=str,
+parser_render_trail.add_argument('--input', '-i', type=str, required=True,
     help='Path or URL to the SQL database to use.')
 parser_render_trail.add_argument('--out', '-o', type=Path, required=False,
     help='Where to save the rendered image.')

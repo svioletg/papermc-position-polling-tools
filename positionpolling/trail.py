@@ -226,7 +226,7 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:  # noqa: C901
 
     Returns an exit code.
     """
-    data = PlayerPositions.from_sql(args.source)
+    data = PlayerPositions.from_sql(args.input)
     player: str | None = args.player
     img_dest: Path | None = args.out and args.out.absolute()
     video_dest: Path | None = args.video and args.video.absolute()
