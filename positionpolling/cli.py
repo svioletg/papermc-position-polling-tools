@@ -140,7 +140,7 @@ def main() -> int:  # noqa: D103
     log_file: Path | Literal[False] = args.log_file
 
     # Start logging
-    _, (log_file_return) = setup_logger(
+    _, log_file_return = setup_logger(
         log_level,
         min(log_level, LogLevel.DEBUG),
         log_path=log_file or None,
