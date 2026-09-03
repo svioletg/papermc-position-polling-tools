@@ -86,14 +86,15 @@ def comma_split[T](s: str, fn: Callable[[list[str]], T] | None = None, *, strip:
 
     return split if not fn else fn(split)
 
-def format_inspect_data(table: Iterable[Iterable[object]], fmt: InspectFormat, headers: Sequence[str] = ()) -> str:
+def format_inspect_data(table: Iterable[Iterable[object]], fmt: str | InspectFormat, headers: Sequence[str] = ()) \
+    -> str:
     """Formats table data into an output string for the ``inspect`` command.
 
     When formatting as JSON, the tabular data will be transformed into a list of objects as such, with the values of
     ``headers`` being used for each object's keys:
 
     >>> data = [(1, 'Red'), (2, 'Green'), (3, 'Blue')]
-    >>> assert format_inspect_data(data, InspectFormat.JSON, headers=('number', 'color')) == '''
+    >>> assert format_inspect_data(data, 'json', headers=('number', 'color')) == '''
     ... [
     ...     {
     ...         "number": 1,
@@ -111,6 +112,8 @@ def format_inspect_data(table: Iterable[Iterable[object]], fmt: InspectFormat, h
     ... '''.strip()
 
     """
+    fmt = InspectFormat(fmt)
+
     if fmt == InspectFormat.TABLE:
         out_str = tabulate(
             table,
