@@ -1,8 +1,11 @@
 """Command-line interface for positionpolling."""
+import json
 import sys
 import time
 from argparse import ArgumentParser, BooleanOptionalAction
-from collections.abc import Callable, Sequence
+from collections import OrderedDict
+from collections.abc import Callable, Iterable, Sequence
+from enum import StrEnum
 from importlib import import_module
 from pathlib import Path
 from types import UnionType
@@ -10,12 +13,20 @@ from typing import Annotated, Any, Literal, Never, cast, get_args, get_origin, o
 
 from loguru import logger
 from pydantic.fields import FieldInfo
+from tabulate import tabulate
 
 from positionpolling import __version__
 from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogLevel, console, setup_logger
-from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, Entry, PlayerPositions, RenderOpt
+from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, PlayerPositions, RenderOpt
 from positionpolling.util import try_next
 
+
+class InspectFormat(StrEnum):
+    """Choices for the ``inspect`` command's ``--format`` option."""
+
+    CSV = 'csv'
+    JSON = 'json'
+    TABLE = 'table'
 
 def abort(err: str | Exception, *, log: bool = True, markup: bool = True, status: int = 1) -> Never:
     """Print an error message or exception without a full traceback and exit with code ``status``.
@@ -75,6 +86,48 @@ def comma_split[T](s: str, fn: Callable[[list[str]], T] | None = None, *, strip:
 
     return split if not fn else fn(split)
 
+def format_inspect_data(table: Iterable[Iterable[object]], fmt: InspectFormat, headers: Sequence[str] = ()) -> str:
+    """Formats table data into an output string for the ``inspect`` command.
+
+    When formatting as JSON, the tabular data will be transformed into a list of objects as such, with the values of
+    ``headers`` being used for each object's keys:
+
+    >>> data = [(1, 'Red'), (2, 'Green'), (3, 'Blue')]
+    >>> assert format_inspect_data(data, InspectFormat.JSON, headers=('number', 'color')) == '''
+    ... [
+    ...     {
+    ...         "number": 1,
+    ...         "color": "Red"
+    ...     },
+    ...     {
+    ...         "number": 2,
+    ...         "color": "Green"
+    ...     },
+    ...     {
+    ...         "number": 3,
+    ...         "color": "Blue"
+    ...     }
+    ... ]
+    ... '''.strip()
+
+    """
+    if fmt == InspectFormat.TABLE:
+        out_str = tabulate(
+            table,
+            headers=headers,
+            tablefmt='plain',
+            numalign='left',
+        )
+    elif fmt == InspectFormat.CSV:
+        out_str = '\n'.join(
+            ','.join(map(str, row))
+            for row in (headers, *table)
+        )
+    elif fmt == InspectFormat.JSON:
+        out_str = json.dumps([OrderedDict(zip(headers, row, strict=True)) for row in table], indent=4)
+
+    return out_str
+
 main_parser = ArgumentParser()
 main_parser.add_argument('--version', '-V', action='store_true',
     help='Shows the installed version and exits.')
@@ -125,17 +178,22 @@ for k, v in render_arg_parsers.items():
 parser_inspect = subparsers.add_parser('inspect')
 parser_inspect.add_argument('--input', '-i', dest='source', type=str, required=True,
     help='Path or URL to the SQL database to use.')
-parser_inspect.add_argument('--format', '-f', type=str)
+parser_inspect.add_argument('--format', '-f', dest='inspect_out_format', type=str.lower,
+    choices=[i.value for i in InspectFormat], default=InspectFormat.TABLE,
+    help='How to format the output data.')
 
 inspect_subparsers = parser_inspect.add_subparsers(dest='inspect_action', required=True)
 parser_inspect_count = ArgumentParser(add_help=False)
 parser_inspect_count.add_argument('--player', type=str, nargs='*', action='extend',
     help='UUID of the player whose entries will be counted. Omit to count all entries.')
+parser_inspect_count.add_argument('--total', dest='count_total', action=BooleanOptionalAction, default=True,
+    help='Whether to include a sum total of every specified players\' entry counts, included as an additional "total"'
+        + ' player.')
 
 inspect_subparsers.add_parser('count', parents=[parser_inspect_count])
 
 @logger.catch(onerror=lambda _: sys.exit(1))
-def main() -> int:  # noqa: D103, PLR0915
+def main() -> int:  # noqa: C901, D103, PLR0915
     setup_logger('ERROR')
 
     # Parse args
@@ -188,10 +246,12 @@ def main() -> int:  # noqa: D103, PLR0915
             logger.debug(f'Load took {time.perf_counter() - ta:.2f}s')
             del ta
 
+            out_format = InspectFormat(args.inspect_out_format)
+
             match args.inspect_action:
                 case 'count':
                     players: list[str] | None = args.player
-                    table: dict[str, int] = {}
+                    table: OrderedDict[str, int] = OrderedDict()
                     total: int = 0
 
                     for player in players or data.by_player:
@@ -199,14 +259,14 @@ def main() -> int:  # noqa: D103, PLR0915
                         table[player] = count
                         total += count
 
-                    out_str: str = tabulate(
-                        itertools.chain(table.items(), [SEPARATING_LINE, ('total', total)]),
-                        headers=('Player', 'Entries'),
-                        tablefmt='simple',
-                        numalign='left',
-                    )
+                    if args.count_total:
+                        table['total'] = total
 
-                    console.print(out_str)
+                    out_str: str = format_inspect_data(table.items(), out_format, ('Player', 'Entries'))
+
+                    # Use plain print instead of the rich console, don't want anything interfering with output meant to
+                    # be parseable
+                    print(out_str)  # noqa: T201
 
                     return 0
                 case _:
