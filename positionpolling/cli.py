@@ -189,6 +189,11 @@ parser_inspect_count.add_argument('--player', type=str, nargs='*', action='exten
 parser_inspect_count.add_argument('--total', dest='count_total', action=BooleanOptionalAction, default=True,
     help='Whether to include a sum total of every specified players\' entry counts, included as an additional "total"'
         + ' player.')
+parser_inspect_count.add_argument('--sort', '-s', dest='count_sort', type=lambda s: s.split(':', maxsplit=1),
+    metavar='{entries,player}', default='entries:d',
+    help='How to sort the resulting player entry counts. "player" sorts by player names in alphabetical order,'
+        + ' "entries" sorts by entry count (most entries first). Sorted in ascending order by default; add ":d" to the'
+        + ' end of the value to sort descending.')
 
 inspect_subparsers.add_parser('count', parents=[parser_inspect_count])
 
@@ -258,6 +263,17 @@ def main() -> int:  # noqa: C901, D103, PLR0915
                         count: int = len(data.by_player.get(player, ()))
                         table[player] = count
                         total += count
+
+                    sorting: str = args.count_sort[0]
+                    sort_reverse: bool = args.count_sort[1] == 'd' if len(args.count_sort) > 1 else False
+
+                    match sorting:
+                        case 'player':
+                            table = OrderedDict(sorted(table.items(), key=lambda kv: kv[0], reverse=sort_reverse))
+                        case 'entries':
+                            table = OrderedDict(sorted(table.items(), key=lambda kv: kv[1], reverse=sort_reverse))
+                        case _:
+                            raise ValueError(f'Invalid sort choice: {sorting!r}')
 
                     if args.count_total:
                         table['total'] = total
