@@ -256,12 +256,12 @@ def main() -> int:  # noqa: C901, D103, PLR0915
             match args.inspect_action:
                 case 'count':
                     players: list[str] | None = args.player
-                    table: OrderedDict[str, int] = OrderedDict()
+                    table: list[tuple[str, int]] = []
                     total: int = 0
 
                     for player in players or data.by_player:
                         count: int = len(data.by_player.get(player, ()))
-                        table[player] = count
+                        table.append((player, count))
                         total += count
 
                     sorting: str = args.count_sort[0]
@@ -269,16 +269,16 @@ def main() -> int:  # noqa: C901, D103, PLR0915
 
                     match sorting:
                         case 'player':
-                            table = OrderedDict(sorted(table.items(), key=lambda kv: kv[0], reverse=sort_reverse))
+                            table.sort(key=lambda kv: kv[0], reverse=sort_reverse)
                         case 'entries':
-                            table = OrderedDict(sorted(table.items(), key=lambda kv: kv[1], reverse=sort_reverse))
+                            table.sort(key=lambda kv: kv[1], reverse=sort_reverse)
                         case _:
                             raise ValueError(f'Invalid sort choice: {sorting!r}')
 
                     if args.count_total:
-                        table['total'] = total
+                        table.append(('total', total))
 
-                    out_str: str = format_inspect_data(table.items(), out_format, ('Player', 'Entries'))
+                    out_str: str = format_inspect_data(table, out_format, ('Player', 'Entries'))
 
                     # Use plain print instead of the rich console, don't want anything interfering with output meant to
                     # be parseable
