@@ -178,6 +178,8 @@ for k, v in render_arg_parsers.items():
 parser_inspect = subparsers.add_parser('inspect')
 parser_inspect.add_argument('--input', '-i', dest='source', type=str, required=True,
     help='Path or URL to the SQL database to use.')
+parser_inspect.add_argument('--out', '-o', dest='inspect_out', type=str,
+    help='File path to save output to. If omitted, output is printed to screen and not saved to disk.')
 parser_inspect.add_argument('--format', '-f', dest='inspect_out_format', type=str.lower,
     choices=[i.value for i in InspectFormat], default=InspectFormat.TABLE,
     help='How to format the output data.')
@@ -280,9 +282,14 @@ def main() -> int:  # noqa: C901, D103, PLR0915
 
                     out_str: str = format_inspect_data(table, out_format, ('Player', 'Entries'))
 
-                    # Use plain print instead of the rich console, don't want anything interfering with output meant to
-                    # be parseable
-                    print(out_str)  # noqa: T201
+                    if args.inspect_out:
+                        dest: Path = Path(args.inspect_out).absolute()
+                        logger.info(f'Saving output to: {dest}')
+                        dest.write_text(out_str, 'utf-8')
+                    else:
+                        # Use plain print instead of the rich console, don't want anything interfering with output meant
+                        # to be parseable
+                        print(out_str)  # noqa: T201
 
                     return 0
                 case _:
