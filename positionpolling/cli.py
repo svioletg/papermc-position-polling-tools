@@ -250,7 +250,7 @@ def main() -> int:  # noqa: C901, D103, PLR0915
             logger.info(f'Loading position data from: {args.source}')
             ta = time.perf_counter()
             data = PlayerPositions.from_sql(args.source)
-            logger.debug(f'Load took {time.perf_counter() - ta:.2f}s')
+            logger.debug(f'Load took {time.perf_counter() - ta:.8f}s')
             del ta
 
             out_format = InspectFormat(args.inspect_out_format)
