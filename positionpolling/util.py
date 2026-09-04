@@ -162,6 +162,24 @@ def fix_opencv_video(src: str | Path, dest: str | Path, *, same_file_ok: bool = 
 
     return Ok(dest)
 
+def flatten(it: Iterable) -> list:
+    """Flattens a multi-dimensional iterable into a flat list."""
+    flat: list = []
+
+    def _flatten(obj: object):  # noqa: ANN202
+        if isinstance(obj, Iterable):
+            for i in obj:
+                if isinstance(i, Iterable):
+                    _flatten(i)
+                else:
+                    flat.append(i)
+        else:
+            flat.append(obj)
+
+    _flatten(it)
+
+    return flat
+
 # modified from:
 # https://github.com/thearchcoder/Hueforge/blob/4942bcfcfeef26f8065bbebe672dec62dabe877e/hueforge/algorithms/other.py#L39-L50
 def gradient(c1: tuple[int, int, int, int], c2: tuple[int, int, int, int], steps: int) \
