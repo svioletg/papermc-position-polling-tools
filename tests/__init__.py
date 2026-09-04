@@ -20,6 +20,8 @@ TESTS_DATA_TMP_DIR: Path = TESTS_DATA_DIR / 'tmp'
 TESTS_DATA_DIR.mkdir(exist_ok=True)
 TESTS_DATA_TMP_DIR.mkdir(exist_ok=True)
 
+UUID4_DUMMY: UUID = UUID('00000000-0000-0000-0000-000000000000')
+
 def gen_pos_logs(
         n: int,
         *,
