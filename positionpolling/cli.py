@@ -50,11 +50,6 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
 
     Returns the passed parser.
     """
-    parser.add_argument('--render-json', '-j', type=Path, metavar='PATH',
-        help='Path to a JSON file defining render options to use. Individual render options will override these'
-            + ' settings. If a file named "render.json" exists in the current directory and this option was not used,'
-            + ' it will be automatically used for this value.')
-
     for name, fld in cast('dict[str, FieldInfo]', RenderOpt.model_fields).items():
         kwargs: dict[str, Any] = {'dest': name, 'help': (fld.description or '').replace('%', '%%')}
 
@@ -154,6 +149,11 @@ main_parser.add_argument('--yes', '-y', action='store_true',
 subparsers = main_parser.add_subparsers(dest='action', required=False)
 
 parser_render = subparsers.add_parser('render')
+parser_render.add_argument('--render-json', '-j', type=Path, metavar='PATH',
+    help='Path to a JSON file defining render options to use. Individual render options will override these'
+        + ' settings. If a file named "render.json" exists in the current directory and this option was not used,'
+        + ' it will be automatically used for this value.')
+
 add_args_from_render_opt(parser_render)
 
 parser_render_trail = ArgumentParser(add_help=False)
