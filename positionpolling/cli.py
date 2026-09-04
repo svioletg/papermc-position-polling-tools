@@ -9,7 +9,7 @@ from enum import StrEnum
 from importlib import import_module
 from pathlib import Path
 from types import UnionType
-from typing import Annotated, Any, Literal, Never, cast, get_args, get_origin, overload
+from typing import Annotated, Any, Literal, Never, TypeAliasType, cast, get_args, get_origin, overload
 
 from loguru import logger
 from pydantic.fields import FieldInfo
@@ -53,13 +53,23 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
     for name, fld in cast('dict[str, FieldInfo]', RenderOpt.model_fields).items():
         kwargs: dict[str, Any] = {'dest': name, 'help': (fld.description or '').replace('%', '%%')}
 
-        typ = fld.annotation if get_origin(fld.annotation) not in [Annotated, UnionType] \
-            else get_args(fld.annotation)[0]
+        typ = fld.annotation
+        while t_args := get_args(typ):
+            if t_args:
+                t_origin = get_origin(typ)
+                # Making an assumption here that we only ever care about the first argument of a union
+                # RenderOpt really shouldn't have any union types that aren't T | None, so this is fine
+                typ = t_args[0] if t_origin in [Annotated, UnionType] else t_origin
+
+            if isinstance(typ, TypeAliasType):
+                typ = typ.__value__
 
         if typ is bool:
             kwargs['action'] = BooleanOptionalAction
         elif typ in [tuple, list]:
             kwargs['type'] = comma_split
+        else:
+            kwargs['type'] = typ
 
         cli_meta: CliOpt = try_next(i for i in fld.metadata if isinstance(i, CliOpt)) \
             or CliOpt([f'--{name.replace('_', '-')}'], kwargs)
