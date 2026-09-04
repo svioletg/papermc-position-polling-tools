@@ -43,6 +43,7 @@ def draw_pos_line(
         **line_kwargs,
     )
 
+# TODO(svioletg): #6 Support multiple player trails
 def trail(  # noqa: C901, PLR0915
         data: PlayerPositions,
         player: str | None = None,
@@ -227,14 +228,15 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:  # noqa: C901
     Returns an exit code.
     """
     data = PlayerPositions.from_sql(args.input)
-    player: str | None = args.player
+    players: list[str] | None = args.player
     img_dest: Path | None = args.out and args.out.absolute()
     video_dest: Path | None = args.video and args.video.absolute()
     desat_per_frame: float = args.desat_per_frame
     auto_confirm: bool = args.yes
 
-    if player and (player not in data.by_player):
-        abort(f'Found no entries in the given data for player: {player}')
+    for p in players or []:
+        if p not in data.by_player:
+            abort(f'Found no entries in the given data for player: {p}')
 
     if img_dest is video_dest is None:
         abort('One or both of "--out" or "--video" must be specified.')
@@ -253,7 +255,8 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:  # noqa: C901
 
     result = trail(
         data,
-        player,
+        # TODO(svioletg): #6 Support multiple player trails
+        players[0] if players else None,
         desat_per_frame=desat_per_frame,
         video_path=video_dest,
         opt=render_opt,

@@ -173,8 +173,8 @@ parser_render_trail.add_argument('--out', '-o', type=Path, required=False,
     help='Where to save the rendered image.')
 parser_render_trail.add_argument('--video', '-v', type=Path, required=False,
     help='Whether to render a video, and if so, where to save it to. Video rendering is skipped.')
-parser_render_trail.add_argument('--player', type=str,
-    help='UUID of the player whose data should be used.')
+parser_render_trail.add_argument('--player', type=str, nargs='*', action='extend',
+    help='One or more player UUIDs whose data should be used.')
 parser_render_trail.add_argument('--desat-per-frame', type=float, default=0.95,
     help='An amount that each previous frame of the video should be desaturated by, creating a fading effect as the'
         + ' trail continues. , 0 makes the previous frame fully greyscale.')
