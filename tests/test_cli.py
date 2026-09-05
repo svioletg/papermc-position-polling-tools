@@ -129,3 +129,60 @@ def test_parse_render_trail(args: list[str], parsed_expected: dict[str, Any]) ->
 
     for name, value in parsed_expected.items():
         assert getattr(parsed, name) == value
+
+INSPECT_PARSER_DEFAULTS: dict[str, Any] = {
+    'source': ...,
+    'inspect_out': None,
+    'inspect_out_format': cli.InspectFormat.TABLE,
+    'inspect_action': ...,
+}
+
+@pytest.mark.parametrize(('args', 'parsed_expected'),
+    [
+        (
+            ['--input', 'data.db', 'count'],
+            {
+                'source': 'data.db',
+                'inspect_action': 'count',
+            },
+        ),
+        (
+            ['--input', 'data.db', '--out', 'results.txt', 'count'],
+            {
+                'source': 'data.db',
+                'inspect_action': 'count',
+                'inspect_out': Path('results.txt'),
+            },
+        ),
+        (
+            ['--input', 'data.db', '--format', 'csv', 'count'],
+            {
+                'source': 'data.db',
+                'inspect_action': 'count',
+                'inspect_out_format': cli.InspectFormat.CSV,
+            },
+        ),
+        (
+            ['--input', 'data.db', '--format', 'json', 'count'],
+            {
+                'source': 'data.db',
+                'inspect_action': 'count',
+                'inspect_out_format': cli.InspectFormat.JSON,
+            },
+        ),
+        (
+            ['--input', 'data.db', '--format', 'table', 'count'],
+            {
+                'source': 'data.db',
+                'inspect_action': 'count',
+                'inspect_out_format': cli.InspectFormat.TABLE,
+            },
+        ),
+    ],
+)
+def test_parse_inspect(args: list[str], parsed_expected: dict[str, Any]) -> None:
+    parsed = cli.parser_inspect.parse_args(args)
+    parsed_expected = INSPECT_PARSER_DEFAULTS | parsed_expected
+
+    for name, value in parsed_expected.items():
+        assert getattr(parsed, name) == value
