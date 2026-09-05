@@ -213,11 +213,15 @@ parser_inspect_count.add_argument('--sort', '-s', dest='count_sort', type=lambda
 inspect_subparsers.add_parser('count', parents=[parser_inspect_count])
 
 @logger.catch(onerror=lambda _: sys.exit(1))
-def main() -> int:  # noqa: C901, D103, PLR0915
+def main(argv: list[str] | None = None) -> int:  # noqa: C901, D103, PLR0915
     setup_logger('ERROR')
 
+    # Check None explicitly since an empty list is valid to use
+    # Omit the command name since we're not using it and so usage of sys.argv vs. a passed list will be consistent
+    argv = sys.argv[1:] if argv is None else argv
+
     # Parse args
-    args = main_parser.parse_args()
+    args = main_parser.parse_args(argv)
     no_color: bool = args.no_color
 
     console.no_color = no_color or NO_COLOR
@@ -238,11 +242,11 @@ def main() -> int:  # noqa: C901, D103, PLR0915
         no_color=no_color or NO_COLOR,
     )
 
-    logger.trace(f'raw args: {sys.argv}')
+    logger.trace(f'raw args: {argv}')
     logger.trace(f'parsed args: {args}')
 
-    if (len(sys.argv) == 1) or (not args.action):
-        if len(sys.argv) > 1:
+    if (len(argv) == 0) or (not args.action):
+        if len(argv) > 0:
             # If the command was invoked with no arguments or options at all, just show the help message and skip this
             console.print(f'[err]Missing an action, must choose one of: {', '.join(subparsers.choices)}[/]')
 
