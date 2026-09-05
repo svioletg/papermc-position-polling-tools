@@ -191,7 +191,7 @@ for k, v in render_arg_parsers.items():
 parser_inspect = subparsers.add_parser('inspect')
 parser_inspect.add_argument('--input', '-i', dest='source', type=str, required=True,
     help='Path or URL to the SQL database to use.')
-parser_inspect.add_argument('--out', '-o', dest='inspect_out', type=str,
+parser_inspect.add_argument('--out', '-o', dest='inspect_out', type=Path,
     help='File path to save output to. If omitted, output is printed to screen and not saved to disk.')
 parser_inspect.add_argument('--format', '-f', dest='inspect_out_format', type=str.lower,
     choices=[i.value for i in InspectFormat], default=InspectFormat.TABLE,
