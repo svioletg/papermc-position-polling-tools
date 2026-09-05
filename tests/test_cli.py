@@ -7,7 +7,7 @@ from uuid import uuid4
 import pytest
 from pydantic import BaseModel
 
-from positionpolling import cli
+from positionpolling import __version__, cli
 from positionpolling.const import DEFAULT_LOGS_DIR
 from positionpolling.models import CliOpt
 
@@ -230,3 +230,10 @@ def test_parse_inspect_count(args: list[str], parsed_expected: dict[str, Any]) -
 
     for name, value in parsed_expected.items():
         assert getattr(parsed, name) == value
+
+def test_main_show_version(capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(['--version']) == 0
+    assert capsys.readouterr().out == f'{__version__}\n'
+
+    assert cli.main(['-V']) == 0
+    assert capsys.readouterr().out == f'{__version__}\n'
