@@ -237,3 +237,11 @@ def test_main_show_version(capsys: pytest.CaptureFixture[str]) -> None:
 
     assert cli.main(['-V']) == 0
     assert capsys.readouterr().out == f'{__version__}\n'
+
+def test_main_no_args(capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main([]) == 2  # noqa: PLR2004
+    assert capsys.readouterr().out.startswith('usage:')
+
+def test_main_missing_action(capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(['--yes']) == 2  # noqa: PLR2004
+    assert capsys.readouterr().out.startswith('Missing an action')
