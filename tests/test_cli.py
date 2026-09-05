@@ -186,3 +186,47 @@ def test_parse_inspect(args: list[str], parsed_expected: dict[str, Any]) -> None
 
     for name, value in parsed_expected.items():
         assert getattr(parsed, name) == value
+
+INSPECT_COUNT_PARSER_DEFAULTS: dict[str, Any] = {
+    'player': None,
+    'count_total': True,
+    'count_sort': ['entries', 'd'],
+}
+
+@pytest.mark.parametrize(('args', 'parsed_expected'),
+    [
+        ([], {}),
+        (
+            ['--player', PLAYERS[0]],
+            {
+                'player': [PLAYERS[0]],
+            },
+        ),
+        # Test multiple players given to single option
+        (
+            ['--player', *PLAYERS],
+            {
+                'player': PLAYERS,
+            },
+        ),
+        # Test multiple players given as separate options
+        (
+            [i for p in PLAYERS for i in ('--player', p)],
+            {
+                'player': PLAYERS,
+            },
+        ),
+        (['--total'], {'count_total': True}),
+        (['--no-total'], {'count_total': False}),
+        (['--sort', 'entries'], {'count_sort': ['entries']}),
+        (['--sort', 'entries:d'], {'count_sort': ['entries', 'd']}),
+        (['--sort', 'player'], {'count_sort': ['player']}),
+        (['--sort', 'player:d'], {'count_sort': ['player', 'd']}),
+    ],
+)
+def test_parse_inspect_count(args: list[str], parsed_expected: dict[str, Any]) -> None:
+    parsed = cli.parser_inspect_count.parse_args(args)
+    parsed_expected = INSPECT_COUNT_PARSER_DEFAULTS | parsed_expected
+
+    for name, value in parsed_expected.items():
+        assert getattr(parsed, name) == value
