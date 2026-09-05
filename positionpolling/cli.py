@@ -241,16 +241,14 @@ def main() -> int:  # noqa: C901, D103, PLR0915
     logger.trace(f'raw args: {sys.argv}')
     logger.trace(f'parsed args: {args}')
 
-    if len(sys.argv) == 1:
+    if (len(sys.argv) == 1) or (not args.action):
+        if len(sys.argv) > 1:
+            # If the command was invoked with no arguments or options at all, just show the help message and skip this
+            console.print(f'[err]Missing an action, must choose one of: {', '.join(subparsers.choices)}[/]')
+
         main_parser.print_help()
 
-        return 0
-
-    if not args.action:
-        abort(
-            f'[warn]Missing action. Run "{Path(sys.argv[0]).name} --help" to see a list of options.[/]',
-            markup=False,
-        )
+        return 2
 
     logger.info(f'{PACKAGE_ROOT.name} v{__version__}')
     logger.debug(f'stdout log level is {log_level.name}')
