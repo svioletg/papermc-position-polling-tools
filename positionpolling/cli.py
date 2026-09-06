@@ -4,12 +4,13 @@ import sys
 import time
 from argparse import ArgumentParser, BooleanOptionalAction
 from collections import OrderedDict
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from enum import StrEnum
 from importlib import import_module
 from pathlib import Path
 from types import UnionType
 from typing import Annotated, Any, Literal, Never, TypeAliasType, cast, get_args, get_origin, overload
+from uuid import UUID
 
 from loguru import logger
 from pydantic.fields import FieldInfo
@@ -18,8 +19,9 @@ from tabulate import tabulate
 from positionpolling import __version__
 from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogLevel, console, setup_logger
 from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, PlayerPositions, RenderOpt
-from positionpolling.util import try_next
+from positionpolling.util import parse_players, try_next
 
+DEFAULT_PLAYER_MAP_PATH: Path = Path('players.json')
 
 class InspectFormat(StrEnum):
     """Choices for the ``inspect`` command's ``--format`` option."""
@@ -136,6 +138,21 @@ def format_inspect_data(table: Iterable[Iterable[object]], fmt: str | InspectFor
 
     return out_str
 
+def parse_players_or_abort(players: list[str], player_map: Mapping[str, str | UUID]) -> set[str]:
+    """Returns a set of player UUIDs from a list of names or UUIDs using the given map, aborting for missing keys."""
+    missing_players: list[str] = []
+    # Make this a set to ignore possible duplicates if two keys point to the same UUID
+    parsed_players: set[str] = set(parse_players(
+        players,
+        player_map,
+        missing=missing_players.append,
+    ))
+    if missing_players:
+        abort('Specified player(s) were not found in the player map and are not UUIDs: '
+            + ', '.join(missing_players))
+
+    return parsed_players
+
 main_parser = ArgumentParser()
 main_parser.add_argument('--version', '-V', action='store_true',
     help='Shows the installed version and exits.')
@@ -155,6 +172,11 @@ main_parser.add_argument('--no-color', action='store_true',
     help='Disables colored terminal output. This overrides the value set by MCPOSLOG_NO_COLOR.')
 main_parser.add_argument('--yes', '-y', action='store_true',
     help='Skips confirmation prompts.')
+main_parser.add_argument('--player-map', type=Path, metavar='PATH',
+    help='Path to a JSON file mapping player names to UUIDs, allowing those names to be used for --player option'
+        + ' values instead of full UUIDs. Any values given to --player that are not in the UUID4 format are assumed to'
+        + ' be keys to use for this map. If a file named "players.json" exists in the current directory and this'
+        + ' option was not used, it will be automatically used for this value.')
 
 subparsers = main_parser.add_subparsers(dest='action', required=False)
 
@@ -260,6 +282,23 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, D103, PLR0915
         log_file = log_file_return[1]
         logger.debug(f'Log file: {log_file}')
 
+    # Get player name -> UUID map
+    player_map_path: Path | None = None
+
+    if args.player_map:
+        if not args.player_map.is_file():
+            abort(f'--player-map: not a file or does not exist: {args.player_map}')
+        player_map_path = args.player_map
+        logger.info(f'Using player map: {player_map_path}')
+    elif DEFAULT_PLAYER_MAP_PATH.is_file():
+        player_map_path = DEFAULT_PLAYER_MAP_PATH
+        logger.info(f'Using player map: {player_map_path}')
+
+    player_map: dict[str, UUID] = {
+        k:UUID(v)
+        for k, v in json.loads(player_map_path.read_text('utf-8')).items()
+    } if player_map_path else {}
+
     match args.action:
         case 'inspect':
             logger.info(f'Loading position data from: {args.source}')
@@ -272,7 +311,8 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, D103, PLR0915
 
             match args.inspect_action:
                 case 'count':
-                    players: list[str] | None = args.player
+                    players: set[str] = parse_players_or_abort(args.player or [], player_map)
+
                     table: list[tuple[str, int]] = []
                     total: int = 0
 
@@ -330,6 +370,9 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, D103, PLR0915
             render_modpath: str = f'{PACKAGE_ROOT.name}.{render_type}'
             logger.debug(f'Importing render module for "{render_type}" using path {render_modpath}')
             render_module = import_module(render_modpath)
+
+            if args.player is not None:
+                args.player = list(parse_players_or_abort(args.player or [], player_map))
 
             return render_module.cli(render_opt, args)
         case _:
