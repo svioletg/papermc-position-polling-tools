@@ -75,6 +75,9 @@ Y_RANGE: dict[str, tuple[int, int]] = {
 
 Y_HUE_RANGE = (0, 300)
 
+UUID4_REGEX: re.Pattern[str] = re.compile(r'[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}')
+"""Matches the UUID4 format with or without separating hyphens."""
+
 class ConsoleHighlighter(Highlighter):
     """Custom highlighter class for the ``rich`` console."""
 
