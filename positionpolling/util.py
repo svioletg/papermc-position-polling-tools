@@ -6,10 +6,13 @@ from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Se
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, overload
+from uuid import UUID
 
 from geometry import Grid2
 from loguru import logger
 from maybetype import Err, Ok, Result
+
+from positionpolling.const import UUID4_REGEX
 
 if TYPE_CHECKING:
     from positionpolling.models import Entry
@@ -304,6 +307,42 @@ def log_progress(
         + (f' ({completed:>{total_width}}/{total})' if show_count else '')
         + ' complete',
     )
+
+def parse_players(
+        players: list[str | UUID],
+        player_map: Mapping[str, str | UUID],
+        missing: Callable[[str], Any] | Literal['pass'] | None = None,
+    ) -> list[str]:
+    """Returns a list of player UUIDs using ``player_map`` to look up non-UUIDs in ``players``.
+
+    Values of ``players`` that are valid UUIDs (matching :data:`const.UUID4_REGEX`) are added to the returned list
+    as-is, otherwise they are used as a key for ``player_map`` and the resulting value is used.
+
+    :param missing: How to handle a value in ``players`` which is not a UUID and does not exist in ``player_map``. If
+        ``None`` (default), :class:`KeyError` is raised. ``'pass'`` skips the value silently. If given a callable, it
+        is called with the key in question as the sole argument.
+    """
+    parsed_players: list[str] = []
+
+    for player in players:
+        if isinstance(player, UUID):
+            parsed_players.append(str(player))
+            continue
+
+        try:
+            parsed_players.append(player if UUID4_REGEX.match(player) else str(player_map[player]))
+        except KeyError:
+            if missing is None:
+                raise
+
+            if missing == 'pass':
+                pass
+            elif callable(missing):
+                missing(player)
+            else:
+                raise ValueError(f"'missing' parameter not None, 'pass', or a callable object: {missing!r}")  # noqa: B904
+
+    return parsed_players
 
 def require_ffmpeg() -> str:
     """Returns the binary path for FFmpeg or raises :class:`FileNotFoundError` if it could not be found."""
