@@ -9,6 +9,7 @@ tmp/
 *.ipynb
 *.db
 *.db.*
+!tests/data/*.db
 .env
 env.py
 render.json
