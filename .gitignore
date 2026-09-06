@@ -13,4 +13,5 @@ tmp/
 .env
 env.py
 render.json
+players.json
 *.log
