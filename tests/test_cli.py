@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from positionpolling import __version__, cli
 from positionpolling.const import DEFAULT_LOGS_DIR
 from positionpolling.models import CliOpt
+from tests import TESTS_DATA_DIR
 
 PLAYERS: list[str] = [str(uuid4()) for _ in range(10)]
 
@@ -245,3 +246,19 @@ def test_main_no_args(capsys: pytest.CaptureFixture[str]) -> None:
 def test_main_missing_action(capsys: pytest.CaptureFixture[str]) -> None:
     assert cli.main(['--yes']) == 2  # noqa: PLR2004
     assert capsys.readouterr().out.startswith('Missing an action')
+
+def test_inspect_count_default(capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(['-l', 'warning', 'inspect', '-i', str(TESTS_DATA_DIR / 'data.db'), 'count']) == 0
+    assert capsys.readouterr().out == (TESTS_DATA_DIR / 'data-count.txt').read_text('utf-8')
+
+def test_inspect_count_csv(capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(['-l', 'warning', 'inspect', '-i', str(TESTS_DATA_DIR / 'data.db'), '-f', 'csv', 'count']) == 0
+    assert capsys.readouterr().out == (TESTS_DATA_DIR / 'data-count.csv').read_text('utf-8')
+
+def test_inspect_count_json(capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(['-l', 'warning', 'inspect', '-i', str(TESTS_DATA_DIR / 'data.db'), '-f', 'json', 'count']) == 0
+    assert capsys.readouterr().out == (TESTS_DATA_DIR / 'data-count.json').read_text('utf-8')
+
+def test_inspect_count_table(capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(['-l', 'warning', 'inspect', '-i', str(TESTS_DATA_DIR / 'data.db'), '-f', 'table', 'count']) == 0
+    assert capsys.readouterr().out == (TESTS_DATA_DIR / 'data-count.txt').read_text('utf-8')
