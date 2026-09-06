@@ -309,7 +309,7 @@ def log_progress(
     )
 
 def parse_players(
-        players: list[str | UUID],
+        players: Sequence[str | UUID],
         player_map: Mapping[str, str | UUID],
         missing: Callable[[str], Any] | Literal['pass'] | None = None,
     ) -> list[str]:
