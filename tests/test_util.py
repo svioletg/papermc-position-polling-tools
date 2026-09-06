@@ -191,6 +191,52 @@ def test_log_progress_show_count(capsys: pytest.CaptureFixture[str]) -> None:
     captured = capsys.readouterr()
     assert '( 25/100)' not in captured.out.splitlines()[0], repr(captured.out)
 
+def test_parse_players() -> None:
+    player_map = {
+        'player1': '00000000-0000-0000-0000-000000000000',
+        'player2': '11111111-1111-1111-1111-111111111111',
+        'player3': '22222222-2222-2222-2222-222222222222',
+    }
+
+    assert util.parse_players([
+        'player1',
+        'player2',
+        'player3',
+        '33333333-3333-3333-3333-333333333333',
+    ], player_map) == [
+        '00000000-0000-0000-0000-000000000000',
+        '11111111-1111-1111-1111-111111111111',
+        '22222222-2222-2222-2222-222222222222',
+        '33333333-3333-3333-3333-333333333333',
+    ]
+
+    assert util.parse_players([
+        'player1',
+        'player2',
+        'player3',
+        'player4',
+    ], player_map, missing='pass') == [
+        '00000000-0000-0000-0000-000000000000',
+        '11111111-1111-1111-1111-111111111111',
+        '22222222-2222-2222-2222-222222222222',
+    ]
+
+    missing_func = Mock()
+
+    assert util.parse_players([
+        'player1',
+        'player2',
+        'player3',
+        'player4',
+    ], player_map, missing=missing_func) == [
+        '00000000-0000-0000-0000-000000000000',
+        '11111111-1111-1111-1111-111111111111',
+        '22222222-2222-2222-2222-222222222222',
+    ]
+
+    assert missing_func.call_count == 1
+    assert missing_func.call_args.args == ('player4',)
+
 @pytest.mark.parametrize(('hexcolor', 'expected'),
     [
         ('ff0000ff', (255, 0, 0, 255)),
