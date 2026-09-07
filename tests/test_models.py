@@ -125,6 +125,11 @@ def test_PlayerPositions_to_json() -> None:
     assert data.to_json() == [e.to_json() for e in entries]
     assert json.dumps(data.to_json())
 
+def test_PlayerPositions_to_rows() -> None:
+    data = models.PlayerPositions(entries=tuple(entries := gen_pos_logs(10)))
+
+    assert data.to_rows() == [e.to_row() for e in entries]
+
 def test_RenderOpt_ensure_frozen() -> None:
     opt = models.RenderOpt()
     with pytest.raises(ValidationError, match=r'.*Instance is frozen.*'):

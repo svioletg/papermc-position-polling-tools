@@ -210,6 +210,10 @@ class PlayerPositions:
         """Returns the player position entries of this object as a JSON-ready list of objects."""
         return [e.to_json() for e in self.entries]
 
+    def to_rows(self) -> list[EntryRowTuple]:
+        """Returns the player position entries of this object as a list of SQL-ready value tuples."""
+        return [e.to_row() for e in self.entries]
+
 class RenderOpt(BaseModel):
     """Visualization rendering options.
 
