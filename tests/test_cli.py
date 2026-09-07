@@ -1,6 +1,8 @@
 from argparse import Action, ArgumentParser, BooleanOptionalAction
+from functools import cache
 from pathlib import Path
-from typing import Annotated, Any
+from types import UnionType
+from typing import Annotated, Any, ClassVar, TypeAliasType, get_args, get_origin
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -10,17 +12,53 @@ from pydantic import BaseModel
 from positionpolling import __version__, cli
 from positionpolling.const import DEFAULT_LOGS_DIR
 from positionpolling.models import CliOpt
-from positionpolling.util import comma_split
+from positionpolling.util import comma_split, try_next
 from tests import TESTS_DATA_DIR
 
 PLAYERS: list[str] = [str(uuid4()) for _ in range(10)]
 
 def test_add_args_from_render_opt() -> None:
     class MockRenderOpt(BaseModel):
+        _cli_meta: ClassVar[dict[str, CliOpt] | None] = None
         number: int = 0
         flag: bool = False
         favorite_color: Annotated[str, CliOpt(['--color', '-c'])] = 'purple'
         number_list: list[float] = []
+
+        @classmethod
+        @cache
+        def cli_meta(cls) -> dict[str, CliOpt]:
+            """Dictionary of field names to their respective :class:`CliOpt` instances."""
+            if cls._cli_meta is None:
+                cls._cli_meta = {}
+                for name, fld in cls.model_fields.items():
+                    kwargs: dict[str, Any] = {'dest': name, 'help': (fld.description or '').replace('%', '%%')}
+
+                    typ = fld.annotation
+                    while t_args := get_args(typ):
+                        if t_args:
+                            t_origin = get_origin(typ)
+                            # Making an assumption here that we only ever care about the first argument of a union
+                            # RenderOpt really shouldn't have any union types that aren't T | None, so this is fine
+                            typ = t_args[0] if t_origin in [Annotated, UnionType] else t_origin
+
+                        if isinstance(typ, TypeAliasType):
+                            typ = typ.__value__
+
+                    if typ is bool:
+                        kwargs['action'] = BooleanOptionalAction
+                    elif typ in [tuple, list]:
+                        kwargs['type'] = comma_split
+                    else:
+                        kwargs['type'] = typ
+
+                    cli_meta: CliOpt | None = try_next(i for i in fld.metadata if isinstance(i, CliOpt))
+                    if cli_meta:
+                        cli_meta.kwargs = kwargs | cli_meta.kwargs
+
+                    cls._cli_meta[name] = cli_meta or CliOpt([f'--{name.replace('_', '-')}'], kwargs)
+
+            return cls._cli_meta
 
     parser = ArgumentParser()
 
