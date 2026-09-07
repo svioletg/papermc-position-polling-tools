@@ -217,7 +217,7 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, D103, PLR0915
     # Omit the command name since we're not using it and so usage of sys.argv vs. a passed list will be consistent
     argv = sys.argv[1:] if argv is None else argv
 
-    term_width: int = get_terminal_size().columns
+    term_width: int = get_terminal_size().columns if sys.stdout.isatty() else 80
 
     # Parse args
     args = main_parser.parse_args(argv)
