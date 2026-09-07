@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from positionpolling import __version__, cli
 from positionpolling.const import DEFAULT_LOGS_DIR
 from positionpolling.models import CliOpt
+from positionpolling.util import comma_split
 from tests import TESTS_DATA_DIR
 
 PLAYERS: list[str] = [str(uuid4()) for _ in range(10)]
@@ -42,7 +43,7 @@ def test_add_args_from_render_opt() -> None:
 
     opt_number_list = action_map['number_list']
     assert opt_number_list.option_strings == ['--number-list']
-    assert opt_number_list.type is cli.comma_split
+    assert opt_number_list.type is comma_split
 
 MAIN_PARSER_DEFAULTS: dict[str, Any] = {
     'version': False,
