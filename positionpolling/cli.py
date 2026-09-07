@@ -52,11 +52,6 @@ def add_args_from_render_opt(parser: ArgumentParser) -> ArgumentParser:
 
     Returns the passed parser.
     """
-    parser.add_argument('--render-json', '-j', type=Path, metavar='PATH',
-        help='Path to a JSON file defining render options to use. Individual render options will override these'
-            + ' settings. If a file named "render.json" exists in the current directory and this option was not used,'
-            + ' it will be automatically used for this value.')
-
     for name in RenderOpt.model_fields:
         cli_meta: CliOpt = RenderOpt.cli_meta()[name]
         parser.add_argument(*cli_meta.names, **cli_meta.kwargs)
