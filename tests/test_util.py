@@ -210,6 +210,14 @@ def test_parse_players() -> None:
         '33333333-3333-3333-3333-333333333333',
     ]
 
+    with pytest.raises(KeyError, match='player4'):
+        assert util.parse_players([
+            'player1',
+            'player2',
+            'player3',
+            'player4',
+        ], player_map)
+
     assert util.parse_players([
         'player1',
         'player2',
