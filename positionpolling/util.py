@@ -263,7 +263,7 @@ def group_by_attr[T, U](it: Iterable[T], name: str, typ: type[U] | None = None, 
 
     Useful for things like dataclasses or models.
 
-    :param typ: Can be used to cast the key type of the resulting dictionary, not used otherwise and
+    :param typ: Can be used to cast the key type of the resulting dictionary; not used at runtime.
     :param strict: If ``False``, when one of the items in ``it`` does not have an attribute ``name``, it will be
         skipped. Otherwise, ``AttributeError`` is raised.
     """
