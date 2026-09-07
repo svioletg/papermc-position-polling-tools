@@ -253,10 +253,7 @@ def group_by[K, V](it: Iterable[Mapping[K, V]], key: K, *, strict: bool = False)
         if (not strict) and (key not in i):
             continue
         val = i[key]
-        if val not in d:
-            d[val] = [i]
-        else:
-            d[val].append(i)
+        d.setdefault(val, []).append(i)
 
     return d
 
@@ -276,10 +273,7 @@ def group_by_attr[T, U](it: Iterable[T], name: str, typ: type[U] | None = None, 
         if (not strict) and (not hasattr(i, name)):
             continue
         val = getattr(i, name)
-        if val not in d:
-            d[val] = [i]
-        else:
-            d[val].append(i)
+        d.setdefault(val, []).append(i)
 
     return d
 
