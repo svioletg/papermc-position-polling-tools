@@ -143,6 +143,17 @@ class Entry:
             z=float(row[5]),
         )
 
+    def to_json(self) -> dict[str, Any]:
+        """Converts this instance to a JSON-ready dictionary."""
+        return {
+            'timestamp': self.timestamp,
+            'player_uuid': str(self.player_uuid),
+            'world': self.world.value,
+            'x': self.x,
+            'y': self.y,
+            'z': self.z,
+        }
+
     def to_row(self) -> EntryRowTuple:
         """Converts this instance to a tuple of SQL-ready values."""
         return (
@@ -194,6 +205,10 @@ class PlayerPositions:
                 grouped[player].append(entry)
 
         return grouped
+
+    def to_json(self) -> list[dict[str, Any]]:
+        """Returns the player position entries of this object as a JSON-ready list of objects."""
+        return [e.to_json() for e in self.entries]
 
 class RenderOpt(BaseModel):
     """Visualization rendering options.

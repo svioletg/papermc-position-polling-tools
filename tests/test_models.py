@@ -80,6 +80,20 @@ def test_Entry_magic_sub() -> None:
         -50,
     )
 
+def test_Entry_to_json() -> None:
+    entry = gen_pos_logs(1)[0]
+
+    assert entry.to_json() == {
+        'timestamp': entry.timestamp,
+        'player_uuid': str(entry.player_uuid),
+        'world': entry.world.value,
+        'x': entry.x,
+        'y': entry.y,
+        'z': entry.z,
+    }
+
+    assert json.dumps(entry.to_json())
+
 def test_PlayerPositions_from_sql() -> None:
     entries: tuple[models.Entry, ...] = tuple(gen_pos_logs(10))
     entries_values: list[models.EntryRowTuple] = [e.to_row() for e in entries]
@@ -104,6 +118,12 @@ def test_PlayerPositions_by_player() -> None:
     by_player = data.by_player
     for k, v in playerlogs.items():
         assert by_player[k] == v
+
+def test_PlayerPositions_to_json() -> None:
+    data = models.PlayerPositions(entries=tuple(entries := gen_pos_logs(10)))
+
+    assert data.to_json() == [e.to_json() for e in entries]
+    assert json.dumps(data.to_json())
 
 def test_RenderOpt_ensure_frozen() -> None:
     opt = models.RenderOpt()
