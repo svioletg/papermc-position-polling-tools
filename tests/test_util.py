@@ -101,6 +101,20 @@ def test_coerce[T](obj: object, typ: type[T], fn: Callable[[object], T] | None, 
 def test_convert_range(value: float, r_from: tuple[float, float], r_to: tuple[float, float], expected: float) -> None:
     assert util.convert_range(value, r_from, r_to) == expected
 
+@pytest.mark.parametrize(('value', 'expected', 'compare'),
+    [
+        ([1, 2, 3, 3, 3, 4, 5, 5, 6, 7, 8, 8, 8, 8, 8, 9], [1, 2, 3, 4, 5, 6, 7, 8, 9], None),
+        ([9, 8, 7, 7, 6, 5, 5, 5, 4, 3, 2, 2, 1], [9, 8, 7, 6, 5, 4, 3, 2, 1], None),
+        (
+            [(1, 'a'), (2, 'b'), (3, 'b'), (4, 'c'), (5, 'b'), (6, 'd')],
+            [(1, 'a'), (2, 'b'), (4, 'c'), (6, 'd')],
+            lambda a, b: a[1] == b[1],
+        ),
+    ],
+)
+def test_drop_duplicates[T](value: list[T], expected: list[T], compare: Callable[[T, T], bool] | None) -> None:
+    assert util.drop_duplicates(value, compare) == expected
+
 @pytest.mark.parametrize('nested',
     [
         ([1, 2, 3, 4, 5, 6, 7, 8, 9]),
