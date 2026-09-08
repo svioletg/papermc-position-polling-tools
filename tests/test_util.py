@@ -126,6 +126,13 @@ def test_drop_duplicates[T](value: list[T], expected: list[T], compare: Callable
 def test_flatten(nested: list) -> None:
     assert util.flatten(nested) == [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
+def test_flatten_str() -> None:
+    assert util.flatten('abc') == ['abc']
+    assert util.flatten(['abc']) == ['abc']
+    assert util.flatten(['abc'], iter_str=True) == ['a', 'b', 'c']
+    assert util.flatten(['abc', ['def']], iter_str=False) == ['abc', 'def']
+    assert util.flatten(['abc', ['def']], iter_str=True) == ['a', 'b', 'c', 'd', 'e', 'f']
+
 def test_gradient() -> None:
     c1 = (255,   0,   0, 255)
     c2 = (  0,   0, 255, 255)

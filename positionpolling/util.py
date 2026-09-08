@@ -5,7 +5,7 @@ import time
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Any, Literal, TypeGuard, overload
 from uuid import UUID
 
 from geometry import Grid2
@@ -205,17 +205,32 @@ def fix_opencv_video(src: str | Path, dest: str | Path, *, same_file_ok: bool = 
 
     return Ok(dest)
 
-def flatten(it: Iterable) -> list:
-    """Flattens a multi-dimensional iterable into a flat list."""
+def flatten(it: Iterable, *, iter_str: bool = False) -> list:
+    """Flattens a multi-dimensional iterable into a flat list.
+
+    :param iter_str: Whether to count strings as iterable, and thus flatten them into the list as well. If ``it`` is a
+        string, a list containing just that string is returned.
+    """
     flat: list = []
 
-    def _flatten(obj: object):  # noqa: ANN202
+    def can_flatten(obj: object) -> TypeGuard[Iterable]:
         if isinstance(obj, Iterable):
-            for i in obj:
-                if isinstance(i, Iterable):
-                    _flatten(i)
-                else:
-                    flat.append(i)
+            if iter_str:
+                return True
+            return not isinstance(obj, str)
+        return False
+
+    def _flatten(obj: object):  # noqa: ANN202
+        if can_flatten(obj):
+            if isinstance(obj, str) and (len(obj) == 1):
+                # Check this to avoid an infinite loop with one-character strings
+                flat.append(obj)
+            else:
+                for i in obj:
+                    if can_flatten(obj):
+                        _flatten(i)
+                    else:
+                        flat.append(i)
         else:
             flat.append(obj)
 
