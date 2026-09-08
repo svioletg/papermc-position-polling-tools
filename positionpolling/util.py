@@ -126,6 +126,33 @@ def dict_entries[K, V](d: Mapping[K, V], labels: tuple[str, str] = ('key', 'valu
 
     return [{key:k, value:v} for k, v in d.items()]
 
+def drop_duplicates[T](it: Iterable[T], compare: Callable[[T, T], bool] | None = None) -> list[T]:
+    """Returns a list of only the unique items of ``it``.
+
+    While slower than ``set(it)``, this function ensures that the original order is preserved, where the order of
+    resulting ``set`` items is not guaranteed.
+
+    :param key: Function used to compare the equality of two items and determine whether it should be added to the list
+        of unique items. Note that this will result in a much slower operation (potentially ``O(n * n)``); when
+        ``None``, a ``set`` is used to keep track of unique items and each item is simply checked to not be in that set,
+        which is an ``O(1)`` operation for each item.
+    """
+    unique: list[T] = []
+
+    if compare:
+        for i in it:
+            if any(compare(i, j) for j in unique):
+                continue
+            unique.append(i)
+    else:
+        counted: set[T] = set()
+        for i in it:
+            if i not in counted:
+                unique.append(i)
+                counted.add(i)
+
+    return unique
+
 def expect[T](value: T | None, *exc_args: object) -> T:
     """Returns ``value`` if not ``None``, otherwise raises ``ValueError``."""
     if value is not None:
