@@ -1,5 +1,9 @@
 import json
+import sqlite3
+from copy import deepcopy
 from itertools import chain
+from random import shuffle
+from secrets import token_hex
 from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock
@@ -10,6 +14,7 @@ from pydantic import ValidationError, ValidationInfo
 
 from positionpolling import models
 from positionpolling.const import World
+from positionpolling.sql import table_exists
 from tests import TESTS_DATA_TMP_DIR, gen_pos_logs, tempdb
 
 if TYPE_CHECKING:
@@ -129,6 +134,60 @@ def test_PlayerPositions_to_rows() -> None:
     data = models.PlayerPositions(entries=tuple(entries := gen_pos_logs(10)))
 
     assert data.to_rows() == [e.to_row() for e in entries]
+
+def test_PlayerPositions_to_sql() -> None:
+    data = models.PlayerPositions(entries=tuple(entries := gen_pos_logs(10)))
+    shuffled_entries = deepcopy(entries)
+    shuffle(shuffled_entries)
+
+    shuffled_data = models.PlayerPositions(entries=tuple(shuffled_entries))
+    assert shuffled_data.entries != data.entries
+
+    tripled_data = models.PlayerPositions(entries=tuple(entries * 3))
+
+    try:
+        conn = sqlite3.connect(':memory:')
+        assert not table_exists(conn, 'player_positions')
+
+        assert (dumped := data.to_sql(conn))
+        assert dumped == conn.execute('SELECT * FROM player_positions;').fetchall()
+
+        assert data.to_sql(conn) == (dumped * 2)
+        assert data.to_sql(conn, replace=True) == dumped
+        assert data.to_sql(conn, unique=True) == dumped
+        assert shuffled_data.to_sql(conn, replace=True, sort=False) != dumped
+        assert shuffled_data.to_sql(conn, replace=True, sort=True) == dumped
+        assert shuffled_data.to_sql(conn, replace=False, sort=True) == [
+            # Adding the same data and sorting everything should result in doubled entries in order
+            j for i in zip(dumped, dumped, strict=True) for j in i
+        ]
+        assert shuffled_data.to_sql(conn, replace=True, sort=lambda e: (e[2], e[0])) == \
+            sorted(dumped, key=lambda e: (e[2], e[0]))
+        assert tripled_data.to_sql(conn, unique=True) == dumped
+    finally:
+        conn.close()
+
+    # Test with file
+    fp = (TESTS_DATA_TMP_DIR / token_hex(8)).with_suffix('.db')
+
+    dumped = data.to_sql(fp)
+    try:
+        conn = sqlite3.connect(fp)
+        result = conn.execute('SELECT * FROM player_positions;').fetchall()
+        assert result == dumped
+    finally:
+        conn.close()
+
+    with pytest.raises(FileExistsError):
+        data.to_sql(fp)
+
+    data.to_sql(fp, exist_ok=True)
+    try:
+        conn = sqlite3.connect(fp)
+        result = conn.execute('SELECT * FROM player_positions;').fetchall()
+        assert result == dumped * 2
+    finally:
+        conn.close()
 
 def test_RenderOpt_ensure_frozen() -> None:
     opt = models.RenderOpt()
