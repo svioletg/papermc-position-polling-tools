@@ -10,4 +10,5 @@ API Reference
     models
     rich
     trail
+    types
     util
