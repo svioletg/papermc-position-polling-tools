@@ -16,7 +16,9 @@ from pydantic import AfterValidator, BaseModel, ConfigDict, GetCoreSchemaHandler
 from pydantic_core import CoreSchema, core_schema
 
 from positionpolling.const import World
-from positionpolling.util import comma_split, try_next
+from positionpolling.sql import SQL_CREATE_PLAYER_POSITIONS_TABLE, SQL_INSERT_INTO_PLAYER_POSITIONS, table_exists
+from positionpolling.types import SupportsGT, SupportsLT
+from positionpolling.util import comma_split, drop_duplicates, try_next
 
 type EntryRowTuple = tuple[float, str, str, float, float, float]
 """Type alias for the simple type tuple form of :class:`Entry`."""
@@ -213,6 +215,69 @@ class PlayerPositions:
     def to_rows(self) -> list[EntryRowTuple]:
         """Returns the player position entries of this object as a list of SQL-ready value tuples."""
         return [e.to_row() for e in self.entries]
+
+    def to_sql(self,
+            db: str | Path | sqlite3.Connection,
+            *,
+            sort: bool | Callable[[EntryRowTuple], SupportsGT | SupportsLT] = False,
+            unique: bool | Callable[[EntryRowTuple, EntryRowTuple], bool] = False,
+            exist_ok: bool = False,
+            replace: bool = False,
+        ) -> list[EntryRowTuple]:
+        """Exports entries to the ``player_positions`` table of an SQLite database, returning the table contents.
+
+        If ``sort`` and/or ``unique`` are not ``False``, the existing ``player_positions`` table will be dropped and
+        rebuilt.
+
+        :param db: File path or existing :class:`sqlite3.Connection` for the database. The database is automatically
+            closed only if a file path was given; an existing connection is left open.
+        :param sort: Sorts entries by timestamp (earliest to latest) if ``True``, leaving them unchanged if ``False``.
+            If ``exist_ok=True`` and ``replace=False``, existing data will also be sorted alongside these entries. Can
+            also be a function to use as the ``key`` parameter to :func:`list.sort`.
+        :param unique: Filters out duplicate entries in both this instance's entries and any existing data if ``True``.
+            Can also be given a function which takes two entry tuples (see :data:`EntryRowTuple`), specifying how to
+            compare entries; e.g. to only filter out entries with duplicate timestamps, this could be ``lambda a, b:
+            a[0] == b[0]``.
+        :param exist_ok: If ``False``, raises :class:`FileExistsError` if the file at ``fp`` already exists. Otherwise,
+            the existing database's player position entries will be either appended to or overwritten depending on
+            ``replace``. Not applicable if ``db`` is a connection object.
+        :param replace: If ``True``, the existing ``player_positions`` table is dropped and recreated with this object's
+            data. **All previous data in the table will be lost.**
+
+        :raises FileExistsError:
+            ``fp`` is a file that exists and ``exist_ok`` is ``False``.
+        """
+        if not (is_existing_connection := isinstance(db, sqlite3.Connection)):
+            db = Path(db)
+            if db.exists() and not exist_ok:
+                raise FileExistsError(db)
+            db = sqlite3.connect(db)
+
+        rows: list[EntryRowTuple] = self.to_rows()
+        try:
+            with db:
+                if replace and table_exists(db, 'player_positions'):
+                    db.execute('DROP TABLE player_positions;')
+
+                if table_exists(db, 'player_positions') and (sort or unique):
+                    # Table needs to be rebuilt to avoid accidental duplicates if we're modifying existing data
+                    # Grab the existing data, then drop the table
+                    rows.extend(db.execute('SELECT * FROM player_positions;').fetchall())
+                    db.execute('DROP TABLE player_positions;')
+
+                if unique:
+                    rows = drop_duplicates(rows, compare=unique if callable(unique) else None)
+
+                if sort:
+                    rows.sort(key=sort if callable(sort) else lambda e: e[0])
+
+                db.execute(SQL_CREATE_PLAYER_POSITIONS_TABLE)
+                db.executemany(SQL_INSERT_INTO_PLAYER_POSITIONS, rows)
+
+            return db.execute('SELECT * FROM player_positions;').fetchall()
+        finally:
+            if not is_existing_connection:
+                db.close()
 
 class RenderOpt(BaseModel):
     """Visualization rendering options.
