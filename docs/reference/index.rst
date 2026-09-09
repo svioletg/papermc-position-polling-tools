@@ -9,6 +9,7 @@ API Reference
     const
     models
     rich
+    sql
     trail
     types
     util
