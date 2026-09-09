@@ -42,13 +42,13 @@ cloning the repo and installing it with `pip install .`.
 4. Run `positionpolling --help` to see a list of available commands and how to
    use them.
 
+</details>
+
 Certain features will require that you have
 [FFmpeg](https://ffmpeg.org/download.html) installed or otherwise available on
 your PATH (placing it in the working directory is sufficient). The functions
 that require FFmpeg are documented here:
 <https://papermc-position-polling-tools.readthedocs.io/en/stable/requires-ffmpeg.html>
-
-</details>
 
 The scripts will need access to the database file created by the plugin, which
 will be located in your server's folder under `plugins/PositionPolling/data.db`.
