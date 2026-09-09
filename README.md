@@ -46,7 +46,7 @@ Certain features will require that you have
 [FFmpeg](https://ffmpeg.org/download.html) installed or otherwise available on
 your PATH (placing it in the working directory is sufficient). The functions
 that require FFmpeg are documented here:
-<https://papermc-position-polling-tools.readthedocs.io/en/stable/requires-ffmpeg>
+<https://papermc-position-polling-tools.readthedocs.io/en/stable/requires-ffmpeg.html>
 
 </details>
 
