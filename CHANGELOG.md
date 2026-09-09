@@ -11,6 +11,48 @@ This project uses [towncrier](https://towncrier.readthedocs.io) to generate rele
 
 <!-- towncrier release notes start -->
 
+## [0.4.0] - 2026-09-09
+
+### Added
+
+- Added function `util.parse_players()` (#25)
+- Added constant `cli.DEFAULT_PLAYER_MAP_PATH` (#25)
+- Added function `cli.parse_players_or_abort()` (#25)
+- Added CLI option `--players` to specify name to UUID player map (#25)
+- Added function `cli.format_inspect_data()` (#40)
+- Added enum class `cli.InspectFormat` (#40)
+- Added CLI subcommand `inspect` for querying position log data (#40)
+- Added function `const.clear_old_logs()` (#41)
+- Added method `models.Entry.to_json()` (#43)
+- Added method `models.PlayerPositions.to_sql()` (#43)
+- Added method `models.PlayerPositions.to_json()` (#43)
+- Added method `models.PlayerPositions.to_rows()` (#43)
+- Added constant `const.UUID4_REGEX`
+- Added function `util.dict_entries()`
+- Added function `util.drop_duplicates()`
+- Added function `util.flatten()`
+- Added module `sql`
+- Added module `types`
+- Added optional parameter `argv` to `cli.main()`, if given will use these args
+  for parsing instead of `sys.argv`
+- Added parameter `iter_str` to `util.flatten()`
+
+### Changed
+
+- Log retention is now handled by `const.clear_old_logs()` rather than letting
+  loguru handle it automatically (#41)
+- Function `cli.abort()` parameter `log` now defaults to `True` instead of
+  `False`
+- `render trail` SQL path positional argument is now a (still required) keyword
+  option `--input/-i`
+- stdout logs no longer diagnose values in tracebacks
+
+### Fixed
+
+- Fixed `cli.add_args_from_render_opt()` not properly retrieving tuple/list
+  types from fields
+- Fixed infinite recursion issue in `util.flatten()` with strings
+
 ## [0.3.0] - 2026-08-23
 
 ### Added
