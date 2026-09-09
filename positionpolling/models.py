@@ -15,7 +15,6 @@ from geometry import Tuple4
 from pydantic import AfterValidator, BaseModel, ConfigDict, GetCoreSchemaHandler, ValidationInfo
 from pydantic_core import CoreSchema, core_schema
 
-from positionpolling.const import World
 from positionpolling.sql import SQL_CREATE_PLAYER_POSITIONS_TABLE, SQL_INSERT_INTO_PLAYER_POSITIONS, table_exists
 from positionpolling.types import SupportsGT, SupportsLT
 from positionpolling.util import comma_split, drop_duplicates, try_next
@@ -109,7 +108,7 @@ class Entry:
 
     timestamp: float
     player_uuid: UUID
-    world: World
+    world: str
     x: float
     y: float
     z: float
@@ -139,7 +138,7 @@ class Entry:
         return cls(
             timestamp=float(row[0]),
             player_uuid=UUID(row[1]),
-            world=World(row[2]),
+            world=str(row[2]),
             x=float(row[3]),
             y=float(row[4]),
             z=float(row[5]),
@@ -150,7 +149,7 @@ class Entry:
         return {
             'timestamp': self.timestamp,
             'player_uuid': str(self.player_uuid),
-            'world': self.world.value,
+            'world': self.world,
             'x': self.x,
             'y': self.y,
             'z': self.z,
@@ -161,7 +160,7 @@ class Entry:
         return (
             self.timestamp,
             str(self.player_uuid),
-            self.world.value,
+            self.world,
             self.x,
             self.y,
             self.z,

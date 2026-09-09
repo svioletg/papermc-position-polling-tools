@@ -13,7 +13,6 @@ import pytest
 from pydantic import ValidationError, ValidationInfo
 
 from positionpolling import models
-from positionpolling.const import World
 from positionpolling.sql import table_exists
 from tests import TESTS_DATA_TMP_DIR, gen_pos_logs, tempdb
 
@@ -71,15 +70,15 @@ def test_Entry_magic_sub() -> None:
     player1 = uuid4()
     player2 = uuid4()
 
-    e1 = models.Entry(1000, player1, World.OVERWORLD, 100, 70, 200)
-    e2 = models.Entry(1500, player2, World.NETHER, 200, 60, 150)
+    e1 = models.Entry(1000, player1, 'minecraft:overworld', 100, 70, 200)
+    e2 = models.Entry(1500, player2, 'minecraft:the_nether', 200, 60, 150)
 
     # Subtracting two entries uses the player_uuid and world values for the left operand
     sub = e2 - e1
     assert sub == models.Entry(
         500,
         player2,
-        World.NETHER,
+        'minecraft:the_nether',
         100,
         -10,
         -50,
@@ -91,7 +90,7 @@ def test_Entry_to_json() -> None:
     assert entry.to_json() == {
         'timestamp': entry.timestamp,
         'player_uuid': str(entry.player_uuid),
-        'world': entry.world.value,
+        'world': entry.world,
         'x': entry.x,
         'y': entry.y,
         'z': entry.z,

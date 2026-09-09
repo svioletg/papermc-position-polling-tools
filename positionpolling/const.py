@@ -6,7 +6,7 @@ import os
 import re
 import warnings
 from collections.abc import Mapping
-from enum import IntEnum, StrEnum
+from enum import IntEnum
 from pathlib import Path
 
 from loguru import logger
@@ -74,6 +74,8 @@ Y_RANGE: dict[str, tuple[int, int]] = {
 }
 
 Y_HUE_RANGE = (0, 300)
+
+VANILLA_WORLDS: list[str] = ['minecraft:overworld', 'minecraft:the_nether', 'minecraft:the_end']
 
 UUID4_REGEX: re.Pattern[str] = re.compile(r'[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}')
 """Matches the UUID4 format with or without separating hyphens."""
@@ -212,10 +214,3 @@ def test_logs() -> None:
     logger.warning('WARNING')
     logger.error('ERROR')
     logger.critical('CRITICAL')
-
-class World(StrEnum):
-    """A vanilla Minecraft world identifier."""
-
-    OVERWORLD = 'minecraft:overworld'
-    NETHER = 'minecraft:the_nether'
-    END = 'minecraft:the_end'
