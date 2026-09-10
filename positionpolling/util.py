@@ -812,6 +812,10 @@ def run(
 
     return proc
 
+def sign(n: float) -> Literal[1, 0, -1]:
+    """Returns the sign of ``n``."""
+    return 0 if n == 0 else (1 if n > 0 else -1)
+
 @contextmanager
 def time_this(dest: list[float]) -> Generator[None]:
     """Context manager which stores the time taken to execute the code in its block to ``dest``."""
