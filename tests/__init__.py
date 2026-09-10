@@ -11,7 +11,6 @@ from geometry import Tuple4
 
 from positionpolling.const import VANILLA_WORLDS, Y_RANGE
 from positionpolling.models import Entry
-from positionpolling.util import coerce
 
 TESTS_DIR: Path = Path(__file__).absolute().parent
 TESTS_DATA_DIR: Path = TESTS_DIR / 'data'
@@ -25,13 +24,13 @@ UUID4_DUMMY: UUID = UUID('00000000-0000-0000-0000-000000000000')
 def gen_pos_logs(
         n: int,
         *,
-        players: list[UUID | str] | int = 5,
+        players: list[str] | int = 5,
         worlds: list[str] | None = None,
         bounds: Tuple4[int] = (-2000, -2000, 2000, 2000),
     ) -> list[Entry]:
     """Generates a list of ``n`` ``Entry`` objects."""
     worlds = worlds or VANILLA_WORLDS
-    playerlist = [coerce(p, UUID) for p in players] if isinstance(players, list) else [uuid4() for _ in range(players)]
+    playerlist = players if isinstance(players, list) else [str(uuid4()) for _ in range(players)]
 
     return [
         Entry(

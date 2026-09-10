@@ -10,7 +10,6 @@ from importlib import import_module
 from os import get_terminal_size
 from pathlib import Path
 from typing import Literal, Never, cast
-from uuid import UUID
 
 from loguru import logger
 from pydantic import ValidationError
@@ -113,7 +112,7 @@ def format_inspect_data(table: Iterable[Iterable[object]], fmt: str | InspectFor
 
     return out_str
 
-def parse_players_or_abort(players: list[str], player_map: Mapping[str, str | UUID]) -> set[str]:
+def parse_players_or_abort(players: list[str], player_map: Mapping[str, str]) -> set[str]:
     """Returns a set of player UUIDs from a list of names or UUIDs using the given map, aborting for missing keys."""
     missing_players: list[str] = []
     # Make this a set to ignore possible duplicates if two keys point to the same UUID
@@ -271,10 +270,7 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, D103, PLR0915
         player_map_path = DEFAULT_PLAYER_MAP_PATH
         logger.info(f'Using player map: {player_map_path}')
 
-    player_map: dict[str, UUID] = {
-        k:UUID(v)
-        for k, v in json.loads(player_map_path.read_text('utf-8')).items()
-    } if player_map_path else {}
+    player_map: dict[str, str] = json.loads(player_map_path.read_text('utf-8')) if player_map_path else {}
 
     match args.action:
         case 'inspect':

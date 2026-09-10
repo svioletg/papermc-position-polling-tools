@@ -6,7 +6,6 @@ from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Se
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, TypeGuard, overload
-from uuid import UUID
 
 from geometry import Grid2
 from loguru import logger
@@ -358,8 +357,8 @@ def log_progress(
     )
 
 def parse_players(
-        players: Sequence[str | UUID],
-        player_map: Mapping[str, str | UUID],
+        players: Sequence[str],
+        player_map: Mapping[str, str],
         missing: Callable[[str], Any] | Literal['pass'] | None = None,
     ) -> list[str]:
     """Returns a list of player UUIDs using ``player_map`` to look up non-UUIDs in ``players``.
@@ -374,10 +373,6 @@ def parse_players(
     parsed_players: list[str] = []
 
     for player in players:
-        if isinstance(player, UUID):
-            parsed_players.append(str(player))
-            continue
-
         try:
             parsed_players.append(player if UUID4_REGEX.match(player) else str(player_map[player]))
         except KeyError:

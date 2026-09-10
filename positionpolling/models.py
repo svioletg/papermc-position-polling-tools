@@ -9,7 +9,6 @@ from functools import cache, cached_property
 from pathlib import Path
 from types import UnionType
 from typing import Annotated, Any, ClassVar, Literal, Self, TypeAliasType, cast, get_args, get_origin, overload
-from uuid import UUID
 
 from geometry import Tuple4
 from pydantic import AfterValidator, BaseModel, ConfigDict, GetCoreSchemaHandler, ValidationInfo
@@ -107,7 +106,7 @@ class Entry:
     """Represents one row of the plugin database's `player_positions` table."""
 
     timestamp: float
-    player_uuid: UUID
+    player_uuid: str
     world: str
     x: float
     y: float
@@ -137,7 +136,7 @@ class Entry:
         """Returns a new :class:`Entry` created from a raw row of the `player_positions` table."""
         return cls(
             timestamp=float(row[0]),
-            player_uuid=UUID(row[1]),
+            player_uuid=str(row[1]),
             world=str(row[2]),
             x=float(row[3]),
             y=float(row[4]),
@@ -148,7 +147,7 @@ class Entry:
         """Converts this instance to a JSON-ready dictionary."""
         return {
             'timestamp': self.timestamp,
-            'player_uuid': str(self.player_uuid),
+            'player_uuid': self.player_uuid,
             'world': self.world,
             'x': self.x,
             'y': self.y,
@@ -159,7 +158,7 @@ class Entry:
         """Converts this instance to a tuple of SQL-ready values."""
         return (
             self.timestamp,
-            str(self.player_uuid),
+            self.player_uuid,
             self.world,
             self.x,
             self.y,
