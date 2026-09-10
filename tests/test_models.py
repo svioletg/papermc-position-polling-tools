@@ -67,8 +67,8 @@ def test_Entry_from_to_row() -> None:
     assert models.Entry.from_row(entry.to_row()) == entry
 
 def test_Entry_magic_sub() -> None:
-    player1 = uuid4()
-    player2 = uuid4()
+    player1 = str(uuid4())
+    player2 = str(uuid4())
 
     e1 = models.Entry(1000, player1, 'minecraft:overworld', 100, 70, 200)
     e2 = models.Entry(1500, player2, 'minecraft:the_nether', 200, 60, 150)
