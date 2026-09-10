@@ -10,6 +10,7 @@ from loguru import logger
 
 from positionpolling import util
 from positionpolling.const import LogLevel, setup_logger
+from positionpolling.util import assert_all
 from tests import TESTS_DATA_TMP_DIR, gen_pos_logs
 
 
@@ -281,6 +282,11 @@ def test_parse_players() -> None:
 )
 def test_rgba(hexcolor: str, expected: Tuple4[int]) -> None:
     assert util.rgba(hexcolor) == expected
+
+def test_sign() -> None:
+    assert_all(range(-11, -1), lambda n: util.sign(n) == -1)  # ty: ignore[invalid-argument-type]
+    assert util.sign(0) == 0
+    assert_all(range(1, 11), lambda n: util.sign(n) == 1)  # ty: ignore[invalid-argument-type]
 
 def test_time_this() -> None:
     times: list[float] = []
