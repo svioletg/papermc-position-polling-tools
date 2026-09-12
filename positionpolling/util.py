@@ -170,6 +170,14 @@ class Color:
 
         return (self._value >> (8 * (3 - idx))) & 0xff
 
+    @staticmethod
+    def _ensure_8bit(n: int) -> int:
+        """Raises ``ValueError`` if ``n`` is not in the range 0-255, otherwise returns the value."""
+        if not (0 <= n <= 255):  # noqa: PLR2004
+            raise ValueError(f'Not in range 0-255: {n!r}')
+
+        return n
+
     # Output
 
     def hex(self, prefix: str = '0x', *, alpha: bool = True) -> str:
@@ -214,6 +222,21 @@ class Color:
             other = self.__class__(cast('ColorSource', other))
 
         yield from (self.__class__(step) for step in gradient(self.rgba(), other.rgba(), steps))
+
+    def replace(self,
+            *,
+            r: int | None = None,
+            g: int | None = None,
+            b: int | None = None,
+            a: int | None = None,
+        ) -> Self:
+        """Returns a new color with any of its RGBA values replaced."""
+        r = self._ensure_8bit(r) if r is not None else self.r
+        g = self._ensure_8bit(g) if g is not None else self.g
+        b = self._ensure_8bit(b) if b is not None else self.b
+        a = self._ensure_8bit(a) if a is not None else self.a
+
+        return self.__class__((r, g, b, a))
 
 def ask(prompt: str, choices: Sequence[str], *, strict_case: bool = False) -> str:
     """Shows an input prompt and keeps asking until the response is in ``choices``, returning the choice.

@@ -128,3 +128,18 @@ def test_color_gradient() -> None:
     assert list(Color(src).gradient(Color(dest), 3)) == [Color(src), Color(0x7f007fff), Color(dest)]
     assert list(Color(src).gradient(dest, 4)) == [Color(src), Color(0xaa0054ff), Color(0x5500a9ff), Color(dest)]
     assert list(Color(src).gradient(Color(dest), 4)) == [Color(src), Color(0xaa0054ff), Color(0x5500a9ff), Color(dest)]
+
+@pytest.mark.parametrize('r', [None, 0, 127])
+@pytest.mark.parametrize('g', [None, 0, 127])
+@pytest.mark.parametrize('b', [None, 0, 127])
+@pytest.mark.parametrize('a', [None, 0, 127])
+def test_color_replace(r: int | None, g: int | None, b: int | None, a: int | None) -> None:
+    color = Color(0xffffffff)
+    new = color.replace(r=r, g=g, b=b, a=a)
+
+    assert new.rgba() == (
+        r if r is not None else color.r,
+        g if g is not None else color.g,
+        b if b is not None else color.b,
+        a if a is not None else color.a,
+    )
