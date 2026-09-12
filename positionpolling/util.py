@@ -2,11 +2,13 @@
 import shutil
 import subprocess
 import time
+from ast import literal_eval
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, TypeGuard, overload
+from typing import TYPE_CHECKING, Any, Literal, Self, TypeGuard, overload
 
+import webcolors
 from geometry import Grid2
 from loguru import logger
 from maybetype import Err, Ok, Result
@@ -16,6 +18,183 @@ from positionpolling.const import UUID4_REGEX
 if TYPE_CHECKING:
     from positionpolling.models import Entry
 
+
+class Color:
+    """Class representing a color which can be constructed from and converted back out to various formats."""
+
+    _value: int
+
+    def __init__(self, source: str | int | tuple[int, int, int] | tuple[int, int, int, int]) -> None:
+        """Construct a color from one of various formats.
+
+        .. note::
+            If ``source`` is given an integer, it will be treated as an RGBA value. This means that passing the
+            hexadecimal form of an integer like ``0xffffff`` will not result in the RGB values ``255, 255, 255``, but
+            ``0, 255, 255``, with an alpha value of ``255``. Make sure to include the last alpha byte if passing
+            integers in this way.
+
+        :param source: Either a string, a positive 32-bit integer, an RGB tuple (values 0-255), or an RGBA tuple. If
+            only RGB values are given (an RGB tuple, or a 24-bit hexadecimal value), the alpha value defaults to 255. If
+            given a string, it is treated as a hexadecimal number if it begins with ``#`` or ``0x``, otherwise the value
+            for the corresponding CSS3 color (see https://www.w3.org/TR/css-color-3/#colorunits) of that name is used.
+            Since these values all have an alpha value of 255, you can optionally suffix the name with ``#XX`` where
+            ``XX`` is the hexadecimal alpha value to set for this color, e.g. ``'darkorchid#7f'``.
+
+        :raises ValueError:
+            - ``source`` is a tuple with less than 3 or greater than 4 items
+            - ``source`` is a name string with more than two characters provided to an alpha specifier
+            - ``source`` is a hexadecimal string whose value is neither 24-bit nor 32-bit
+
+        .. include
+        """
+        if isinstance(source, tuple):
+            if len(source) not in (3, 4):
+                raise ValueError(f'Color tuple must be either 3 or 4 values: {source!r}')
+            if len(source) == 3:  # noqa: PLR2004
+                source = (*source, 255)
+            # Lazy way to do this but it works
+            source = int(literal_eval(f'0x{source[0]:02x}{source[1]:02x}{source[2]:02x}{source[3]:02x}'))
+
+        if isinstance(source, str):
+            if (source[0] != '#') and (not source.startswith('0x')):
+                # Check if alpha was specified
+                name, *extra = source.split('#', maxsplit=1)
+                extra = extra[0] if extra else ''
+                if len(extra) > 2:  # noqa: PLR2004
+                    raise ValueError(f'Expected a maximum of two characters for hexadecimal alpha value: {source!r}')
+                extra = extra or 'ff'
+                source = webcolors.name_to_hex(name) + extra.rjust(2, '0')
+
+            source = source.replace('#', '0x')
+
+            if len(source) == 8:  # noqa: PLR2004
+                source += 'ff'
+            if len(source) != 10:  # noqa: PLR2004
+                raise ValueError(f'Expected 6 or 8 hexadecimal characters for color value: {source!r}')
+
+            source = int(literal_eval(source.replace('#', '0x')))
+
+        self._value = source
+
+    @property
+    def value(self) -> int:
+        """Integer value of this color.
+
+        Trying to set this property to a non-``int`` will raise ``TypeError``. Setting it to a negative value or value
+        greater than the 32-bit maximum will raise ``ValueError``.
+        """
+        return self._value
+
+    @value.setter
+    def value(self, new: int) -> None:
+        if not isinstance(new, int):
+            raise TypeError(f'Color value must be an integer: {new!r}')
+        if new < 0:
+            raise ValueError(f'Color value cannot be negative: {new!r}')
+        if new > 0xffffffff:  # noqa: PLR2004
+            raise ValueError(f'Color value cannot be larger than {0xffffffff}: {new!r}')
+
+        self._value = new
+
+    @property
+    def r(self) -> int:
+        """Red value."""
+        return self._value >> 24
+
+    @property
+    def g(self) -> int:
+        """Green value."""
+        return (self._value >> 16) & 0xff
+
+    @property
+    def b(self) -> int:
+        """Blue value."""
+        return (self._value >> 8) & 0xff
+
+    @property
+    def a(self) -> int:
+        """Alpha value."""
+        return self._value & 0xff
+
+    def __repr__(self) -> str:  # noqa: D105
+        return f'{self.__class__.__name__}(value={self._value!r})'
+
+    def __copy__(self) -> Self:
+        """Returns a new instance with the same color value.
+
+        .. include
+        """
+        return self.__class__(self._value)
+
+    def __eq__(self, other: object) -> bool:
+        """Compares the :data:`value` of this color with an integer, float, or another color instance's value.
+
+        Comparing against any other type returns ``False``.
+
+        .. include
+        """
+        if isinstance(other, self.__class__):
+            return self._value == other._value
+        if isinstance(other, int | float):
+            return self._value == other
+
+        return False
+
+    def __hash__(self) -> int:
+        """Returns the hash of the color's :data:`value`.
+
+        .. include
+        """
+        return hash(self._value)
+
+    def __iter__(self) -> Generator[int]:
+        """Iterates over the RGBA values of this color.
+
+        .. include
+        """
+        yield from (self.r, self.g, self.b, self.a)
+
+    def __getitem__(self, idx: int) -> int:
+        """Returns the channel value at the corresponding RGBA index.
+
+        Does not allow negative indexing.
+
+        :raises: ValueError
+            ``idx`` is less than 0 or greater than 3.
+
+        .. include
+        """
+        if not (0 <= idx <= 3):  # noqa: PLR2004
+            raise ValueError(f'{self.__class__.__name__}.__getitem__() index must be between 0 and 3: {idx!r}')
+
+        return (self._value >> (8 * (3 - idx))) & 0xff
+
+    def hex(self, prefix: str = '0x', *, alpha: bool = True) -> str:
+        """Returns the hexadecimal string for this color with a specified prefix.
+
+        :param alpha: Discards the alpha value if ``False``.
+        """
+        s: str = f'{prefix}{self._value:08x}'
+
+        return s if alpha else s[:-2]
+
+    def rgb(self) -> tuple[int, int, int]:
+        """Returns the RGB tuple for this color."""
+        return (self.r, self.g, self.b)
+
+    def rgba(self) -> tuple[int, int, int, int]:
+        """Returns the RGBA tuple for this color."""
+        return (self.r, self.g, self.b, self.a)
+
+    def name(self) -> str | None:
+        """Returns the CSS3 name, if any, for this color.
+
+        Alpha value is ignored. Returns ``None`` if a name was not found.
+        """
+        try:
+            return webcolors.hex_to_name(self.hex('#', alpha=False))
+        except ValueError:
+            return None
 
 def ask(prompt: str, choices: Sequence[str], *, strict_case: bool = False) -> str:
     """Shows an input prompt and keeps asking until the response is in ``choices``, returning the choice.
