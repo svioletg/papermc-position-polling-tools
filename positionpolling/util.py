@@ -419,16 +419,15 @@ def flatten(it: Iterable, *, iter_str: bool = False) -> list:
 # modified from:
 # https://github.com/thearchcoder/Hueforge/blob/4942bcfcfeef26f8065bbebe672dec62dabe877e/hueforge/algorithms/other.py#L39-L50
 def gradient(c1: tuple[int, int, int, int], c2: tuple[int, int, int, int], steps: int) \
-    -> list[tuple[int, int, int, int]]:
-    """Returns a list of colors (length ``steps``) that smoothly transition from ``c1`` to ``c2``.
+    -> Generator[tuple[int, int, int, int]]:
+    """Yields colors (length ``steps``) that smoothly transition from ``c1`` to ``c2``.
 
-    :raises ValueError:
-        ``steps`` is not >=2.
+    A ``steps`` value of 1 yields ``c2`` immediately, a value of 0 or less yields nothing.
     """
-    if steps < 2:  # noqa: PLR2004
-        raise ValueError(f"gradient() parameter 'steps' must be >=2: {steps!r}")
-
-    return [blend_color(c1, c2, (n / (steps - 1)) * 100) for n in range(steps)]
+    if steps == 1:
+        yield c2
+    else:
+        yield from (blend_color(c1, c2, (n / (steps - 1)) * 100) for n in range(steps))
 
 def grid_from_entries(data: Iterable['Entry'], **grid_kwargs: Any) -> Grid2:  # noqa: ANN401
     """Returns a grid created from the minimum and maximum ``x`` and ``z`` values of ``data``'s entries."""

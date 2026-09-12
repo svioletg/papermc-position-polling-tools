@@ -136,12 +136,11 @@ def test_flatten_str() -> None:
 def test_gradient() -> None:
     c1 = (255,   0,   0, 255)
     c2 = (  0,   0, 255, 255)
-    assert util.gradient(c1, c2, 10) == [util.blend_color(c1, c2, (n / (10 - 1)) * 100) for n in range(10)]
-    assert util.gradient(c1, c2, 5) == [util.blend_color(c1, c2, (n / (5 - 1)) * 100) for n in range(5)]
-    assert util.gradient(c1, c2, 2) == [util.blend_color(c1, c2, (n / (2 - 1)) * 100) for n in range(2)]
-
-    with pytest.raises(ValueError, match=r"gradient\(\) parameter 'steps' must be >=2: 1"):
-        util.gradient(c1, c2, 1)
+    assert list(util.gradient(c1, c2, 10)) == [util.blend_color(c1, c2, (n / (10 - 1)) * 100) for n in range(10)]
+    assert list(util.gradient(c1, c2, 5)) == [util.blend_color(c1, c2, (n / (5 - 1)) * 100) for n in range(5)]
+    assert list(util.gradient(c1, c2, 2)) == [util.blend_color(c1, c2, (n / (2 - 1)) * 100) for n in range(2)]
+    assert list(util.gradient(c1, c2, 1)) == [c2]
+    assert list(util.gradient(c1, c2, 0)) == []
 
 def test_grid_from_entries() -> None:
     entries = gen_pos_logs(100)
