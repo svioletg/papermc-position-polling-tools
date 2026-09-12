@@ -241,6 +241,50 @@ class Color:
 
         return s if alpha else s[:-2]
 
+    def hsl(self, *, css: bool = False) -> tuple[float, float, float]:
+        """Returns this color in HSL format.
+
+        Each value is a float ranging from 0 to 1 by default, passing ``css=True`` will return them in ranges 0-360,
+        0-100, and 0-100 respectively.
+        """
+        h, l, s = colorsys.rgb_to_hls(self.r / 255, self.g / 255, self.b / 255)  # noqa: E741
+
+        return (
+            convert_range(h, (0, 1), (0, 360)) if css else h,
+            convert_range(s, (0, 1), (0, 100)) if css else s,
+            convert_range(l, (0, 1), (0, 100)) if css else l,
+        )
+
+    def hsla(self, *, css: bool = False) -> tuple[float, float, float, float]:
+        """Returns this color in HSLA format.
+
+        Each value is a float ranging from 0 to 1 by default, passing ``css=True`` will return them in ranges 0-360,
+        0-100, 0-100, and 0-1 respectively.
+        """
+        return (*self.hsl(css=css), self.a / 255)
+
+    def hsv(self, *, css: bool = False) -> tuple[float, float, float]:
+        """Returns this color in HSL format.
+
+        Each value is a float ranging from 0 to 1 by default, passing ``css=True`` will return them in ranges 0-360,
+        0-100, and 0-100 respectively.
+        """
+        h, s, v = colorsys.rgb_to_hsv(self.r / 255, self.g / 255, self.b / 255)
+
+        return (
+            convert_range(h, (0, 1), (0, 360)) if css else h,
+            convert_range(s, (0, 1), (0, 100)) if css else s,
+            convert_range(v, (0, 1), (0, 100)) if css else v,
+        )
+
+    def hsva(self, *, css: bool = False) -> tuple[float, float, float, float]:
+        """Returns this color in HSVA format.
+
+        Each value is a float ranging from 0 to 1 by default, passing ``css=True`` will return them in ranges 0-360,
+        0-100, 0-100, and 0-1 respectively.
+        """
+        return (*self.hsl(css=css), self.a / 255)
+
     def rgb(self) -> tuple[int, int, int]:
         """Returns the RGB tuple for this color."""
         return (self.r, self.g, self.b)
