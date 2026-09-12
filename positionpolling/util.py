@@ -1,4 +1,6 @@
 """Miscellaneous common members used by various scripts."""
+import colorsys
+import re
 import shutil
 import subprocess
 import time
@@ -6,7 +8,7 @@ from ast import literal_eval
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Self, TypeGuard, cast, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Self, TypeGuard, cast, overload
 
 import webcolors
 from geometry import Grid2
@@ -23,6 +25,9 @@ type ColorSource = str | int | tuple[int, int, int] | tuple[int, int, int, int]
 class Color:
     """Class representing a color which can be constructed from and converted back out to various formats."""
 
+    HSL_HSV_REGEX: ClassVar[re.Pattern[str]] = re.compile(r'^(hsl|hsv)\(.*\)$')
+    """Matches an ``hsl(...)`` or ``hsv(...)`` string, capturing ``'hsl'`` or ``'hsv'``."""
+
     _value: int
 
     def __init__(self, source: ColorSource) -> None:
@@ -36,9 +41,10 @@ class Color:
 
         :param source: Either a string, a positive 32-bit integer, an RGB tuple (values 0-255), or an RGBA tuple. If
             only RGB values are given (an RGB tuple, or a 24-bit hexadecimal value), the alpha value defaults to 255. If
-            given a string, it is treated as a hexadecimal number if it begins with ``#`` or ``0x``, otherwise the value
-            for the corresponding CSS3 color (see https://www.w3.org/TR/css-color-3/#colorunits) of that name is used.
-            Since these values all have an alpha value of 255, you can optionally suffix the name with ``#XX`` where
+            given a string, it can be either a hexadecimal color starting with ``#`` or ``0x``, a CSS3 color keyword
+            (see https://www.w3.org/TR/css-color-3/#colorunits), or a CSS-style ``hsl(...)`` or ``hsv(...)`` string.
+
+            Since all named colors have an alpha value of 255, you can optionally suffix the name with ``#XX`` where
             ``XX`` is the hexadecimal alpha value to set for this color, e.g. ``'darkorchid#7f'``.
 
         :raises ValueError:
@@ -48,6 +54,9 @@ class Color:
 
         .. include
         """
+        if isinstance(source, str) and self.HSL_HSV_REGEX.match(source):
+            source = self._parse_hsl_hsv(source)
+
         if isinstance(source, tuple):
             if len(source) not in (3, 4):
                 raise ValueError(f'Color tuple must be either 3 or 4 values: {source!r}')
@@ -177,6 +186,49 @@ class Color:
             raise ValueError(f'Not in range 0-255: {n!r}')
 
         return n
+
+    @staticmethod
+    def _parse_hsl_hsv(string: str) -> tuple[int, int, int, int]:
+        """Parses an ``hsl(...)`` or ``hsv(...)`` string to RGBA values.
+
+        3 or 4 number values must be given, where the 4th is used as the alpha value. If a 4th value is not given, the
+        alpha value defaults to 1 (255). The converted values are rounded according to the built-in :func:`round`.
+        """
+        if not (m := Color.HSL_HSV_REGEX.match(string)):
+            raise ValueError(f'Expected HSL/HSV string to be in format "hsl(...)" or "hsv(...)": {string!r}')
+        mode = cast('Literal["hsl", "hsv"]', m.groups(0)[0])
+
+        ns: list[float] = [float(m) for m in re.findall(r'(\d+(?:\.\d+)?)', string)]
+        if len(ns) not in (3, 4):
+            raise ValueError(f'Expected 3 or 4 number values for HSV/HSL string: {string!r}')
+
+        h, s, vl, a, *_ = [*ns, 1] # Default alpha to 1
+        if not (0 <= h <= 360):  # noqa: PLR2004
+            raise ValueError(f'Hue value not in range 0-360: {h!r}')
+        if not (0 <= s <= 100):  # noqa: PLR2004
+            raise ValueError(f'Saturation value not in range 0-100: {s!r}')
+        if not (0 <= vl <= 100):  # noqa: PLR2004
+            raise ValueError(f'{'Lightness' if mode == 'hsl' else 'Brightness'} value not in range 0-100: {vl!r}')
+        if not (0 <= a <= 1):
+            raise ValueError(f'Alpha value not in range 0-1: {a!r}')
+
+        match mode:
+            case 'hsl':
+                r, g, b = colorsys.hls_to_rgb(
+                    convert_range(h, (0, 360), (0, 1)),
+                    convert_range(vl, (0, 100), (0, 1)),
+                    convert_range(s, (0, 100), (0, 1)),
+                )
+            case 'hsv':
+                r, g, b = colorsys.hsv_to_rgb(
+                    convert_range(h, (0, 360), (0, 1)),
+                    convert_range(s, (0, 100), (0, 1)),
+                    convert_range(vl, (0, 100), (0, 1)),
+                )
+            case _:
+                raise ValueError(f'Unexpected mode: {mode!r}')
+
+        return (round(r * 255), round(g * 255), round(b * 255), round(convert_range(a, (0, 1), (0, 255))))
 
     # Output
 
