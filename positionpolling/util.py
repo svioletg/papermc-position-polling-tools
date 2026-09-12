@@ -6,7 +6,7 @@ from ast import literal_eval
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Self, TypeGuard, overload
+from typing import TYPE_CHECKING, Any, Literal, Self, TypeGuard, cast, overload
 
 import webcolors
 from geometry import Grid2
@@ -18,13 +18,14 @@ from positionpolling.const import UUID4_REGEX
 if TYPE_CHECKING:
     from positionpolling.models import Entry
 
+type ColorSource = str | int | tuple[int, int, int] | tuple[int, int, int, int]
 
 class Color:
     """Class representing a color which can be constructed from and converted back out to various formats."""
 
     _value: int
 
-    def __init__(self, source: str | int | tuple[int, int, int] | tuple[int, int, int, int]) -> None:
+    def __init__(self, source: ColorSource) -> None:
         """Construct a color from one of various formats.
 
         .. note::
@@ -169,6 +170,8 @@ class Color:
 
         return (self._value >> (8 * (3 - idx))) & 0xff
 
+    # Output
+
     def hex(self, prefix: str = '0x', *, alpha: bool = True) -> str:
         """Returns the hexadecimal string for this color with a specified prefix.
 
@@ -195,6 +198,22 @@ class Color:
             return webcolors.hex_to_name(self.hex('#', alpha=False))
         except ValueError:
             return None
+
+    # Transformations
+
+    def blend(self, other: Self | ColorSource, delta: float = 50.0) -> Self:
+        """Returns a new color with this instance's value blended with another's."""
+        if not isinstance(other, self.__class__):
+            other = self.__class__(cast('ColorSource', other))
+
+        return self.__class__(blend_color(self.rgba(), other.rgba(), delta))
+
+    def gradient(self, other: Self | ColorSource, steps: int) -> Generator[Self]:
+        """Yields colors (length ``steps``) that smoothly transition from ``self`` to ``other``."""
+        if not isinstance(other, self.__class__):
+            other = self.__class__(cast('ColorSource', other))
+
+        yield from (self.__class__(step) for step in gradient(self.rgba(), other.rgba(), steps))
 
 def ask(prompt: str, choices: Sequence[str], *, strict_case: bool = False) -> str:
     """Shows an input prompt and keeps asking until the response is in ``choices``, returning the choice.

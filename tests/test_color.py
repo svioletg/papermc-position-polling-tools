@@ -106,3 +106,25 @@ def test_color_set_value() -> None:
 
     with pytest.raises(ValueError, match=r'cannot be larger than'):
         color.value = 0x100000000
+
+def test_color_blend() -> None:
+    src = 0xff0000ff
+    dest = 0x0000ffff
+
+    assert Color(src).blend(dest) == Color(0x7f007fff)
+    assert Color(src).blend(Color(dest)) == Color(0x7f007fff)
+
+def test_color_gradient() -> None:
+    src = 0xff0000ff
+    dest = 0x0000ffff
+
+    assert list(Color(src).gradient(dest, 0)) == []
+    assert list(Color(src).gradient(Color(dest), 0)) == []
+    assert list(Color(src).gradient(dest, 1)) == [Color(dest)]
+    assert list(Color(src).gradient(Color(dest), 1)) == [Color(dest)]
+    assert list(Color(src).gradient(dest, 2)) == [Color(src), Color(dest)]
+    assert list(Color(src).gradient(Color(dest), 2)) == [Color(src), Color(dest)]
+    assert list(Color(src).gradient(dest, 3)) == [Color(src), Color(0x7f007fff), Color(dest)]
+    assert list(Color(src).gradient(Color(dest), 3)) == [Color(src), Color(0x7f007fff), Color(dest)]
+    assert list(Color(src).gradient(dest, 4)) == [Color(src), Color(0xaa0054ff), Color(0x5500a9ff), Color(dest)]
+    assert list(Color(src).gradient(Color(dest), 4)) == [Color(src), Color(0xaa0054ff), Color(0x5500a9ff), Color(dest)]
