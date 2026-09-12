@@ -16,6 +16,7 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "rich>=15.0.0",
     "tabulate>=0.10.0",
+    "webcolors>=25.10.0",
 ]
 dynamic = ["version"]
 
