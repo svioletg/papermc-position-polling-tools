@@ -24,18 +24,15 @@ def draw_pos_line(
         draw: ImageDraw.ImageDraw,
         pos_grid: Grid2,
         img_grid: Grid2,
-        a: Entry,
-        b: Entry,
+        a: Coord2,
+        b: Coord2,
         **kwargs,
     ) -> None:
-    """Uses ``draw`` to draw a line from one Minecraft coordinate to another by projecting thme onto ``img_grid``."""
+    """Uses ``draw`` to draw a line from one Minecraft coordinate to another by projecting them onto ``img_grid``."""
     line_kwargs: dict[str, Any] = {'fill': 0xff0000, 'width': 4} | kwargs
 
-    a_coord = Coord2(a.x, a.z)
-    b_coord = Coord2(b.x, b.z)
-
     draw.line(
-        (pos_grid.project(a_coord, img_grid).as_tuple(), pos_grid.project(b_coord, img_grid).as_tuple()),
+        (pos_grid.project(a, img_grid).as_tuple(), pos_grid.project(b, img_grid).as_tuple()),
         **line_kwargs,
     )
 
@@ -117,7 +114,7 @@ def trail(  # noqa: C901, PLR0915
             with time_this(itimes):
                 color = 'red'
 
-                draw_pos_line(ImageDraw.Draw(frame), datagrid, imgrid, a, b, fill=color)
+                draw_pos_line(ImageDraw.Draw(frame), datagrid, imgrid, a.xy, b.xy, fill=color)
                 if video:
                     duration: int = round((b.timestamp - a.timestamp) * opt.v_fps * opt.v_time_factor) \
                         if opt.v_time_factor else 1
