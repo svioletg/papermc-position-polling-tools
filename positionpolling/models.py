@@ -10,7 +10,7 @@ from pathlib import Path
 from types import UnionType
 from typing import Annotated, Any, ClassVar, Literal, Self, TypeAliasType, cast, get_args, get_origin, overload
 
-from geometry import Tuple4
+from geometry import Coord2, Tuple4
 from pydantic import AfterValidator, BaseModel, ConfigDict, GetCoreSchemaHandler, ValidationInfo
 from pydantic_core import CoreSchema, core_schema
 
@@ -142,6 +142,11 @@ class Entry:
             y=float(row[4]),
             z=float(row[5]),
         )
+
+    @cached_property
+    def xy(self) -> Coord2:
+        """A :data:`geometry.Coord2` of this entry's X and Z coordinates."""
+        return Coord2(self.x, self.z)
 
     def to_json(self) -> dict[str, Any]:
         """Converts this instance to a JSON-ready dictionary."""
