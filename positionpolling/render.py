@@ -1,4 +1,5 @@
 """Common functionality used by most render modules."""
+import time
 from collections.abc import Sequence
 from datetime import timedelta
 from pathlib import Path
@@ -128,3 +129,11 @@ def report_frame_estimate_diff(estimate: int, actual: int) -> None:
     elif estimate_diff < 0:
         diff_pct: float = 1 - (estimate / actual)
         logger.debug(f'Frame estimate undershot by {abs(estimate_diff)} (-{diff_pct:.1%})')
+
+def report_itimes(itimes: list[float], time_started: float, *, level: str = 'INFO') -> None:
+    """Logs a summary of iteration time data."""
+    logger.log(
+        level,
+        f'Took {time.perf_counter() - time_started:.4f}s for {len(itimes)} iterations'
+        + f' (average iteration {sum(itimes) / len(itimes):.4f}s; min {min(itimes):.4f}s; max {max(itimes):.4f}s)',
+    )
