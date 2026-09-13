@@ -2,10 +2,9 @@
 import itertools as it
 import time
 from argparse import Namespace
-from datetime import timedelta
+from collections.abc import Sequence
 from math import ceil
 from pathlib import Path
-from subprocess import CompletedProcess
 from typing import Any
 
 import cv2
@@ -14,14 +13,11 @@ from geometry import Coord2, Grid2
 from loguru import logger
 from maybetype import Err, Ok, Result
 from PIL import Image, ImageDraw, ImageEnhance
-from rich.progress import Progress, TaskProgressColumn, TextColumn
-from rich.table import Column
 
+from positionpolling import render
 from positionpolling.cli import abort
-from positionpolling.const import console
 from positionpolling.models import RENDER_OPT_DEFAULT, Entry, PlayerPositions, RenderOpt
-from positionpolling.rich import CustomBarColumn
-from positionpolling.util import ask, ask_overwrite, fix_opencv_video, grid_from_entries, log_progress, time_this
+from positionpolling.util import ask, ask_overwrite, grid_from_entries, log_progress, time_this
 
 
 def draw_pos_line(
@@ -45,8 +41,8 @@ def draw_pos_line(
 
 # TODO(svioletg): #6 Support multiple player trails
 def trail(  # noqa: C901, PLR0915
-        data: PlayerPositions,
-        player: str | None = None,
+        data: str | Path | Sequence[Entry],
+        players: list[str] | None = None,
         *,
         img: Image.Image | None = None,
         desat_per_frame: float = 0.95,
@@ -69,30 +65,10 @@ def trail(  # noqa: C901, PLR0915
     :param opt: Additional rendering options. See: :class:`positionpolling.const.RenderOpt`
     :param confirm: Whether to ask the user for confirmation before beginning the render.
     """
-    video_path = Path(video_path).absolute() if video_path else None
-    if video_path and not video_path.parent.exists():
-        raise FileNotFoundError(f'Directory does not exist: {video_path.parent}')
-
-    data_by_player = data.by_player
-    if player is None:
-        if len(data_by_player.keys()) == 1:
-            player = next(iter(data_by_player.keys()))
-        else:
-            raise ValueError("'player' is required when position data for multiple players is present")
-
-    logger.info(f'Using data for player: {player}')
-
-    entries = data_by_player[player]
-    total_entry_duration = timedelta(seconds=entries[-1].timestamp - entries[0].timestamp)
-
-    logger.info(f'There are {len(entries)} entries to go through, covering a span of {total_entry_duration}')
-    frame_estimate: int = 1
-    if video_path and opt.v_time_factor:
-        video_duration_estimate = timedelta(seconds=total_entry_duration.total_seconds() * opt.v_time_factor)
-        # TODO(svioletg): #4 frame estimate overshoots by a fair bit
-        frame_estimate: int = round(video_duration_estimate.total_seconds() * opt.v_fps)
-        logger.info(f'v_time_factor is {opt.v_time_factor}, final video should be roughly {video_duration_estimate}'
-            + f' (~{frame_estimate} frames at {opt.v_fps} fps)')
+    video_path: Path | None = render.check_video_path(video_path)
+    entries: list[Entry] = render.prepare_entries(data, players)
+    frame_estimate: int = render.get_frame_estimate(entries, time_factor=opt.v_time_factor, fps=opt.v_fps) \
+        if video_path else 1
 
     datagrid = grid_from_entries(entries)
     imgrid = datagrid.translate_to((0, 0)).round()
@@ -106,9 +82,7 @@ def trail(  # noqa: C901, PLR0915
 
     img = img or Image.new('RGBA', size=(ceil(imgrid.width), ceil(imgrid.height)))
 
-    video: cv2.VideoWriter | None = None
-    if video_path:
-        video = cv2.VideoWriter(video_path, cv2.VideoWriter.fourcc(*'mp4v'), opt.v_fps, img.size)
+    video: cv2.VideoWriter | None = render.prepare_video_writer(video_path, img.size, fps=opt.v_fps)
 
     if video:
         logger.info('Rendering image and video...')
@@ -126,18 +100,7 @@ def trail(  # noqa: C901, PLR0915
         len(str(len(entries))),
     )
 
-    with Progress(
-            TextColumn('[progress.description]{task.description}'),
-            TaskProgressColumn('[[info2]{task.percentage:>3.0f}%[/]]'),
-            CustomBarColumn(bar_width=None, table_column=Column(ratio=2)),
-            TextColumn(
-                '[[info2]{task.completed:>' + str(mofn_m_width) +'}/{task.total:<' + str(mofn_m_width) + '}[/]]',
-            ),
-            console=console,
-            transient=True,
-            expand=True,
-            disable=not opt.progress_bar,
-        ) as pbar:
+    with render.progress_bar(disable=not opt.progress_bar, mofn_m_width=mofn_m_width) as pbar:
         task_video = pbar.add_task('Writing video...', completed=0, total=frame_estimate) if video_path else None
         task_data = pbar.add_task('Processing entries...', completed=-1, total=len(entries))
 
@@ -182,16 +145,7 @@ def trail(  # noqa: C901, PLR0915
 
     logger.info('Render finished')
     if video:
-        logger.info(f'Wrote {frame_count} frame(s) to video')
-        frame_estimate_diff: int = frame_estimate - frame_count
-        if frame_estimate_diff == 0:
-            logger.debug(f'No difference from frame estimate: est. {frame_estimate}, actual {frame_count}')
-        elif frame_estimate_diff > 0:
-            diff_pct: float = 1 - (frame_count / frame_estimate)
-            logger.debug(f'Frame estimate overshot by {frame_estimate_diff} (+{diff_pct:.1%})')
-        elif frame_estimate_diff < 0:
-            diff_pct: float = 1 - (frame_estimate / frame_count)
-            logger.debug(f'Frame estimate undershot by {abs(frame_estimate_diff)} (-{diff_pct:.1%})')
+        render.report_frame_estimate_diff(frame_estimate, frame_count)
 
     logger.info(f'Took {time.perf_counter() - total_time:.4f}s for {len(entries)} data points'
           + f' (average iteration {sum(itimes) / len(itimes):.4f}s; min {min(itimes):.4f}s; max {max(itimes):.4f}s)')
@@ -202,23 +156,7 @@ def trail(  # noqa: C901, PLR0915
         logger.info(f'Saving video to: {video_path}')
         video.release()
         if opt.v_fix:
-            # Log warning and continue on if FFmpeg isn't installed instead of raising an error
-            fix_result: Result[Path, CompletedProcess] | None = None
-            try:
-                fix_result = fix_opencv_video(video_path, video_path, same_file_ok=True)
-            except FileNotFoundError as e:
-                if 'ffmpeg could not be found' in str(e):
-                    logger.warning('FFmpeg is not installed, skipping fix_opencv_video step')
-                else:
-                    raise
-
-            if fix_result is not None:
-                match fix_result:
-                    case Ok(dest):
-                        logger.info(f'Video reprocessed successfully and saved to {dest}')
-                    case Err(proc):
-                        logger.error(f'FFmpeg process failed with status {proc.returncode}')
-                        logger.info('Video reprocessing failed, the original video is unmodified')
+           render.fix_video(video_path)
 
     return Ok((img, video))
 
@@ -254,9 +192,8 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:  # noqa: C901
             abort('Aborting.')
 
     result = trail(
-        data,
-        # TODO(svioletg): #6 Support multiple player trails
-        players[0] if players else None,
+        data.entries,
+        players,
         desat_per_frame=desat_per_frame,
         video_path=video_dest,
         opt=render_opt,
