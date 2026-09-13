@@ -548,7 +548,7 @@ requires-dist = [
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=5.1.0" },
     { name = "opencv-python", specifier = ">=5.0.0.93" },
     { name = "pillow", specifier = ">=12.3.0" },
-    { name = "py-geometry-utils", specifier = ">=0.7.0" },
+    { name = "py-geometry-utils", specifier = "==0.8.0" },
     { name = "py-maybetype", specifier = ">=0.14.0" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pytest", marker = "extra == 'all'", specifier = ">=9.1.1" },
@@ -652,11 +652,11 @@ wheels = [
 
 [[package]]
 name = "py-geometry-utils"
-version = "0.7.0"
+version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/23/ec/307f8118a193c62208f644d5b69680537760ea877849001f2715b6f55e46/py_geometry_utils-0.7.0.tar.gz", hash = "sha256:be869613bc7a1b0bd9f59c7058a485e9c227ba0db3f6e9496c80ba42350d5a3c", size = 69121, upload-time = "2026-08-14T23:08:12.675Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d2/fc/c22180731474331f445e10455eb8713bb11aac82824cfef9c87993ac78dc/py_geometry_utils-0.8.0.tar.gz", hash = "sha256:46cbd4a78c77c8362db4bcd7733fa80e848cf7793a8461ac2a5793ee642eec63", size = 71206, upload-time = "2026-09-13T02:03:02.782Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/79/8a/24ecdad1a7e0e1defad3b319957fd74561fc99d5a511fd577591f55624f0/py_geometry_utils-0.7.0-py3-none-any.whl", hash = "sha256:5a400b3bb28d62e215185921d1876bd4172b6707fa97e4bc6f54bed0c537ba37", size = 12922, upload-time = "2026-08-14T23:08:11.15Z" },
+    { url = "https://files.pythonhosted.org/packages/13/28/f5d53ba638299eac6a94ec69839a8bd776382196f429bba16310ee0f5674/py_geometry_utils-0.8.0-py3-none-any.whl", hash = "sha256:939d5f1e92347923241aff51943bd2c79b133b375ca52e7e978fee8b78902071", size = 13776, upload-time = "2026-09-13T02:03:01.437Z" },
 ]
 
 [[package]]
