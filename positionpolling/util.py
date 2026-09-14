@@ -20,7 +20,8 @@ from positionpolling.const import UUID4_REGEX
 if TYPE_CHECKING:
     from positionpolling.models import Entry
 
-type ColorSource = str | int | tuple[int, int, int] | tuple[int, int, int, int]
+type ColorSource = Color | str | int | tuple[int, int, int] | tuple[int, int, int, int]
+"""Type alias for valid :class:`Color` constructor inputs."""
 
 class Color:
     """Class representing a color which can be constructed from and converted back out to various formats."""
@@ -39,10 +40,11 @@ class Color:
             ``0, 255, 255``, with an alpha value of ``255``. Make sure to include the last alpha byte if passing
             integers in this way.
 
-        :param source: Either a string, a positive 32-bit integer, an RGB tuple (values 0-255), or an RGBA tuple. If
-            only RGB values are given (an RGB tuple, or a 24-bit hexadecimal value), the alpha value defaults to 255. If
-            given a string, it can be either a hexadecimal color starting with ``#`` or ``0x``, a CSS3 color keyword
-            (see https://www.w3.org/TR/css-color-3/#colorunits), or a CSS-style ``hsl(...)`` or ``hsv(...)`` string.
+        :param source: Either a string, a positive 32-bit integer, an RGB tuple (values 0-255), an RGBA tuple, or
+            another :class:`Color` instance. If only RGB values are given (an RGB tuple, or a 24-bit hexadecimal value),
+            the alpha value defaults to 255. If given a string, it can be either a hexadecimal color starting with ``#``
+            or ``0x``, a CSS3 color keyword (see https://www.w3.org/TR/css-color-3/#colorunits), or a CSS-style
+            ``hsl(...)`` or ``hsv(...)`` string.
 
             Since all named colors have an alpha value of 255, you can optionally suffix the name with ``#XX`` where
             ``XX`` is the hexadecimal alpha value to set for this color, e.g. ``'darkorchid#7f'``.
@@ -54,18 +56,12 @@ class Color:
 
         .. include
         """
+        if isinstance(source, Color):
+            source = source.value
+
         if isinstance(source, str) and self.HSL_HSV_REGEX.match(source):
             source = self._parse_hsl_hsv(source)
-
-        if isinstance(source, tuple):
-            if len(source) not in (3, 4):
-                raise ValueError(f'Color tuple must be either 3 or 4 values: {source!r}')
-            if len(source) == 3:  # noqa: PLR2004
-                source = (*source, 255)
-            # Lazy way to do this but it works
-            source = int(literal_eval(f'0x{source[0]:02x}{source[1]:02x}{source[2]:02x}{source[3]:02x}'))
-
-        if isinstance(source, str):
+        elif isinstance(source, str):
             if (source[0] != '#') and (not source.startswith('0x')):
                 # Check if alpha was specified
                 name, *extra = source.split('#', maxsplit=1)
@@ -83,6 +79,14 @@ class Color:
                 raise ValueError(f'Expected 6 or 8 hexadecimal characters for color value: {source!r}')
 
             source = int(literal_eval(source.replace('#', '0x')))
+
+        if isinstance(source, tuple):
+            if len(source) not in (3, 4):
+                raise ValueError(f'Color tuple must be either 3 or 4 values: {source!r}')
+            if len(source) == 3:  # noqa: PLR2004
+                source = (*source, 255)
+            # Lazy way to do this but it works
+            source = int(literal_eval(f'0x{source[0]:02x}{source[1]:02x}{source[2]:02x}{source[3]:02x}'))
 
         self._value = source
 

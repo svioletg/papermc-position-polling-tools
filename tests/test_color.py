@@ -29,6 +29,7 @@ from positionpolling.util import Color
         ((0, 0, 0), 0x000000ff),
         ('black', 0x000000ff),
         ('black#00', 0),
+        (Color(0), 0),
     ],
 )
 def test_color_init(source: int | str | tuple[int, int, int] | tuple[int, int, int, int], expected: int) -> None:
