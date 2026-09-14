@@ -59,36 +59,13 @@ class Color:
         if isinstance(source, Color):
             source = source.value
 
-        if isinstance(source, str) and self.HSL_HSV_REGEX.match(source):
-            source = self._parse_hsl_hsv(source)
-        elif isinstance(source, str):
-            if (source[0] != '#') and (not source.startswith('0x')):
-                # Check if alpha was specified
-                name, *extra = source.split('#', maxsplit=1)
-                extra = extra[0] if extra else ''
-                if len(extra) > 2:  # noqa: PLR2004
-                    raise ValueError(f'Expected a maximum of two characters for hexadecimal alpha value: {source!r}')
-                extra = extra or 'ff'
-                source = webcolors.name_to_hex(name) + extra.rjust(2, '0')
-
-            source = source.replace('#', '0x')
-
-            if len(source) == 8:  # noqa: PLR2004
-                source += 'ff'
-            if len(source) != 10:  # noqa: PLR2004
-                raise ValueError(f'Expected 6 or 8 hexadecimal characters for color value: {source!r}')
-
-            source = int(literal_eval(source.replace('#', '0x')))
+        if isinstance(source, str):
+            source = self._parse_from_str(source)
 
         if isinstance(source, tuple):
-            if len(source) not in (3, 4):
-                raise ValueError(f'Color tuple must be either 3 or 4 values: {source!r}')
-            if len(source) == 3:  # noqa: PLR2004
-                source = (*source, 255)
-            # Lazy way to do this but it works
-            source = int(literal_eval(f'0x{source[0]:02x}{source[1]:02x}{source[2]:02x}{source[3]:02x}'))
+            source = self._parse_from_tuple(source)
 
-        self._value = source
+        self.value = source
 
     @property
     def value(self) -> int:
@@ -190,6 +167,39 @@ class Color:
             raise ValueError(f'Not in range 0-255: {n!r}')
 
         return n
+
+    @staticmethod
+    def _parse_from_str(source: str) -> int | tuple[int, int, int, int]:
+        if isinstance(source, str) and Color.HSL_HSV_REGEX.match(source):
+            return Color._parse_hsl_hsv(source)
+
+        if (source[0] != '#') and (not source.startswith('0x')):
+            # Check if alpha was specified
+            name, *extra = source.split('#', maxsplit=1)
+            extra = extra[0] if extra else ''
+            if len(extra) > 2:  # noqa: PLR2004
+                raise ValueError(f'Expected a maximum of two characters for hexadecimal alpha value: {source!r}')
+            extra = extra or 'ff'
+            source = webcolors.name_to_hex(name) + extra.rjust(2, '0')
+
+        source = source.replace('#', '0x')
+
+        if len(source) == 8:  # noqa: PLR2004
+            source += 'ff'
+        if len(source) != 10:  # noqa: PLR2004
+            raise ValueError(f'Expected 6 or 8 hexadecimal characters for color value: {source!r}')
+
+        return int(literal_eval(source.replace('#', '0x')))
+
+    @staticmethod
+    def _parse_from_tuple(source: tuple[int, int, int] | tuple[int, int, int, int]) -> int:
+        if len(source) not in (3, 4):
+            raise ValueError(f'Color tuple must be either 3 or 4 values: {source!r}')
+        if len(source) == 3:  # noqa: PLR2004
+            source = (*source, 255)
+
+        # Lazy way to do this but it works
+        return int(literal_eval(f'0x{source[0]:02x}{source[1]:02x}{source[2]:02x}{source[3]:02x}'))
 
     @staticmethod
     def _parse_hsl_hsv(string: str) -> tuple[int, int, int, int]:
