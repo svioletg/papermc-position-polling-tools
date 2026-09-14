@@ -11,10 +11,12 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Self, TypeGuard, cast, overload
 
+import numpy as np
 import webcolors
 from geometry import Grid2
 from loguru import logger
 from maybetype import Err, Ok, Result
+from PIL import Image
 
 from positionpolling.const import UUID4_REGEX
 
@@ -750,6 +752,12 @@ def parse_players(
                 raise ValueError(f"'missing' parameter not None, 'pass', or a callable object: {missing!r}")  # noqa: B904
 
     return parsed_players
+
+def rand_img(size: tuple[int, int], *, alpha: bool = True) -> Image.Image:
+    """Returns a noise image with random pixel values."""
+    rng = np.random.default_rng()
+
+    return Image.fromarray(rng.integers(0, 255, (*size, 4 if alpha else 3)).astype(np.uint8))
 
 def require_ffmpeg() -> str:
     """Returns the binary path for FFmpeg or raises :class:`FileNotFoundError` if it could not be found."""
