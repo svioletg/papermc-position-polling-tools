@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import time
 from ast import literal_eval
+from collections import OrderedDict
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
@@ -594,7 +595,13 @@ def grid_from_entries(data: Iterable['Entry'], **grid_kwargs: Any) -> Grid2:  # 
         **grid_kwargs,
     )
 
-def group_by[K, V](it: Iterable[Mapping[K, V]], key: K, *, strict: bool = False) -> dict[V, list[Mapping[K, V]]]:
+def group_by[K, V, T: Mapping](
+        it: Iterable[Mapping[K, V]],
+        key: K,
+        *,
+        strict: bool = False,
+        ordered: bool = False,
+    ) -> dict[V, list[Mapping[K, V]]]:
     """Groups mappings together into a new dictionary by the value of a given key.
 
     Example:
@@ -620,8 +627,10 @@ def group_by[K, V](it: Iterable[Mapping[K, V]], key: K, *, strict: bool = False)
 
     :param strict: If ``False``, when ``key`` is not found in one of ``it`` 's mappings, the item is skipped. Otherwise,
         ``KeyError`` is raised.
+    :param ordered: Uses :class:`collections.OrderedDict` instead of a plain dictionary, preserving insertion order
+        while iterating over ``it``.
     """
-    d: dict[V, list[Mapping[K, V]]] = {}
+    d: dict[V, list[Mapping[K, V]]] = OrderedDict() if ordered else {}
 
     for i in it:
         if (not strict) and (key not in i):
@@ -631,8 +640,14 @@ def group_by[K, V](it: Iterable[Mapping[K, V]], key: K, *, strict: bool = False)
 
     return d
 
-def group_by_attr[T, U](it: Iterable[T], name: str, typ: type[U] | None = None, *, strict: bool = False) \
-    -> dict[U, list[T]]:  # noqa: ARG001
+def group_by_attr[T, U](
+        it: Iterable[T],
+        name: str,
+        typ: type[U] | None = None,  # noqa: ARG001
+        *,
+        strict: bool = False,
+        ordered: bool = False,
+    ) -> dict[U, list[T]]:
     """Like :func:`group_by`, but works on an iterable of any object and groups by attribute values.
 
     Useful for things like dataclasses or models.
@@ -640,8 +655,10 @@ def group_by_attr[T, U](it: Iterable[T], name: str, typ: type[U] | None = None, 
     :param typ: Can be used to cast the key type of the resulting dictionary; not used at runtime.
     :param strict: If ``False``, when one of the items in ``it`` does not have an attribute ``name``, it will be
         skipped. Otherwise, ``AttributeError`` is raised.
+    :param ordered: Uses :class:`collections.OrderedDict` instead of a plain dictionary, preserving insertion order
+        while iterating over ``it``.
     """
-    d: dict[U, list[T]] = {}
+    d: dict[U, list[T]] = OrderedDict() if ordered else {}
 
     for i in it:
         if (not strict) and (not hasattr(i, name)):

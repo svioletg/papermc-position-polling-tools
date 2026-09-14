@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
@@ -173,10 +174,14 @@ def test_group_by() -> None:
         ],
     }
 
+    assert isinstance(util.group_by(items, 'artist', ordered=True), OrderedDict)
+
 def test_group_by_attr() -> None:
     entries = gen_pos_logs(10)
     assert all(all(i.player_uuid == k for i in v) for k, v in util.group_by_attr(entries, 'player_uuid').items())
     assert all(all(i.world == k for i in v) for k, v in util.group_by_attr(entries, 'world').items())
+
+    assert isinstance(util.group_by_attr(entries, 'player_uuid', ordered=True), OrderedDict)
 
 @pytest.mark.parametrize('pct_digits', [0, 1, 2, 3, 4])
 @pytest.mark.parametrize('level', [i.name for i in LogLevel])
