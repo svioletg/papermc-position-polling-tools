@@ -312,14 +312,14 @@ class Color:
     def blend(self, other: Self | ColorSource, delta: float = 50.0) -> Self:
         """Returns a new color with this instance's value blended with another's."""
         if not isinstance(other, self.__class__):
-            other = self.__class__(cast('ColorSource', other))
+            other = self.__class__(other)
 
         return self.__class__(blend_color(self.rgba(), other.rgba(), delta))
 
     def gradient(self, other: Self | ColorSource, steps: int) -> Generator[Self]:
         """Yields colors (length ``steps``) that smoothly transition from ``self`` to ``other``."""
         if not isinstance(other, self.__class__):
-            other = self.__class__(cast('ColorSource', other))
+            other = self.__class__(other)
 
         yield from (self.__class__(step) for step in gradient(self.rgba(), other.rgba(), steps))
 
