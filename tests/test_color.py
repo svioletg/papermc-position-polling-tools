@@ -36,6 +36,19 @@ def test_color_init(source: int | str | tuple[int, int, int] | tuple[int, int, i
     assert Color(expected).value == expected
     assert Color(source).value == expected
 
+@pytest.mark.parametrize(('rgba', 'expected'),
+    [
+        ((255, 255, 255, 255), 0xffffffff),
+        ((255, 0, 0, 255), 0xff0000ff),
+        ((0, 255, 0, 255), 0x00ff00ff),
+        ((0, 0, 255, 255), 0x0000ffff),
+        ((0, 0, 0, 0), 0),
+    ],
+)
+def test_color_pack_rgba(rgba: tuple[int, int, int] | tuple[int, int, int, int], expected: int) -> None:
+    assert Color.pack_rgba(rgba) == expected
+    assert Color.pack_rgba(rgba[:3]) == expected | 0xff
+
 @pytest.mark.parametrize('r', [0, 255])
 @pytest.mark.parametrize('g', [0, 255])
 @pytest.mark.parametrize('b', [0, 255])

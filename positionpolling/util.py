@@ -260,6 +260,11 @@ class Color:
 
         return (round(r * 255), round(g * 255), round(b * 255), round(convert_range(a, (0, 1), (0, 255))))
 
+    @staticmethod
+    def pack_rgba(rgba: tuple[int, int, int] | tuple[int, int, int, int]) -> int:
+        """Packs an RGB or RGBA tuple of 8-bit values into an integer."""
+        return rgba[0] << 24 | (rgba[1] << 16) | (rgba[2] << 8) | (rgba[3] if len(rgba) == 4 else 255)  # noqa: PLR2004
+
     # Output
 
     def hex(self, prefix: str = '0x', *, alpha: bool = True) -> str:
