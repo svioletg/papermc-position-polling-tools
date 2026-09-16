@@ -1,6 +1,6 @@
 """Common functionality used by most render modules."""
 import time
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from datetime import timedelta
 from pathlib import Path
 from subprocess import CompletedProcess
@@ -75,7 +75,7 @@ def get_frame_estimate(
 
 def prepare_entries(
         data: str | Path | Sequence[Entry],
-        players: list[str] | None = None,
+        players: Iterable[str] | None = None,
     ) -> list[Entry]:
     """Returns a list of :class:`models.Entry` objects after filtering by players.
 
