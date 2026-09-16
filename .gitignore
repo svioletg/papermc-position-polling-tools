@@ -15,3 +15,4 @@ env.py
 render.json
 players.json
 *.log
+scalene-profile.*
