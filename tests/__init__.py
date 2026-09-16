@@ -1,6 +1,6 @@
 import random
 import sqlite3
-from collections.abc import Generator, Sequence
+from collections.abc import Generator, Iterable, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -10,7 +10,8 @@ from uuid import UUID, uuid4
 from geometry import Tuple4
 
 from positionpolling.const import VANILLA_WORLDS, Y_RANGE
-from positionpolling.models import Entry
+from positionpolling.models import Entry, PlayerPositions
+from positionpolling.util import drop_duplicates
 
 TESTS_DIR: Path = Path(__file__).absolute().parent
 TESTS_DATA_DIR: Path = TESTS_DIR / 'data'
@@ -43,6 +44,39 @@ def gen_pos_logs(
         )
         for t in range(n)
     ]
+
+def merge_data(
+        *datasets: str | Path | Sequence[Entry] | PlayerPositions,
+        players: Iterable[str] | None = None,
+    ) -> list[Entry]:
+    players = iter(players) if players is not None else None
+
+    merged: list[dict[str, Any]] = []
+
+    for n, source in enumerate(datasets):
+        if isinstance(source, PlayerPositions):
+            data = source.entries
+        if isinstance(source, str | Path):
+            data = PlayerPositions.from_sql(source).entries
+
+        if n == 0:
+            origin_xy = data[0].xy
+            origin_time = data[0].timestamp
+            merged = [e.to_json() for e in data]
+            continue
+
+        player = next(players) if players else None
+
+        coord_diff = data[0].xy - origin_xy
+
+        merged.extend(e.to_json() | {
+            'timestamp': origin_time + n,
+            'x': e.x + coord_diff.x,
+            'z': e.y + coord_diff.y,
+            'player_uuid': player or e.player_uuid,
+        } for n, e in enumerate(data))
+
+    return sorted(drop_duplicates(Entry(**e) for e in merged), key=lambda e: e.timestamp)
 
 @contextmanager
 def tempdb(
