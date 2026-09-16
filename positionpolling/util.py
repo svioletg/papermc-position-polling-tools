@@ -77,6 +77,9 @@ class Color:
         if isinstance(source, tuple):
             source = self._parse_from_tuple(source)
 
+        if not isinstance(source, int):
+            raise TypeError(f'Unsupported Color source: {source!r}')
+
         self.value = source
 
     @property
@@ -426,6 +429,13 @@ def blend_color(c1: tuple[int, int, int, int], c2: tuple[int, int, int, int], de
         int(b1 * (1 - factor) + b2 * factor),
         int(a1 * (1 - factor) + a2 * factor),
     )
+
+def clamp(n: float, r: tuple[float, float]) -> float:
+    """Clamps a number to be within range of (a, b)."""
+    # Allows the range to be given in either order
+    a, b = min(r), max(r)
+
+    return max(a, min(n, b))
 
 def coerce[T](obj: object, typ: type[T], fn: Callable[[object], T] | None = None) -> T:
     """Returns ``obj`` if it is already of type ``typ``, otherwise converts it to that type.
