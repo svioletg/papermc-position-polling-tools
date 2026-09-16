@@ -132,16 +132,16 @@ def progress_bar(*, disable: bool = True, mofn_m_width: int = 0) -> Progress:
 
 def report_frame_estimate_diff(estimate: int, actual: int) -> None:
     """Logs the difference between the given frame estimate and the actual number of frames written."""
-    logger.info(f'Wrote {actual} frame(s) to video')
+    logger.opt(depth=1).info(f'Wrote {actual} frame(s) to video')
     estimate_diff: int = estimate - actual
     if estimate_diff == 0:
-        logger.debug(f'No difference from frame estimate: est. {estimate}, actual {actual}')
+        logger.opt(depth=1).debug(f'No difference from frame estimate: est. {estimate}, actual {actual}')
     elif estimate_diff > 0:
         diff_pct: float = 1 - (actual / estimate)
-        logger.debug(f'Frame estimate overshot by {estimate_diff} (+{diff_pct:.1%})')
+        logger.opt(depth=1).debug(f'Frame estimate overshot by {estimate_diff} (+{diff_pct:.1%})')
     elif estimate_diff < 0:
         diff_pct: float = 1 - (estimate / actual)
-        logger.debug(f'Frame estimate undershot by {abs(estimate_diff)} (-{diff_pct:.1%})')
+        logger.opt(depth=1).debug(f'Frame estimate undershot by {abs(estimate_diff)} (-{diff_pct:.1%})')
 
 def report_itimes(itimes: list[float], time_started: float, *, level: str = 'INFO') -> None:
     """Logs a summary of iteration time data."""
