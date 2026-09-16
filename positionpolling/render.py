@@ -51,17 +51,25 @@ def fix_video(video_path: str | Path) -> None:
             logger.error(f'FFmpeg process failed with status {proc.returncode}')
             logger.info('Video reprocessing failed, the original video is unmodified')
 
-def get_frame_estimate(entries: Sequence[Entry], *, time_factor: float, fps: int) -> int:
+def get_frame_estimate(
+        entries: Sequence[Entry],
+        *,
+        time_factor: float,
+        fps: int,
+        log: bool = False,
+    ) -> int:
     """Estimate how many frames long a render of these entries should be based on the given time factor and fps."""
     total_entry_duration = timedelta(seconds=entries[-1].timestamp - entries[0].timestamp)
 
-    logger.info(f'There are {len(entries)} entries to go through, covering a span of {total_entry_duration}')
+    if log:
+        logger.info(f'There are {len(entries)} entries to go through, covering a span of {total_entry_duration}')
 
     video_duration_estimate = timedelta(seconds=total_entry_duration.total_seconds() * time_factor)
     # TODO(svioletg): #4 Frame estimate can overshoot sometimes
     frame_estimate: int = round(video_duration_estimate.total_seconds() * fps)
-    logger.info(f'Video time factor is {time_factor}, final video should be roughly {video_duration_estimate}'
-        + f' (~{frame_estimate} frames at {fps} fps)')
+    if log:
+        logger.info(f'Video time factor is {time_factor}, final video should be roughly {video_duration_estimate}'
+            + f' (~{frame_estimate} frames at {fps} fps)')
 
     return frame_estimate
 
