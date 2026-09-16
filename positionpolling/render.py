@@ -31,7 +31,7 @@ def check_video_path(video_path: str | Path | None) -> Path | None:
 
     return video_path
 
-def fix_video(video_path: Path) -> None:
+def fix_video(video_path: str | Path) -> None:
     """Reprocess the video at ``video_path`` with FFmpeg to a more widely compatible format, logging any issues."""
     fix_result: Result[Path, CompletedProcess]
     try:
