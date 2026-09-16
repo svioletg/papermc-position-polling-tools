@@ -145,7 +145,7 @@ def report_frame_estimate_diff(estimate: int, actual: int) -> None:
 
 def report_itimes(itimes: list[float], time_started: float, *, level: str = 'INFO') -> None:
     """Logs a summary of iteration time data."""
-    logger.log(
+    logger.opt(depth=1).log(
         level,
         f'Took {time.perf_counter() - time_started:.4f}s for {len(itimes)} iterations'
         + f' (average iteration {sum(itimes) / len(itimes):.4f}s; min {min(itimes):.4f}s; max {max(itimes):.4f}s)',
