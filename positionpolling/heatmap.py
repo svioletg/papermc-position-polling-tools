@@ -1,4 +1,5 @@
 """Visualizes player position data as a grid-based heatmap."""
+import subprocess
 import time
 from collections.abc import Iterable, Sequence
 from colorsys import hsv_to_rgb
@@ -7,9 +8,8 @@ from itertools import pairwise
 from math import ceil, floor
 from operator import neg
 from pathlib import Path
-from typing import Literal, cast
+from typing import IO, Literal, cast
 
-import cv2
 import numpy as np
 from geometry import Coord2, Grid2, Rect
 from geometry.util import snap_num
@@ -21,6 +21,7 @@ from PIL.ImageDraw import ImageDraw
 
 from positionpolling import render
 from positionpolling.models import RENDER_OPT_DEFAULT, Entry, RenderOpt
+from positionpolling.render import get_ffmpeg_args
 from positionpolling.util import (
     Color,
     ColorSource,
@@ -246,8 +247,6 @@ def _heatmap_video(  # noqa: PLR0915
     img_grid = data_grid.translate_to((0, 0))
     size: tuple[int, int] = int(img_grid.size[0]), int(img_grid.size[1])
 
-    video: cv2.VideoWriter = expect(render.prepare_video_writer(video_path, size))
-
     bg = bg if isinstance(bg, Image.Image) else Image.new('RGBA', size, Color(bg or 'black').replace(a=255).rgba())
 
     mofn_m_width: int = max(
@@ -260,6 +259,19 @@ def _heatmap_video(  # noqa: PLR0915
     by_time: dict[float, list[Entry]] = group_by_attr(entries, 'timestamp', float, ordered=True)
 
     logger.info('Rendering video...')
+
+    ffmpeg_args: tuple[str, ...] = get_ffmpeg_args(video_path, size, fps=opt.v_fps)
+
+    logger.debug(f'Run: {ffmpeg_args}')
+
+    ffmpeg = subprocess.Popen(  # noqa: S603
+        ffmpeg_args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+    )
+
+    ffmpeg_stdin: IO[bytes] = expect(ffmpeg.stdin)
 
     with render.progress_bar(disable=not opt.progress_bar, mofn_m_width=mofn_m_width) as pbar:
         task_data = pbar.add_task('Processing entries...', completed=-1, total=len(entries))
@@ -307,25 +319,15 @@ def _heatmap_video(  # noqa: PLR0915
 
                     areas_loaded.append(rect)
 
-                for _ in range(max(1, round((time_b - time_a) * opt.v_time_factor * opt.v_fps))):
-                    # broken out into variables for profiling, would normally just be one line
-                    a = alpha_composite(
-                        bg,
-                        frame,
-                    )
-                    arr = np.array(
-                        a,
-                    )
-                    vdata = cv2.cvtColor(
-                        arr,
-                        cv2.COLOR_RGB2BGR,
-                    )
-                    video.write(
-                        vdata,
-                    )
+                frame_duration: int = max(1, round((time_b - time_a) * opt.v_time_factor * opt.v_fps))
+                for _ in range(frame_duration):
+                    try:
+                        ffmpeg_stdin.write(np.array(alpha_composite(bg, frame)).tobytes())
+                    except Exception:
+                        logger.error('An exception occurred while sending data to FFmpeg')
+                        logger.error(f'Captured FFmpeg output:\n{expect(ffmpeg.stderr).read().decode('utf-8')}')
+                        raise
 
-                    frame_n += 1
-                    pbar.update(task_video, advance=1)
                     _fade_regions(
                         frame,
                         squares,
@@ -335,6 +337,9 @@ def _heatmap_video(  # noqa: PLR0915
                         alpha_range=freq_alpha_range,
                         alpha_mult=0.99,
                     )
+
+                pbar.update(task_video, advance=frame_duration)
+                frame_n += frame_duration
 
                 if (opt.progress_log_interval > 0):
                     if entry_n / len(entries) > progress_log_thresh_data:
@@ -348,16 +353,13 @@ def _heatmap_video(  # noqa: PLR0915
         # End entries loop
     del pbar
 
+    # End video render
     logger.info('Video render finished')
     render.report_frame_estimate_diff(frame_estimate, frame_n)
     render.report_itimes(itimes, time_started)
 
-    # End video render
-
     logger.info(f'Saving video to: {video_path}')
-    video.release()
-    if opt.v_fix:
-        render.fix_video(video_path)
+    ffmpeg.communicate() # Closes stdin
 
     return Path(video_path)
 
