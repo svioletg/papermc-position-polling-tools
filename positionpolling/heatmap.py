@@ -21,7 +21,7 @@ from PIL.ImageDraw import ImageDraw
 
 from positionpolling import render
 from positionpolling.models import RENDER_OPT_DEFAULT, Entry, RenderOpt
-from positionpolling.render import get_ffmpeg_args
+from positionpolling.render import ffmpeg_size_in_range, get_ffmpeg_args
 from positionpolling.util import (
     Color,
     ColorSource,
@@ -246,6 +246,9 @@ def _heatmap_video(  # noqa: PLR0915
 
     img_grid = data_grid.translate_to((0, 0))
     size: tuple[int, int] = int(img_grid.size[0]), int(img_grid.size[1])
+
+    if not ffmpeg_size_in_range(size):
+        raise ValueError(f'Image size exceeds FFmpeg limits: {size}')
 
     bg = bg if isinstance(bg, Image.Image) else Image.new('RGBA', size, Color(bg or 'black').replace(a=255).rgba())
 
