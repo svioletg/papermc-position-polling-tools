@@ -51,6 +51,10 @@ def fix_video(video_path: str | Path) -> None:
             logger.error(f'FFmpeg process failed with status {proc.returncode}')
             logger.info('Video reprocessing failed, the original video is unmodified')
 
+def ffmpeg_size_in_range(size: tuple[int, int]) -> bool:
+    """Returns whether the given size is within FFmpeg's picture size limit."""
+    return ((size[0] * 8 + 1024) * size[1] + 128) < (2 ** 31 - 1)
+
 def get_ffmpeg_args(
         video_path: str | Path,
         size: tuple[int, int],
