@@ -13,7 +13,7 @@ from rich.progress import Column, Progress, TaskProgressColumn, TextColumn
 from positionpolling.const import console
 from positionpolling.models import Entry, PlayerPositions
 from positionpolling.rich import CustomBarColumn
-from positionpolling.util import fix_opencv_video
+from positionpolling.util import fix_opencv_video, require_ffmpeg
 
 
 def check_video_path(video_path: str | Path | None) -> Path | None:
@@ -50,6 +50,33 @@ def fix_video(video_path: str | Path) -> None:
         case Err(proc):
             logger.error(f'FFmpeg process failed with status {proc.returncode}')
             logger.info('Video reprocessing failed, the original video is unmodified')
+
+def get_ffmpeg_args(
+        video_path: str | Path,
+        size: tuple[int, int],
+        *,
+        fps: int,
+        crf: int = 23,
+        log_level: str = 'info',
+    ) -> tuple[str, ...]:
+    """Returns a tuple of arguments to spawn an FFmpeg process reading RGBA video data from stdin.
+
+    This function will call :func:`util.require_ffmpeg`.
+    """
+    return (
+        require_ffmpeg(),
+        '-y',
+        '-hide_banner',
+        '-v', log_level,
+        '-f', 'rawvideo',
+        '-pix_fmt', 'rgba',
+        '-vsync', '0',
+        '-s', f'{size[0]}x{size[1]}',
+        '-r', str(fps),
+        '-i', '-',
+        '-crf', str(crf),
+        str(video_path),
+    )
 
 def get_frame_estimate(
         entries: Sequence[Entry],
