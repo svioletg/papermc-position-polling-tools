@@ -197,6 +197,7 @@ def test_RenderOpt_json() -> None:
     opt_dict: dict[str, Any] = {
         'progress_bar': True,
         'progress_log_interval': 0.25,
+        'size': 0.5,
         'world_crop': (-100, -100, 100, 100),
         'v_fix': False,
         'v_fps': 30,
@@ -226,28 +227,31 @@ def test_RenderOpt_display() -> None:
 Render options:
     progress_bar = False
     progress_log_interval = 0.1
+    size = None
     world_crop = None
     v_fix = True
     v_fps = 60
     v_time_factor = 0.25
 """.strip()
 
-    opt = models.RenderOpt(progress_log_interval=0.25, world_crop=(-100, -100, 100, 100))
+    opt = models.RenderOpt(progress_log_interval=0.25, size=0.5, world_crop=(-100, -100, 100, 100))
     assert opt.display() == """
 Render options:
     progress_bar = False
     progress_log_interval* = 0.25
+    size* = 0.5
     world_crop* = (-100.0, -100.0, 100.0, 100.0)
     v_fix = True
     v_fps = 60
     v_time_factor = 0.25
 """.strip()
 
-    opt = models.RenderOpt(progress_log_interval=0.25, world_crop=(-100, -100, 100, 100))
+    opt = models.RenderOpt(progress_log_interval=0.25, size=0.5, world_crop=(-100, -100, 100, 100))
     assert opt.display(mark_changes=False) == """
 Render options:
     progress_bar = False
     progress_log_interval = 0.25
+    size = 0.5
     world_crop = (-100.0, -100.0, 100.0, 100.0)
     v_fix = True
     v_fps = 60

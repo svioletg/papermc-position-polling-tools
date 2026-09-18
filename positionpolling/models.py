@@ -304,6 +304,13 @@ class RenderOpt(BaseModel):
 
     Value cannot be less than 0 or more than 1. If 0, no progress logs are printed for rendering.
     """
+    size: tuple[int, int] | float | None = None
+    """An exact size or scale multiplier for the image/video, depending on what types were given.
+
+    If a tuple of two ``int`` is given, it is used exactly as the width and height values of the final render. If a
+    ``float`` is given, it will be used as a multiplier for the original size (calculated either by the area covered by
+    the input data, or by the :data:`world_crop`) on both its height and width.
+    """
     world_crop: Tuple4[float] | None = None
     """A rectangle of the Minecraft world (use in-game coordinates) to crop the visualization to."""
     v_fix: Annotated[bool, CliOpt(['--fix-vid'])] = True
