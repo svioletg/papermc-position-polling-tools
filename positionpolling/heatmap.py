@@ -6,7 +6,6 @@ from colorsys import hsv_to_rgb
 from dataclasses import dataclass
 from itertools import pairwise
 from math import ceil, floor
-from operator import neg
 from pathlib import Path
 from typing import IO, Literal, cast
 
@@ -52,11 +51,11 @@ class RegionHueAlpha:
             int(self.alpha * 255),
         ))
 
-def coord_rect(xy: Coord2, data_grid: Grid2) -> Rect:
+def coord_rect(xy: Coord2, grid: Grid2) -> Rect:
     """Returns a rectangle tuple this coordinate encompasses based on the given grid and its step."""
-    rect_tl = xy.snap_to_grid(data_grid, floor)
+    rect_tl = xy.snap_to_grid(grid, floor)
 
-    return Rect(*rect_tl, *(rect_tl + data_grid.step))
+    return Rect(*rect_tl, *(rect_tl + grid.step))
 
 def get_visited_regions(
         entries: Iterable[Entry],
@@ -131,9 +130,9 @@ def _heatmap_image(
     if freq_min == freq_max:
         freq_max += 1
 
-    img_grid = data_grid.translate_to((0, 0))
+    img_grid: Grid2 = render.get_image_grid(data_grid, opt)
 
-    logger.debug(f'Image grid: {img_grid!r} (size={data_grid.size})')
+    logger.debug(f'Image grid: {img_grid!r} (size={img_grid.size})')
 
     logger.info('Assembling heatmap image...')
 
@@ -153,7 +152,11 @@ def _heatmap_image(
                 freq = region_frequencies[game_rect]
                 dist = region_dist_scores[game_rect]
 
-                img_rect = game_rect.translate_by(data_grid.top_left.map(neg)).resize((-1, -1))
+                img_rect = Rect(
+                    *(tl := data_grid.project(game_rect.top_left, img_grid)),
+                    *(tl + img_grid.step - 1),
+                )
+
                 fill: tuple[int, ...] = (
                     *(int(n * 255) for n in hsv_to_rgb(convert_range(dist, (0, 1), dist_hue_range), 1, 1)),
                     int(convert_range(freq, (freq_min, freq_max), freq_alpha_range) * 255),
@@ -244,7 +247,10 @@ def _heatmap_video(  # noqa: PLR0915
     ) -> Path:
     frame_estimate: int = render.get_frame_estimate(entries, time_factor=opt.v_time_factor, fps=opt.v_fps)
 
-    img_grid = data_grid.translate_to((0, 0))
+    img_grid: Grid2 = render.get_image_grid(data_grid, opt)
+
+    logger.debug(f'Image grid: {img_grid!r} (size={img_grid.size})')
+
     size: tuple[int, int] = int(img_grid.size[0]), int(img_grid.size[1])
 
     if not ffmpeg_size_in_range(size):
@@ -305,8 +311,7 @@ def _heatmap_video(  # noqa: PLR0915
                     pbar.update(task_data, advance=1)
                     entry_n += 1
 
-                    rect = coord_rect(entry.xy, data_grid) \
-                        .translate_by(data_grid.top_left.map(neg))
+                    rect: Rect = coord_rect(data_grid.project(entry.xy, img_grid), img_grid)
 
                     # Shift hue based on how many players are in this region at the same time
                     players_here = players_in_area[rect] = players_in_area.setdefault(rect, 0) + 1
@@ -433,8 +438,8 @@ def heatmap(
         data_grid,
         dist_hue_range=dist_hue_range,
         freq_alpha_range=freq_alpha_range,
-        bg=bg,
         opt=opt,
+        bg=bg,
     )
 
     if video_path:
