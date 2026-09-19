@@ -90,7 +90,7 @@ def get_region_player_dist_scores(
     region_dists: dict[Rect, list[float]] = {}
     for region, record in regions.items():
         mn, mx = min(record.values()), max(record.values())
-        region_dists[region] = [convert_range(i, (mn, mx), (0, 1)) for i in record.values()] \
+        region_dists[region] = sorted(convert_range(i, (mn, mx), (0, 1)) for i in record.values()) \
             if mn != mx else [1] * len(record.values())
 
     # Assumes every list is the same length, which it should be if it came from get_visited_regions()
