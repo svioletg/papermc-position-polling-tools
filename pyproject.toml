@@ -49,6 +49,12 @@ path = "positionpolling/__init__.py"
 [tool.hatch.build.targets.wheel]
 packages = ["positionpolling"]
 
+[tool.pytest]
+testpaths = [
+    "positionpolling",
+    "tests",
+]
+
 [project.scripts]
 positionpolling = "positionpolling.cli:main"
 mcposlog = "positionpolling.cli:main"
