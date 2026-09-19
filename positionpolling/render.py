@@ -4,14 +4,16 @@ from collections.abc import Iterable, Sequence
 from datetime import timedelta
 from pathlib import Path
 from subprocess import CompletedProcess
+from typing import cast
 
 import cv2
+from geometry import Grid2
 from loguru import logger
 from maybetype import Err, Ok, Result
 from rich.progress import Column, Progress, TaskProgressColumn, TextColumn
 
 from positionpolling.const import console
-from positionpolling.models import Entry, PlayerPositions
+from positionpolling.models import Entry, PlayerPositions, RenderOpt
 from positionpolling.rich import CustomBarColumn
 from positionpolling.util import fix_opencv_video, require_ffmpeg
 
@@ -103,6 +105,33 @@ def get_frame_estimate(
             + f' (~{frame_estimate} frames at {fps} fps)')
 
     return frame_estimate
+
+def get_image_grid(data_grid: Grid2, opt: RenderOpt) -> Grid2:
+    """Returns a grid to be referenced for image rendering of a position log data grid.
+
+    The resulting grid has an ``origin`` of ``(0, 0)``.
+    """
+    img_grid = data_grid.translate_to((0, 0), origin=(0, 0))
+
+    if isinstance(opt.size, tuple):
+        logger.debug(f'Applying render size tuple {opt.size}...')
+
+        iw, ih = opt.size
+        stretch_x, stretch_y = (iw / data_grid.width, ih / data_grid.height)
+        img_grid = Grid2.from_size(
+            opt.size,
+            step=(data_grid.step.x * stretch_x, data_grid.step.y * stretch_y),
+            origin=(0, 0),
+        )
+    elif isinstance(opt.size, (int, float)):
+        logger.debug(f'Applying render size multiplier {opt.size}...')
+
+        img_grid = img_grid.map(
+            lambda n: n * cast('float', opt.size), # cast for ty false positive here
+            step=data_grid.step * opt.size,
+        ).ceil()
+
+    return img_grid
 
 def prepare_entries(
         data: str | Path | Sequence[Entry],
