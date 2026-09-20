@@ -35,6 +35,15 @@ class Color:
     def __init__(self, source: ColorSource) -> None:
         """Construct a color from one of various formats.
 
+        >>> assert Color(0xff0000ff) == 0xff0000ff
+        >>> assert Color((255, 0, 0, 255)) == 0xff0000ff
+        >>> assert Color((255, 0, 0)) == 0xff0000ff
+        >>> assert Color('hsv(0, 100, 100)') == 0xff0000ff
+        >>> assert Color('hsv(0, 100, 100, 0.5)') == 0xff000080
+        >>> assert Color('red') == 0xff0000ff
+        >>> assert Color('red#aa') == 0xff0000aa
+        >>> assert Color(Color('red')) == 0xff0000ff
+
         .. note::
             If ``source`` is given an integer, it will be treated as an RGBA value. This means that passing the
             hexadecimal form of an integer like ``0xffffff`` will not result in the RGB values ``255, 255, 255``, but
