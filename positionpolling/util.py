@@ -161,6 +161,10 @@ class Color:
 
         return (self._value >> (8 * (3 - idx))) & 0xff
 
+    def __int__(self) -> int:
+        """Returns :data:`value`."""
+        return self.value
+
     @staticmethod
     def _ensure_8bit(n: int) -> int:
         """Raises ``ValueError`` if ``n`` is not in the range 0-255, otherwise returns the value."""

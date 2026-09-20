@@ -80,6 +80,10 @@ def test_color_getitem() -> None:
     with pytest.raises(ValueError, match=r'index must be between 0 and 3'):
         color[4]
 
+def test_color_to_int() -> None:
+    assert int(Color(0)) == 0
+    assert int(Color(0xff0000ff)) == 0xff0000ff  # noqa: PLR2004
+
 def test_color_hex() -> None:
     color = Color((0, 64, 127, 255))
     assert color.hex() == '0x00407fff'
