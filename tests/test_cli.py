@@ -1,4 +1,4 @@
-from argparse import Action, ArgumentParser, BooleanOptionalAction
+from argparse import Action, ArgumentError, ArgumentParser, BooleanOptionalAction
 from functools import cache
 from pathlib import Path
 from types import UnionType
@@ -105,6 +105,10 @@ def test_parse_main(args: list[str], parsed_expected: dict[str, Any]) -> None:
 
     for name, value in parsed_expected.items():
         assert getattr(parsed, name) == value
+
+def test_parse_main_error() -> None:
+    with pytest.raises(ArgumentError, match=r'unrecognized arguments: --asdf'):
+        cli.main_parser.parse_args(['--asdf'])
 
 RENDER_TRAIL_PARSER_DEFAULTS: dict[str, Any] = {
     'input': ...,
@@ -285,6 +289,14 @@ def test_main_no_args(capsys: pytest.CaptureFixture[str]) -> None:
 def test_main_missing_action(capsys: pytest.CaptureFixture[str]) -> None:
     assert cli.main(['--yes']) == 2  # noqa: PLR2004
     assert capsys.readouterr().out.startswith('Missing an action')
+
+def test_main_parse_err(capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(['--asdf']) == 2  # noqa: PLR2004
+    assert 'error: unrecognized arguments: --asdf' in capsys.readouterr().err
+
+    assert cli.main(['render', '--bg-color', 'rad']) == 2  # noqa: PLR2004
+    assert 'error: failed to parse value for --bg-color: "rad" is not defined as a named \ncolor in css3' \
+        in capsys.readouterr().err
 
 def test_inspect_count_default(capsys: pytest.CaptureFixture[str]) -> None:
     assert cli.main(['-l', 'warning', 'inspect', '-i', str(TESTS_DATA_DIR / 'data.db'), 'count']) == 0
