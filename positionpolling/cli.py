@@ -162,6 +162,26 @@ parser_render.add_argument('--render-json', '-j', type=Path, metavar='PATH',
 
 add_args_from_render_opt(parser_render)
 
+parser_render_heatmap = ArgumentParser(add_help=False)
+parser_render_heatmap.add_argument('--input', '-i', type=str, required=True,
+    help='Path or URL to the SQL database to use.')
+parser_render_heatmap.add_argument('--out', '-o', type=Path, required=False,
+    help='Where to save the rendered image.')
+parser_render_heatmap.add_argument('--video', '-v', type=Path, required=False,
+    help='Whether to render a video, and if so, where to saves it to. Ommitting this option skips video rendering.')
+parser_render_heatmap.add_argument('--player', type=str, nargs='*', action='extend',
+    help='One or more player UUIDs whose data should be used.')
+parser_render_heatmap.add_argument('--hue-range', type=lambda s: tuple(float(i) for i in s.split(',')),
+    default=(0.5, 0),
+    help='The minimum and maximum values to use for region hue, based on player distribution.'
+        + ' Must be two values from 0 to 1.')
+parser_render_heatmap.add_argument('--alpha-range', type=lambda s: tuple(float(i) for i in s.split(',')),
+    default=(0.1, 0.9),
+    help='The minimum and maximum values to use for region opacity, based on player frequency.'
+        + ' Must be two values from 0 to 1.')
+parser_render_heatmap.add_argument('--region', type=int, default=16,
+    help='The size of each heatmap grid square, in blocks. Defaults to a chunk (16).')
+
 parser_render_trail = ArgumentParser(add_help=False)
 parser_render_trail.add_argument('--input', '-i', type=str, required=True,
     help='Path or URL to the SQL database to use.')
@@ -176,6 +196,7 @@ parser_render_trail.add_argument('--desat-per-frame', type=float, default=0.95,
         + ' trail continues. , 0 makes the previous frame fully greyscale.')
 
 render_arg_parsers: dict[str, ArgumentParser] = {
+    'heatmap': parser_render_heatmap,
     'trail': parser_render_trail,
 }
 
