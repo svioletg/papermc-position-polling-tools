@@ -28,7 +28,6 @@ from positionpolling.models import RENDER_OPT_DEFAULT, Entry, PlayerPositions, R
 from positionpolling.render import ffmpeg_size_in_range, get_ffmpeg_args
 from positionpolling.util import (
     Color,
-    ColorSource,
     ask,
     ask_overwrite,
     clamp,
@@ -125,7 +124,6 @@ def _heatmap_image(
         dist_hue_range: tuple[float, float],
         freq_alpha_range: tuple[float, float],
         opt: RenderOpt,
-        bg: Image.Image | ColorSource | None = None,
     ) -> Image.Image:
     logger.info('Gathering region data...')
 
@@ -181,9 +179,9 @@ def _heatmap_image(
 
     del itimes, time_started
 
-    if bg is not None:
-        logger.info(f'Applying background: {bg!r}')
-        bg = bg if isinstance(bg, Image.Image) else Image.new('RGBA', img.size, Color(bg).rgba())
+    if opt.bg_color is not None:
+        logger.info(f'Applying background color: {opt.bg_color!r}')
+        bg = Image.new('RGBA', img.size, Color(opt.bg_color).rgba())
         img = alpha_composite(bg, img)
 
     logger.info('Image render finished')
@@ -249,7 +247,6 @@ def _heatmap_video(  # noqa: C901, PLR0915
         dist_hue_range: tuple[float, float],
         freq_alpha_range: tuple[float, float],
         opt: RenderOpt,
-        bg: Image.Image | Color | ColorSource | None = None,
     ) -> Path:
     """|requires-ffmpeg|"""  # noqa: D400, D415
     frame_estimate: int = render.get_frame_estimate(entries, time_factor=opt.v_time_factor, fps=opt.v_fps)[0]
@@ -263,7 +260,7 @@ def _heatmap_video(  # noqa: C901, PLR0915
     if not ffmpeg_size_in_range(size):
         raise ValueError(f'Image size exceeds FFmpeg limits: {size}')
 
-    bg = bg if isinstance(bg, Image.Image) else Image.new('RGBA', size, Color(bg or 'black').replace(a=255).rgba())
+    bg = Image.new('RGBA', size, Color(opt.bg_color or 0).replace(a=255).rgba())
 
     mofn_m_width: int = max(
         len(str(frame_estimate)),
@@ -410,7 +407,6 @@ def heatmap(
         dist_hue_range: tuple[float, float] = (0.5, 0),
         freq_alpha_range: tuple[float, float] = (0.1, 0.9),
         region_size: int = 16,
-        bg: Image.Image | Color | ColorSource | None = None,
         opt: RenderOpt = RENDER_OPT_DEFAULT,
         confirm: bool = False,
     ) -> Result[Image.Image, str]:
@@ -470,7 +466,6 @@ def heatmap(
         dist_hue_range=dist_hue_range,
         freq_alpha_range=freq_alpha_range,
         opt=opt,
-        bg=bg,
     )
 
     if video_path:
@@ -482,7 +477,6 @@ def heatmap(
             dist_hue_range=dist_hue_range,
             freq_alpha_range=freq_alpha_range,
             opt=opt,
-            bg=bg,
         )
 
     return Ok(img)
