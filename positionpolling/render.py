@@ -2,6 +2,7 @@
 import time
 from collections.abc import Iterable, Sequence
 from datetime import timedelta
+from os import devnull
 from pathlib import Path
 from subprocess import CompletedProcess
 from typing import cast
@@ -69,6 +70,9 @@ def get_ffmpeg_args(
 
     This function will call :func:`util.require_ffmpeg`.
     """
+    # If /dev/null is given FFmpeg needs a format specified
+    out_format_args: tuple[str, ...] = ('-f', 'null') if str(video_path) == devnull else ()
+
     return (
         require_ffmpeg(),
         '-y',
@@ -80,6 +84,7 @@ def get_ffmpeg_args(
         '-r', str(fps),
         '-i', '-',
         '-crf', str(crf),
+        *out_format_args,
         str(video_path),
     )
 
