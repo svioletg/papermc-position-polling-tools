@@ -1,6 +1,7 @@
 """Visualizes player position data as a grid-based heatmap."""
 import subprocess
 import time
+from argparse import Namespace
 from collections.abc import Iterable, Sequence
 from colorsys import hsv_to_rgb
 from dataclasses import dataclass
@@ -22,12 +23,14 @@ from PIL.ImageDraw import ImageDraw
 from tornado.process import CalledProcessError
 
 from positionpolling import render
-from positionpolling.models import RENDER_OPT_DEFAULT, Entry, RenderOpt
+from positionpolling.cli import abort
+from positionpolling.models import RENDER_OPT_DEFAULT, Entry, PlayerPositions, RenderOpt
 from positionpolling.render import ffmpeg_size_in_range, get_ffmpeg_args
 from positionpolling.util import (
     Color,
     ColorSource,
     ask,
+    ask_overwrite,
     clamp,
     convert_range,
     expect,
@@ -481,3 +484,60 @@ def heatmap(
         )
 
     return Ok(img)
+
+def cli(render_opt: RenderOpt, args: Namespace) -> int:  # noqa: C901
+    """Function to be called when using the CLI interface launched by :func:`positionpolling.cli.main`.
+
+    Returns an exit code.
+    """
+    data = PlayerPositions.from_sql(args.input)
+    players: list[str] | None = args.player
+    img_dest: Path | None = args.out and args.out.absolute()
+    video_dest: Path | None = args.video and args.video.absolute()
+    auto_confirm: bool = args.yes
+    hue_range: tuple[float, float] = args.hue_range
+    alpha_range: tuple[float, float] = args.alpha_range
+    region_size: int = args.region
+
+    for p in players or []:
+        if p not in data.by_player:
+            abort(f'Found no entries in the given data for player: {p}')
+
+    if img_dest is video_dest is None:
+        abort('One or both of "--out" or "--video" must be specified.')
+
+    if img_dest and img_dest.is_dir():
+        abort(f'--out option value exists and is a directory: {img_dest}')
+    if video_dest and video_dest.is_dir():
+        abort(f'--video option value exists and is a directory: {video_dest}')
+
+    for path in (img_dest, video_dest):
+        if path is None:
+            continue
+
+        if (not auto_confirm) and path.exists() and not ask_overwrite(path):
+            abort('Aborting.')
+
+    result = heatmap(
+        data.entries,
+        players,
+        video_path=video_dest,
+        dist_hue_range=hue_range,
+        freq_alpha_range=alpha_range,
+        region_size=region_size,
+        opt=render_opt,
+        confirm=not auto_confirm,
+    )
+
+    match result:
+        case Err(e):
+            # Cancellation is logged, no reason for a redundant error message
+            if e == 'Cancelled':
+                return 1
+            abort(f'Render failed: {e}')
+        case Ok(img):
+            if img_dest:
+                logger.info(f'Saving image to: {img_dest}')
+                img.save(img_dest)
+
+    return 0
