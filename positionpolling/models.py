@@ -16,7 +16,7 @@ from pydantic_core import CoreSchema, core_schema
 
 from positionpolling.sql import SQL_CREATE_PLAYER_POSITIONS_TABLE, SQL_INSERT_INTO_PLAYER_POSITIONS, table_exists
 from positionpolling.types import SupportsGT, SupportsLT
-from positionpolling.util import comma_split, drop_duplicates, try_next
+from positionpolling.util import Color, comma_split, drop_duplicates, try_next
 
 type EntryRowTuple = tuple[float, str, str, float, float, float]
 """Type alias for the simple type tuple form of :class:`Entry`."""
@@ -297,6 +297,30 @@ class RenderOpt(BaseModel):
 
     # Fields
 
+    bg_color: Annotated[int | None, CliOpt(['--bg-color'], {'type': lambda s: Color(s).value})] = None
+    """Background color to use for renders, given as a 32-bit color integer.
+
+    If ``None``, backgrounds default to transparent for images, and black for videos. If this and :data:`bg_img` are
+    both present, this is used as the background color behind the background image, either for an image with an already
+    transparent background, or for when the render area is larger than the background image.
+    """
+    bg_img: Path | None = None
+    """File path to a background image (intended to be a world map) to use for renders which support it.
+
+    See :data:`bg_img_map` and :data:`bg_img_scale` to make full use of this.
+    """
+    bg_img_map: Annotated[
+        tuple[tuple[int, int], tuple[int, int]] | None,
+        CliOpt(['--bg-map'], {'type': lambda s: [i.split(',') for i in s.split(':')]}),
+    ] = None
+    """Describes how :data:`bg_img` corresponds to in-game world coordinates.
+
+    The left value should be a coordinate within the image,
+    and the right value should be the in-game coordinate that pixel of the image corresponds to.
+
+    .. note::
+        This value is required when :data:`bg_img` is not ``None``.
+    """
     progress_bar: Annotated[bool, CliOpt(['--progress-bar', '-P'])] = False
     """Whether to show a progress bar while rendering."""
     progress_log_interval: Annotated[float, AfterValidator(vld_range(0, 1, 'raise'))] = 0.1

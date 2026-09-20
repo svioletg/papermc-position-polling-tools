@@ -195,6 +195,9 @@ def test_RenderOpt_ensure_frozen() -> None:
 
 def test_RenderOpt_json() -> None:
     opt_dict: dict[str, Any] = {
+        'bg_color': None,
+        'bg_img': None,
+        'bg_img_map': None,
         'progress_bar': True,
         'progress_log_interval': 0.25,
         'scale': 0.5,
@@ -225,6 +228,9 @@ def test_RenderOpt_display() -> None:
     opt = models.RenderOpt()
     assert opt.display() == """
 Render options:
+    bg_color = None
+    bg_img = None
+    bg_img_map = None
     progress_bar = False
     progress_log_interval = 0.1
     scale = 1.0
@@ -237,6 +243,9 @@ Render options:
     opt = models.RenderOpt(progress_log_interval=0.25, scale=0.5, world_crop=(-100, -100, 100, 100))
     assert opt.display() == """
 Render options:
+    bg_color = None
+    bg_img = None
+    bg_img_map = None
     progress_bar = False
     progress_log_interval* = 0.25
     scale* = 0.5
@@ -249,6 +258,9 @@ Render options:
     opt = models.RenderOpt(progress_log_interval=0.25, scale=0.5, world_crop=(-100, -100, 100, 100))
     assert opt.display(mark_changes=False) == """
 Render options:
+    bg_color = None
+    bg_img = None
+    bg_img_map = None
     progress_bar = False
     progress_log_interval = 0.25
     scale = 0.5
