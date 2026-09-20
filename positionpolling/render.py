@@ -77,6 +77,7 @@ def get_ffmpeg_args(
         require_ffmpeg(),
         '-y',
         '-v', log_level,
+        '-stats_period', '2',
         '-f', 'rawvideo',
         '-pix_fmt', 'rgba',
         '-vsync', '0',
