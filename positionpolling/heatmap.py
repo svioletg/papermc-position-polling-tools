@@ -4,9 +4,11 @@ import time
 from collections.abc import Iterable, Sequence
 from colorsys import hsv_to_rgb
 from dataclasses import dataclass
+from io import TextIOWrapper
 from itertools import pairwise
 from math import ceil, floor
 from pathlib import Path
+from threading import Thread
 from typing import IO, Literal, cast
 
 import numpy as np
@@ -235,7 +237,7 @@ def _fade_regions(
 
     return img
 
-def _heatmap_video(  # noqa: PLR0915
+def _heatmap_video(  # noqa: C901, PLR0915
         entries: list[Entry],
         players: Sequence[str] | set[str],
         data_grid: Grid2,
@@ -274,6 +276,12 @@ def _heatmap_video(  # noqa: PLR0915
 
     logger.debug(f'Run: {ffmpeg_args}')
 
+    def log_stream(stream: IO[bytes]) -> None:
+        wrapped_stream = TextIOWrapper(stream, encoding='utf-8', newline=None)
+
+        while not wrapped_stream.closed:
+            logger.debug(f'[ffmpeg] {wrapped_stream.readline().strip()}')
+
     ffmpeg = subprocess.Popen(  # noqa: S603
         ffmpeg_args,
         stdout=subprocess.PIPE,
@@ -297,6 +305,8 @@ def _heatmap_video(  # noqa: PLR0915
         )
 
     ffmpeg_stdin: IO[bytes] = expect(ffmpeg.stdin)
+
+    Thread(target=log_stream, args=[ffmpeg.stderr], daemon=True).start()
 
     with render.progress_bar(disable=not opt.progress_bar, mofn_m_width=mofn_m_width) as pbar:
         task_data = pbar.add_task('Processing entries...', completed=-1, total=len(entries))
