@@ -19,6 +19,7 @@ Documentation: <https://papermc-position-polling-tools.readthedocs.io/en/stable>
 - [Commands](#commands)
 - [Commands: `render`](#commands-render)
   - [Render options](#render-options)
+  - [`render heatmap`](#render-heatmap)
   - [`render trail`](#render-trail)
 - [Commands: `inspect`](#commands-inspect)
   - [`inspect count`](#inspect-count)
@@ -135,6 +136,10 @@ will always take precedence over JSON, e.g. if your JSON file defines `"v_fps":
 
 If a file called `render.json` exists in the current directory, it will be
 automatically used if `--render-json` was not specified otherwise.
+
+### `render heatmap`
+
+Examples: `mcposlog render heatmap -i data.db -o heatmap.png -v heatmap.mp4`
 
 ### `render trail`
 
