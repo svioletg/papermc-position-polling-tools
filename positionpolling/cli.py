@@ -2,7 +2,7 @@
 import json
 import sys
 import time
-from argparse import ArgumentParser, BooleanOptionalAction
+from argparse import ArgumentError, ArgumentParser, BooleanOptionalAction
 from collections import OrderedDict
 from collections.abc import Iterable, Mapping, Sequence
 from enum import StrEnum
@@ -127,7 +127,7 @@ def parse_players_or_abort(players: list[str], player_map: Mapping[str, str]) ->
 
     return parsed_players
 
-main_parser = ArgumentParser()
+main_parser = ArgumentParser(exit_on_error=False)
 main_parser.add_argument('--version', '-V', action='store_true',
     help='Shows the installed version and exits.')
 main_parser.add_argument('--log-level', '-l', type=lambda s: s.upper(), choices=[i.name for i in LogLevel],
@@ -154,7 +154,7 @@ main_parser.add_argument('--player-map', type=Path, metavar='PATH',
 
 subparsers = main_parser.add_subparsers(dest='action', required=False)
 
-parser_render = subparsers.add_parser('render')
+parser_render = subparsers.add_parser('render', exit_on_error=False)
 parser_render.add_argument('--render-json', '-j', type=Path, metavar='PATH',
     help='Path to a JSON file defining render options to use. Individual render options will override these'
         + ' settings. If a file named "render.json" exists in the current directory and this option was not used,'
@@ -162,7 +162,7 @@ parser_render.add_argument('--render-json', '-j', type=Path, metavar='PATH',
 
 add_args_from_render_opt(parser_render)
 
-parser_render_heatmap = ArgumentParser(add_help=False)
+parser_render_heatmap = ArgumentParser(add_help=False, exit_on_error=False)
 parser_render_heatmap.add_argument('--input', '-i', type=str, required=True,
     help='Path or URL to the SQL database to use.')
 parser_render_heatmap.add_argument('--out', '-o', type=Path, required=False,
@@ -182,7 +182,7 @@ parser_render_heatmap.add_argument('--alpha-range', type=lambda s: tuple(float(i
 parser_render_heatmap.add_argument('--region', type=int, default=16,
     help='The size of each heatmap grid square, in blocks. Defaults to a chunk (16).')
 
-parser_render_trail = ArgumentParser(add_help=False)
+parser_render_trail = ArgumentParser(add_help=False, exit_on_error=False)
 parser_render_trail.add_argument('--input', '-i', type=str, required=True,
     help='Path or URL to the SQL database to use.')
 parser_render_trail.add_argument('--out', '-o', type=Path, required=False,
@@ -203,9 +203,9 @@ render_arg_parsers: dict[str, ArgumentParser] = {
 render_subparsers = parser_render.add_subparsers(dest='render_type', required=True)
 
 for k, v in render_arg_parsers.items():
-    render_subparsers.add_parser(k, parents=[v])
+    render_subparsers.add_parser(k, parents=[v], exit_on_error=False)
 
-parser_inspect = subparsers.add_parser('inspect')
+parser_inspect = subparsers.add_parser('inspect', exit_on_error=False)
 parser_inspect.add_argument('--input', '-i', dest='source', type=str, required=True,
     help='Path or URL to the SQL database to use.')
 parser_inspect.add_argument('--out', '-o', dest='inspect_out', type=Path,
@@ -215,7 +215,8 @@ parser_inspect.add_argument('--format', '-f', dest='inspect_out_format', type=st
     help='How to format the output data.')
 
 inspect_subparsers = parser_inspect.add_subparsers(dest='inspect_action', required=True)
-parser_inspect_count = ArgumentParser(add_help=False)
+
+parser_inspect_count = ArgumentParser(add_help=False, exit_on_error=False)
 parser_inspect_count.add_argument('--player', type=str, nargs='*', action='extend',
     help='UUID of the player whose entries will be counted. Omit to count all entries.')
 parser_inspect_count.add_argument('--total', dest='count_total', action=BooleanOptionalAction, default=True,
@@ -227,10 +228,13 @@ parser_inspect_count.add_argument('--sort', '-s', dest='count_sort', type=lambda
         + ' "entries" sorts by entry count (most entries first). Sorted in ascending order by default; add ":d" to the'
         + ' end of the value to sort descending.')
 
-inspect_subparsers.add_parser('count', parents=[parser_inspect_count])
+inspect_subparsers.add_parser('count', parents=[parser_inspect_count], exit_on_error=False)
 
 @logger.catch(onerror=lambda _: sys.exit(1))
 def main(argv: list[str] | None = None) -> int:  # noqa: C901, D103, PLR0915
+    # Default to this before we parse the arguments successfully
+    console.no_color = True
+
     setup_logger('ERROR')
 
     # Check None explicitly since an empty list is valid to use
@@ -240,7 +244,22 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, D103, PLR0915
     term_width: int = get_terminal_size().columns if sys.stdout.isatty() else 80
 
     # Parse args
-    args = main_parser.parse_args(argv)
+    try:
+        args = main_parser.parse_args(argv)
+    except ArgumentError as e:
+        main_parser.print_usage()
+
+        console.stderr = True
+
+        if e.__context__:
+            console.print(f'error: failed to parse value for {e.argument_name}: {e.__context__}')
+        else:
+            console.print(f'error: {e}')
+
+        console.stderr = False
+
+        return 2
+
     no_color: bool = args.no_color
 
     console.no_color = no_color or NO_COLOR
