@@ -9,6 +9,7 @@ from io import TextIOWrapper
 from itertools import pairwise
 from math import ceil, floor
 from pathlib import Path
+from subprocess import CalledProcessError
 from threading import Thread
 from typing import IO, Literal, cast
 
@@ -20,7 +21,6 @@ from maybetype import Err, Ok, Result
 from PIL import Image
 from PIL.Image import alpha_composite
 from PIL.ImageDraw import ImageDraw
-from tornado.process import CalledProcessError
 
 from positionpolling import render
 from positionpolling.cli import abort
