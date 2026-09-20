@@ -283,8 +283,8 @@ def _heatmap_video(  # noqa: C901, PLR0915
     def log_stream(stream: IO[bytes]) -> None:
         wrapped_stream = TextIOWrapper(stream, encoding='utf-8', newline=None)
 
-        while not wrapped_stream.closed:
-            logger.debug(f'[ffmpeg] {wrapped_stream.readline().strip()}')
+        for line in wrapped_stream:
+            logger.debug(f'[ffmpeg] {line.strip()}')
 
     ffmpeg = subprocess.Popen(  # noqa: S603
         ffmpeg_args,
@@ -397,7 +397,8 @@ def _heatmap_video(  # noqa: C901, PLR0915
     render.report_itimes(itimes, time_started)
 
     logger.info(f'Saving video to: {video_path}')
-    ffmpeg.communicate() # Closes stdin
+    ffmpeg_stdin.close()
+    ffmpeg.wait()
 
     return Path(video_path)
 
