@@ -17,6 +17,7 @@ from maybetype import Err, Ok, Result
 from PIL import Image
 from PIL.Image import alpha_composite
 from PIL.ImageDraw import ImageDraw
+from tornado.process import CalledProcessError
 
 from positionpolling import render
 from positionpolling.models import RENDER_OPT_DEFAULT, Entry, RenderOpt
@@ -280,6 +281,21 @@ def _heatmap_video(  # noqa: PLR0915
         stdin=subprocess.PIPE,
     )
 
+    logger.debug('Sleeping for 0.2s so we can poll FFmpeg...')
+    time.sleep(0.2)
+
+    if ffmpeg.poll() is not None:
+        # FFmpeg exited already, which is a problem
+        ffout, fferr = expect(ffmpeg.stdout).read().decode('utf-8'), expect(ffmpeg.stderr).read().decode('utf-8')
+        logger.error(f'FFmpeg exited immediately with code {ffmpeg.returncode}:\n{fferr}')
+
+        raise CalledProcessError(
+            ffmpeg.returncode,
+            ffmpeg.args,
+            ffout,
+            fferr,
+        )
+
     ffmpeg_stdin: IO[bytes] = expect(ffmpeg.stdin)
 
     with render.progress_bar(disable=not opt.progress_bar, mofn_m_width=mofn_m_width) as pbar:
@@ -331,8 +347,8 @@ def _heatmap_video(  # noqa: PLR0915
                 for _ in range(frame_duration):
                     try:
                         ffmpeg_stdin.write(np.array(alpha_composite(bg, frame)).tobytes())
-                    except Exception:
-                        logger.error('An exception occurred while sending data to FFmpeg')
+                    except Exception as e:
+                        logger.error(f'An exception occurred while sending data to FFmpeg: {e}')
                         logger.error(f'Captured FFmpeg output:\n{expect(ffmpeg.stderr).read().decode('utf-8')}')
                         raise
 
