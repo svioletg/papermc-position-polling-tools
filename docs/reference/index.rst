@@ -7,7 +7,9 @@ API Reference
     module
     cli
     const
+    heatmap
     models
+    render
     rich
     sql
     trail
