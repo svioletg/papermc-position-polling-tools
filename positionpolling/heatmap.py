@@ -332,7 +332,7 @@ def _heatmap_video(  # noqa: PLR0915
                     # Shift hue based on how many players are in this region at the same time
                     players_here = players_in_area[rect] = players_in_area.setdefault(rect, 0) + 1
                     hue: float = convert_range(players_here, (1, len(players)), dist_hue_range)
-                    alpha: float = 1.0
+                    alpha: float = freq_alpha_range[1]
 
                     rvalues: RegionHueAlpha = squares.setdefault(rect, RegionHueAlpha(hue, alpha))
                     rvalues.hue = hue
