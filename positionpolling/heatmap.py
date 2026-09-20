@@ -417,7 +417,7 @@ def heatmap(
 
     Heatmap videos process data one timestamp at a time and primarily visualize the updates between entries, while the
     heatmap image will take the entire data set into account and is more accurate for a full summary of information.
-    The color of each heatmap square—a region—indicates both the frequency at which any number of players visited it
+    The color of each heatmap square—a "region"—indicates both the frequency at which any number of players visited it
     over the course of the data, and the concentration of players that visited a region on average, the former shown by
     the region's hue, the latter shown by its alpha value, both of which can be configured.
 
