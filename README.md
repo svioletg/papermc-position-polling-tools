@@ -143,7 +143,7 @@ Examples: `mcposlog render heatmap -i data.db -o heatmap.png -v heatmap.mp4`
 
 ### `render trail`
 
-Example: `mcposlog render trail data.db -v trail.mp4`
+Example: `mcposlog render trail -i data.db -v trail.mp4`
 
 ## Commands: `inspect`
 
