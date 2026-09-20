@@ -1,7 +1,7 @@
 """Common functionality used by most render modules."""
 import time
 from collections.abc import Iterable, Sequence
-from datetime import timedelta
+from itertools import pairwise
 from os import devnull
 from pathlib import Path
 from subprocess import CompletedProcess
@@ -94,21 +94,30 @@ def get_frame_estimate(
         time_factor: float,
         fps: int,
         log: bool = False,
-    ) -> int:
-    """Estimate how many frames long a render of these entries should be based on the given time factor and fps."""
-    total_entry_duration = timedelta(seconds=entries[-1].timestamp - entries[0].timestamp)
+    ) -> tuple[int, float]:
+    """Estimate how many frames long a video render of these entries should be based on the given time factor and fps.
 
-    if log:
-        logger.info(f'There are {len(entries)} entries to go through, covering a span of {total_entry_duration}')
+    Returns a tuple of the estimated frames and the estimated duration of the video in seconds. If ``time_factor`` is 0,
+    the estimate returned is for one frame per unique entry timestamp.
+    """
+    # Iterating over the whole thing should almost always be fully accurate, it's somewhat slow but in most situations
+    # this function shouldn't be getting called many times over
 
-    video_duration_estimate = timedelta(seconds=total_entry_duration.total_seconds() * time_factor)
-    # TODO(svioletg): #4 Frame estimate can overshoot sometimes
-    frame_estimate: int = round(video_duration_estimate.total_seconds() * fps)
+    if time_factor > 0:
+        frame_estimate: int = sum(
+            round(diff * time_factor * fps)
+            for a, b in pairwise(entries)
+            if (diff := b.timestamp - a.timestamp) != 0
+        )
+    else:
+        frame_estimate: int = len({e.timestamp for e in entries}) + 1
+
+    video_duration_estimate: float = frame_estimate / fps
     if log:
         logger.info(f'Video time factor is {time_factor}, final video should be roughly {video_duration_estimate}'
             + f' (~{frame_estimate} frames at {fps} fps)')
 
-    return frame_estimate
+    return (frame_estimate, video_duration_estimate)
 
 def get_image_grid(data_grid: Grid2, opt: RenderOpt) -> Grid2:
     """Returns a grid to be referenced for image rendering of a position log data grid.

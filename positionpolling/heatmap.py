@@ -246,7 +246,7 @@ def _heatmap_video(  # noqa: PLR0915
         opt: RenderOpt,
         bg: Image.Image | Color | ColorSource | None = None,
     ) -> Path:
-    frame_estimate: int = render.get_frame_estimate(entries, time_factor=opt.v_time_factor, fps=opt.v_fps)
+    frame_estimate: int = render.get_frame_estimate(entries, time_factor=opt.v_time_factor, fps=opt.v_fps)[0]
 
     img_grid: Grid2 = render.get_image_grid(data_grid, opt)
 
