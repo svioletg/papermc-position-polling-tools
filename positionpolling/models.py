@@ -297,7 +297,13 @@ class RenderOpt(BaseModel):
 
     # Fields
 
-    bg_color: Annotated[int | None, CliOpt(['--bg-color'], {'type': lambda s: Color(s).value})] = None
+    bg_color: Annotated[
+        int | None,
+        CliOpt(
+            ['--bg-color'],
+            {'type': lambda s: int(s) if s.isdigit() else Color(s).value},
+        ),
+    ] = None
     """Background color to use for renders, given as a 32-bit color integer.
 
     If ``None``, backgrounds default to transparent for images, and black for videos. If this and :data:`bg_img` are
