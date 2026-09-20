@@ -304,12 +304,12 @@ class RenderOpt(BaseModel):
 
     Value cannot be less than 0 or more than 1. If 0, no progress logs are printed for rendering.
     """
-    size: tuple[int, int] | float | None = None
-    """An exact size or scale multiplier for the image/video, depending on what types were given.
+    scale: Annotated[float, AfterValidator(vld_range(0, 10, 'raise')), CliOpt(['--scale', '-s'])] = 1.0
+    """Multiplier to scale the input data with.
 
-    If a tuple of two ``int`` is given, it is used exactly as the width and height values of the final render. If a
-    ``float`` is given, it will be used as a multiplier for the original size (calculated either by the area covered by
-    the input data, or by the :data:`world_crop`) on both its height and width.
+    Defaults to 1, which renders all data at a 1:1 blocks per pixels scale. When visualizing data that crosses very
+    large areas, this can be used to scale the render down (e.g. 0.5 for half scale, 2^2 blocks per pixel), or
+    alternatively scale up a render of a very small area.
     """
     world_crop: Tuple4[float] | None = None
     """A rectangle of the Minecraft world (use in-game coordinates) to crop the visualization to."""

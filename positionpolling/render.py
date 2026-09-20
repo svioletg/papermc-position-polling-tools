@@ -5,7 +5,6 @@ from itertools import pairwise
 from os import devnull
 from pathlib import Path
 from subprocess import CompletedProcess
-from typing import cast
 
 import cv2
 from geometry import Grid2
@@ -127,22 +126,12 @@ def get_image_grid(data_grid: Grid2, opt: RenderOpt) -> Grid2:
     """
     img_grid = data_grid.translate_to((0, 0), origin=(0, 0))
 
-    if isinstance(opt.size, tuple):
-        logger.debug(f'Applying render size tuple {opt.size}...')
-
-        iw, ih = opt.size
-        stretch_x, stretch_y = (iw / data_grid.width, ih / data_grid.height)
-        img_grid = Grid2.from_size(
-            opt.size,
-            step=(data_grid.step.x * stretch_x, data_grid.step.y * stretch_y),
-            origin=(0, 0),
-        )
-    elif isinstance(opt.size, (int, float)):
-        logger.debug(f'Applying render size multiplier {opt.size}...')
+    if opt.scale != 1:
+        logger.debug(f'Applying render size multiplier {opt.scale}...')
 
         img_grid = img_grid.map(
-            lambda n: n * cast('float', opt.size), # cast for ty false positive here
-            step=data_grid.step * opt.size,
+            lambda n: n * opt.scale, # cast for ty false positive here
+            step=data_grid.step * opt.scale,
         ).ceil()
 
     return img_grid
