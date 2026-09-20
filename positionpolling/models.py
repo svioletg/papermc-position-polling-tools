@@ -48,6 +48,13 @@ class BeforeValidatorWithType[T, U]:
 
         return core_schema.with_info_before_validator_function(wrapped, handler(source_type))
 
+def vld_nonzero(n: float, _info: ValidationInfo) -> float:
+    """Returns ``n`` if not zero, otherwise raises :class:`ValueError`."""
+    if n == 0:
+        raise ValueError(f'Value cannot be 0: {n!r}')
+
+    return n
+
 @overload
 def vld_nullable[T](validator: ValidatorFunc[T]) -> ValidatorFunc[T | None]: ...
 @overload
@@ -73,6 +80,13 @@ def vld_nullable[T](validator: ValidatorFunc[T] | ValidatorFuncWithType[T]) \
             return validator(value, annotation, info)
 
     return wrapped
+
+def vld_positive(n: float, _info: ValidationInfo) -> float:
+    """Returns ``n`` if n>=0, otherwise raises :class:`ValueError`."""
+    if n < 0:
+        raise ValueError(f'Value must be positive: {n!r}')
+
+    return n
 
 def vld_range[T: (int, float)](
         minimum: T,
