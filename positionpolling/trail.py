@@ -64,7 +64,7 @@ def trail(  # noqa: C901, PLR0915
     """
     video_path: Path | None = render.check_video_path(video_path)
     entries: list[Entry] = render.prepare_entries(data, players)
-    frame_estimate: int = render.get_frame_estimate(entries, time_factor=opt.v_time_factor, fps=opt.v_fps) \
+    frame_estimate: int = render.get_frame_estimate(entries, time_factor=opt.v_time_factor, fps=opt.v_fps)[0] \
         if video_path else 1
 
     datagrid = grid_from_entries(entries)
