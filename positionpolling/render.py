@@ -2,6 +2,7 @@
 import time
 from collections.abc import Iterable, Sequence
 from itertools import pairwise
+from math import floor
 from os import devnull
 from pathlib import Path
 
@@ -15,6 +16,48 @@ from positionpolling.models import Entry, PlayerPositions, RenderOpt
 from positionpolling.rich import CustomBarColumn
 from positionpolling.util import Color, require_ffmpeg
 
+
+def apply_background_image(
+        data_img: Image.Image,
+        data_grid: Grid2,
+        opt: RenderOpt,
+    ) -> Image.Image:
+    """Apply a background world map to a data render image based on ``opt``.
+
+    If ``opt.bg_img`` is ``None``, ``data_img`` is returned.
+    """
+    if opt.bg_img is None:
+        return data_img
+
+    if opt.bg_img_area is None:
+        raise ValueError('opt.bg_img_area cannot be None when opt.bg_img is not None')
+
+    bg = Image.open(opt.bg_img)
+    if bg.mode != 'RGBA':
+        bg = bg.convert('RGBA')
+
+    bg_img_scale: float = bg.size[0] / (opt.bg_img_area[2] - opt.bg_img_area[0])
+    if bg_img_scale != opt.scale:
+        bg_scale_div: float = bg_img_scale / opt.scale
+        logger.debug(f'Resizing background image: {bg.size} / {bg_scale_div}')
+        bg = bg.resize((floor(bg.size[0] / bg_scale_div), floor(bg.size[1] / bg_scale_div)))
+
+    # Get what block the top-left of the heatmap image is at
+    bg_world_grid = Grid2(*opt.bg_img_area)
+
+    fit_grid = Grid2(
+        min(data_grid.x1, bg_world_grid.x1),
+        min(data_grid.y1, bg_world_grid.y1),
+        max(data_grid.x2, bg_world_grid.x2),
+        max(data_grid.y2, bg_world_grid.y2),
+    )
+
+    return paste_with_world_coords(
+        resize_canvas(bg, (int(fit_grid.size[0] * opt.scale), int(fit_grid.size[1] * opt.scale))),
+        bg_world_grid.as_tuple(int),
+        data_img,
+        data_grid.as_tuple(int),
+    )
 
 def check_video_path(video_path: str | Path | None) -> Path | None:
     """Returns the absolute path for ``video_path`` if its parent directory exists, or ``None`` if ``None``.
@@ -61,6 +104,7 @@ def get_ffmpeg_args(
         '-s', f'{size[0]}x{size[1]}',
         '-r', str(fps),
         '-i', '-',
+        '-preset', 'veryfast',
         '-crf', str(crf),
         *out_format_args,
         str(video_path),
