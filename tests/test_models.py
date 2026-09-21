@@ -197,7 +197,7 @@ def test_RenderOpt_json() -> None:
     opt_dict: dict[str, Any] = {
         'bg_color': None,
         'bg_img': None,
-        'bg_img_map': None,
+        'bg_img_area': None,
         'progress_bar': True,
         'progress_log_interval': 0.25,
         'scale': 0.5,
@@ -230,7 +230,7 @@ def test_RenderOpt_display() -> None:
 Render options:
     bg_color = None
     bg_img = None
-    bg_img_map = None
+    bg_img_area = None
     progress_bar = False
     progress_log_interval = 0.1
     scale = 1.0
@@ -245,7 +245,7 @@ Render options:
 Render options:
     bg_color = None
     bg_img = None
-    bg_img_map = None
+    bg_img_area = None
     progress_bar = False
     progress_log_interval* = 0.25
     scale* = 0.5
@@ -260,7 +260,7 @@ Render options:
 Render options:
     bg_color = None
     bg_img = None
-    bg_img_map = None
+    bg_img_area = None
     progress_bar = False
     progress_log_interval = 0.25
     scale = 0.5

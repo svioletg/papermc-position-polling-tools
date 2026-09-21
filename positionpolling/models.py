@@ -329,14 +329,8 @@ class RenderOpt(BaseModel):
 
     See :data:`bg_img_map` and :data:`bg_img_scale` to make full use of this.
     """
-    bg_img_map: Annotated[
-        tuple[tuple[int, int], tuple[int, int]] | None,
-        CliOpt(['--bg-map'], {'type': lambda s: [i.split(',') for i in s.split(':')]}),
-    ] = None
-    """Describes how :data:`bg_img` corresponds to in-game world coordinates.
-
-    The left value should be a coordinate within the image,
-    and the right value should be the in-game coordinate that pixel of the image corresponds to.
+    bg_img_area: Annotated[Tuple4[int] | None, CliOpt(['--bg-area'])] = None
+    """The world area that the background image covers, using in-game coordinates.
 
     .. note::
         This value is required when :data:`bg_img` is not ``None``.
