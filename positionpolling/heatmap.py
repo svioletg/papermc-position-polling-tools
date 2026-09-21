@@ -25,7 +25,7 @@ from PIL.ImageDraw import ImageDraw
 from positionpolling import render
 from positionpolling.cli import abort
 from positionpolling.models import RENDER_OPT_DEFAULT, Entry, PlayerPositions, RenderOpt
-from positionpolling.render import ffmpeg_size_in_range, get_ffmpeg_args
+from positionpolling.render import apply_background_image, ffmpeg_size_in_range, get_ffmpeg_args
 from positionpolling.util import (
     Color,
     ask,
@@ -179,8 +179,13 @@ def _heatmap_image(
 
     del itimes, time_started
 
+    if opt.bg_img is not None:
+        logger.info(f'Using background image: {opt.bg_img}')
+
+        img = apply_background_image(img, data_grid, opt)
+
     if opt.bg_color is not None:
-        logger.info(f'Applying background color: {opt.bg_color!r}')
+        logger.info(f'Applying background color: #{opt.bg_color:x}')
         bg = Image.new('RGBA', img.size, Color(opt.bg_color).rgba())
         img = alpha_composite(bg, img)
 
@@ -251,21 +256,21 @@ def _heatmap_video(  # noqa: C901, PLR0915
     """|requires-ffmpeg|"""  # noqa: D400, D415
     frame_estimate: int = render.get_frame_estimate(entries, time_factor=opt.v_time_factor, fps=opt.v_fps)[0]
 
-    img_grid: Grid2 = render.get_image_grid(data_grid, opt)
+    data_img_grid: Grid2 = render.get_image_grid(data_grid, opt)
+    data_img = Image.new('RGBA', (int(data_img_grid.size[0]), int(data_img_grid.size[1])))
 
-    logger.debug(f'Image grid: {img_grid!r} (size={img_grid.size})')
+    logger.debug(f'data_img_grid: {data_img_grid!r} (size={data_img_grid.size})')
 
-    size: tuple[int, int] = int(img_grid.size[0]), int(img_grid.size[1])
+    # No data at this point yet but this will resize the image as needed to fit the render
+    bg = render.apply_background_image(data_img, data_grid, opt)
+    bg = alpha_composite(Image.new('RGBA', bg.size, Color(opt.bg_color or 0).replace(a=255).rgba()), bg)
 
-    if not ffmpeg_size_in_range(size):
-        raise ValueError(f'Image size exceeds FFmpeg limits: {size}')
+    logger.debug(f'bg: {bg!r}')
 
-    bg = Image.new('RGBA', size, Color(opt.bg_color or 0).replace(a=255).rgba())
+    final_size: tuple[int, int] = bg.size
 
-    mofn_m_width: int = max(
-        len(str(frame_estimate)),
-        len(str(len(entries))),
-    )
+    if not ffmpeg_size_in_range(final_size):
+        raise ValueError(f'Image size exceeds FFmpeg limits: {final_size}')
 
     logger.info('Grouping entries by timestamp...')
 
@@ -273,7 +278,7 @@ def _heatmap_video(  # noqa: C901, PLR0915
 
     logger.info('Rendering video...')
 
-    ffmpeg_args: tuple[str, ...] = get_ffmpeg_args(video_path, size, fps=opt.v_fps)
+    ffmpeg_args: tuple[str, ...] = get_ffmpeg_args(video_path, final_size, fps=opt.v_fps)
 
     logger.debug(f'Run: {ffmpeg_args}')
 
@@ -309,6 +314,11 @@ def _heatmap_video(  # noqa: C901, PLR0915
 
     Thread(target=log_stream, args=[ffmpeg.stderr], daemon=True).start()
 
+    mofn_m_width: int = max(
+        len(str(frame_estimate)),
+        len(str(len(entries))),
+    )
+
     with render.progress_bar(disable=not opt.progress_bar, mofn_m_width=mofn_m_width) as pbar:
         task_data = pbar.add_task('Processing entries...', completed=-1, total=len(entries))
         task_video = pbar.add_task('Writing video...', completed=0, total=frame_estimate)
@@ -322,7 +332,6 @@ def _heatmap_video(  # noqa: C901, PLR0915
 
         squares: dict[Rect, RegionHueAlpha] = {}
         players_in_area: dict[Rect, int] = {}
-        frame = Image.new('RGBA', size)
 
         entry_n: int = 0
         frame_n: int = 0
@@ -338,7 +347,7 @@ def _heatmap_video(  # noqa: C901, PLR0915
                     pbar.update(task_data, advance=1)
                     entry_n += 1
 
-                    rect: Rect = coord_rect(data_grid.project(entry.xy, img_grid), img_grid)
+                    rect: Rect = coord_rect(data_grid.project(entry.xy, data_img_grid), data_img_grid)
 
                     # Shift hue based on how many players are in this region at the same time
                     players_here = players_in_area[rect] = players_in_area.setdefault(rect, 0) + 1
@@ -350,21 +359,31 @@ def _heatmap_video(  # noqa: C901, PLR0915
                     rvalues.alpha = alpha
 
                     # Seems to be slightly faster to paste than to use ImageDraw.rectangle here
-                    frame.paste(rvalues.rgba(), rect.as_tuple(int))
+                    data_img.paste(rvalues.rgba(), rect.as_tuple(int))
 
                     areas_loaded.append(rect)
 
                 frame_duration: int = max(1, round((time_b - time_a) * opt.v_time_factor * opt.v_fps))
                 for _ in range(frame_duration):
+                    if opt.bg_img:
+                        frame = render.paste_with_world_coords(
+                            bg.copy(),
+                            expect(opt.bg_img_area),
+                            data_img,
+                            data_grid.as_tuple(int),
+                        )
+                    else:
+                        frame = alpha_composite(bg, data_img)
+
                     try:
-                        ffmpeg_stdin.write(np.array(alpha_composite(bg, frame)).tobytes())
+                        ffmpeg_stdin.write(np.array(frame).tobytes())
                     except Exception as e:
                         logger.error(f'An exception occurred while sending data to FFmpeg: {e}')
                         logger.error(f'Captured FFmpeg output:\n{expect(ffmpeg.stderr).read().decode('utf-8')}')
                         raise
 
                     _fade_regions(
-                        frame,
+                        data_img,
                         squares,
                         ignore=areas_loaded,
                         hue_range=dist_hue_range,
@@ -372,6 +391,8 @@ def _heatmap_video(  # noqa: C901, PLR0915
                         alpha_range=freq_alpha_range,
                         alpha_mult=0.99,
                     )
+
+                del frame
 
                 pbar.update(task_video, advance=frame_duration)
                 frame_n += frame_duration
