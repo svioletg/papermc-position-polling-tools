@@ -7,12 +7,13 @@ from pathlib import Path
 
 from geometry import Grid2
 from loguru import logger
+from PIL import Image
 from rich.progress import Column, Progress, TaskProgressColumn, TextColumn
 
 from positionpolling.const import console
 from positionpolling.models import Entry, PlayerPositions, RenderOpt
 from positionpolling.rich import CustomBarColumn
-from positionpolling.util import require_ffmpeg
+from positionpolling.util import Color, require_ffmpeg
 
 
 def check_video_path(video_path: str | Path | None) -> Path | None:
@@ -112,6 +113,21 @@ def get_image_grid(data_grid: Grid2, opt: RenderOpt) -> Grid2:
         ).ceil()
 
     return img_grid
+
+def resize_canvas(img: Image.Image, size: tuple[int, int], color: Color | int | None = None) -> Image.Image:
+    """Returns a new image of the given size with ``img`` centered inside it."""
+    if (size[0] > img.size[0]) or (size[1] > img.size[1]):
+        canvas = Image.new('RGBA', size, int(color) if color else None)
+        canvas.paste(img, ((canvas.size[0] - img.size[0]) // 2, (canvas.size[1] - img.size[1]) // 2))
+
+        return canvas
+    else:
+        return img.copy().crop((
+            img.size[0] - size[0],
+            img.size[1] - size[1],
+            (img.size[0] - size[0]) + size[0],
+            (img.size[1] - size[1]) + size[1],
+        ))
 
 def prepare_entries(
         data: str | Path | Sequence[Entry],
