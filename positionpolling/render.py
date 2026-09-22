@@ -5,7 +5,7 @@ from itertools import pairwise
 from os import devnull
 from pathlib import Path
 
-from geometry import Grid2
+from geometry import Coord2, Grid2, Tuple4
 from loguru import logger
 from PIL import Image
 from rich.progress import Column, Progress, TaskProgressColumn, TextColumn
@@ -128,6 +128,36 @@ def resize_canvas(img: Image.Image, size: tuple[int, int], color: Color | int | 
             (img.size[0] - size[0]) + size[0],
             (img.size[1] - size[1]) + size[1],
         ))
+
+def paste_with_world_coords(
+        im1: Image.Image,
+        im1_area: Tuple4[int],
+        im2: Image.Image,
+        im2_area: Tuple4[int],
+    ) -> Image.Image:
+    """Pastes ``im2`` onto ``im1`` in-place, aligned with regards to the world area they cover."""
+    im1_world_scale: float = im1.size[0] / (im1_area[2] - im1_area[0])
+    im2_world_scale: float = im2.size[0] / (im2_area[2] - im2_area[0])
+
+    if im1_world_scale != im2_world_scale:
+        resize_mult: float = im1_world_scale / im2_world_scale
+        im2 = im2.resize((int(im2.size[0] * resize_mult), int(im2.size[1] * resize_mult)))
+
+    im1_tl_block = Coord2(im1_area[0], im1_area[1])
+    im2_tl_block = Coord2(im2_area[0], im2_area[1])
+    im2_br_block = Coord2(im2_area[2], im2_area[3])
+
+    im2_tl_in_im1: Coord2 = (im2_tl_block - im1_tl_block) * im1_world_scale
+    im2_br_in_im1: Coord2 = ((im2_br_block - im2_tl_block) * im1_world_scale) + im2_tl_in_im1
+
+    im2_box: Tuple4[int] = (
+        *im2_tl_in_im1.as_tuple(int),
+        *im2_br_in_im1.as_tuple(int),
+    )
+
+    im1.paste(im2, im2_box, mask=im2)
+
+    return im1
 
 def prepare_entries(
         data: str | Path | Sequence[Entry],
