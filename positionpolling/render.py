@@ -218,7 +218,7 @@ def get_image_grid(data_grid: Grid2, opt: RenderOpt) -> Grid2:
         logger.debug(f'Applying render size multiplier {opt.scale}...')
 
         img_grid = img_grid.map(
-            lambda n: n * opt.scale, # cast for ty false positive here
+            lambda n: n * opt.scale,
             step=data_grid.step * opt.scale,
         ).ceil()
 
