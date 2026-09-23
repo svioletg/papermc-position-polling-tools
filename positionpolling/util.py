@@ -824,3 +824,8 @@ def try_next[T, U](it: Iterator[T], default: U | None = None) -> T | U | None:
         return next(it)
     except StopIteration:
         return default
+
+def void_stream(stream: IO[bytes]) -> None:
+    """Consume all lines from ``stream`` and do nothing with them."""
+    for _ in stream:
+        pass
