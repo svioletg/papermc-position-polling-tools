@@ -1,23 +1,20 @@
 """Visualizes logged positions as a trail, with lines connecting each pair of points."""
 import itertools as it
-import subprocess
 import time
 from argparse import Namespace
 from collections.abc import Sequence
-from io import TextIOWrapper
-from math import ceil
 from pathlib import Path
-from threading import Thread
-from typing import IO
 
 from geometry import Coord2, Grid2
 from loguru import logger
 from maybetype import Err, Ok, Result
 from PIL import Image, ImageDraw, ImageEnhance
+from PIL.Image import alpha_composite
 
 from positionpolling import render
 from positionpolling.cli import abort
 from positionpolling.models import RENDER_OPT_DEFAULT, Entry, PlayerPositions, RenderOpt
+from positionpolling.render import FFmpegWriter
 from positionpolling.util import (
     Color,
     ColorSource,
@@ -84,49 +81,33 @@ def trail(  # noqa: C901, PLR0915
         log=True,
     )[0] if video_path else 1
 
-    datagrid = grid_from_entries(entries)
+    data_grid = grid_from_entries(entries)
 
-    logger.debug(f'Data grid: {datagrid!r} {datagrid.size}')
+    logger.debug(f'Data grid: {data_grid!r} {data_grid.size}')
 
-    imgrid = datagrid.translate_to((0, 0)).map(lambda n: n * opt.scale).round()
+    data_img_grid: Grid2 = render.get_image_grid(data_grid, opt)
+    data_img = Image.new('RGBA', (int(data_img_grid.size[0]), int(data_img_grid.size[1])))
 
-    logger.debug(f'Image grid: {imgrid!r} {imgrid.size}')
+    logger.debug(f'data_img_grid: {data_img_grid!r} {data_img_grid.size}')
+
+    # No data at this point yet but this will resize the image as needed to fit the render
+    bg = render.apply_background_image(data_img, data_grid, opt)
+    bg = alpha_composite(Image.new('RGBA', bg.size, Color(opt.bg_color or 0).replace(a=255).rgba()), bg)
+
+    logger.debug(f'bg: {bg!r}')
 
     if confirm and (ask('Start render? (y/n) ', 'yn') != 'y'):
         logger.info('Render cancelled by user')
 
         return Err('Cancelled')
 
-    img = img or Image.new('RGBA', size=(ceil(imgrid.width), ceil(imgrid.height)))
-
     ffmpeg = None
-    ffmpeg_stdin = None
-
-    def log_stream(stream: IO[bytes]) -> None:
-        wrapped_stream = TextIOWrapper(stream, encoding='utf-8', newline=None)
-
-        for line in wrapped_stream:
-            logger.debug(f'[ffmpeg] {line.strip()}')
 
     if video_path:
-        if not render.ffmpeg_size_in_range(img.size):
-            raise ValueError(f'Image size exceeds FFmpeg limits: {img.size}')
-
-        ffmpeg_args = render.get_ffmpeg_args(video_path, img.size, fps=opt.v_fps)
-
-        logger.info(f'Run: {' '.join(ffmpeg_args)}')
-        logger.debug(f'Run: {ffmpeg_args}')
-
-        ffmpeg = subprocess.Popen(  # noqa: S603
-            ffmpeg_args,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,
-        )
-
-        Thread(target=log_stream, args=[ffmpeg.stderr], daemon=True).start()
-
-        ffmpeg_stdin: IO[bytes] = expect(ffmpeg.stdin)
+        if not render.ffmpeg_size_in_range(bg.size):
+            raise ValueError(f'Image size exceeds FFmpeg limits: {bg.size}')
+        ffmpeg_args = render.get_ffmpeg_args(video_path, bg.size, fps=opt.v_fps)
+        ffmpeg = FFmpegWriter(ffmpeg_args)
 
     if ffmpeg:
         logger.info('Rendering image and video...')
@@ -134,9 +115,6 @@ def trail(  # noqa: C901, PLR0915
         logger.info('Rendering image...')
 
     itimes: list[float] = []
-
-    frame = img.copy()
-    frame_count: int = 0
 
     mofn_m_width: int = max(
         len(str(frame_estimate)),
@@ -154,6 +132,9 @@ def trail(  # noqa: C901, PLR0915
         progress_log_thresh_data: float = opt.progress_log_interval
         progress_log_thresh_video: float = opt.progress_log_interval
 
+        frame = data_img.copy()
+        frame_count: int = 0
+
         time_started = time.perf_counter()
 
         for n, (a, b) in enumerate(it.pairwise(entries)):
@@ -163,30 +144,44 @@ def trail(  # noqa: C901, PLR0915
                 color = 'red'
 
                 draw_pos_line(
-                    ImageDraw.Draw(frame),
-                    datagrid,
-                    imgrid,
+                    ImageDraw.Draw(data_img),
+                    data_grid,
+                    data_img_grid,
                     a.xy,
                     b.xy,
                     opt=opt,
                     fill=color,
                 )
 
-                if ffmpeg_stdin:
-                    duration: int = round((b.timestamp - a.timestamp) * opt.v_fps * opt.v_time_factor) \
-                        if opt.v_time_factor else 1
+                if ffmpeg:
+                    frame_duration: int = max(1, round((b.timestamp - a.timestamp) * opt.v_time_factor * opt.v_fps))
 
-                    while duration:
-                        ffmpeg_stdin.write(frame.tobytes())
+                    for _ in range(frame_duration):
+                        if opt.bg_img:
+                            frame = render.paste_with_world_coords(
+                                bg.copy(),
+                                expect(opt.bg_img_area),
+                                data_img,
+                                data_grid.as_tuple(int),
+                            )
+                        else:
+                            frame = alpha_composite(bg, data_img)
+
+                        try:
+                            ffmpeg.stdin.write(frame.tobytes())
+                        except Exception as e:
+                            logger.error(f'An exception occurred while sending data to FFmpeg: {e}')
+                            logger.error(f'Captured FFmpeg output:\n{expect(ffmpeg.stderr).read().decode('utf-8')}')
+                            raise
+
                         if task_video is not None:
                             pbar.update(task_video, advance=1)
                         if desat_per_frame < 1:
-                            frame = ImageEnhance.Color(frame).enhance(desat_per_frame)
+                            data_img = ImageEnhance.Color(data_img).enhance(desat_per_frame)
                         frame_count += 1
-                        duration -= 1
                 else:  # noqa: PLR5501
                     if desat_per_frame < 1:
-                        frame = ImageEnhance.Color(frame).enhance(desat_per_frame)
+                        data_img = ImageEnhance.Color(data_img).enhance(desat_per_frame)
 
                 if (opt.progress_log_interval > 0):
                     if n / len(entries) > progress_log_thresh_data:
@@ -197,18 +192,26 @@ def trail(  # noqa: C901, PLR0915
                         log_progress(frame_count, frame_estimate, 'Writing video... '.ljust(progress_log_desc_ljust))
                         progress_log_thresh_video += opt.progress_log_interval
 
+    if opt.bg_img:
+        img = render.paste_with_world_coords(
+            bg.copy(),
+            expect(opt.bg_img_area),
+            data_img,
+            data_grid.as_tuple(int),
+        )
+    else:
+        img = data_img
+
     logger.info('Render finished')
     if ffmpeg:
         render.report_frame_estimate_diff(frame_estimate, frame_count)
 
     render.report_itimes(itimes, time_started)
 
-    img = frame
-
-    if ffmpeg and ffmpeg_stdin:
+    if ffmpeg:
         logger.info(f'Saving video to: {video_path}')
-        ffmpeg_stdin.close()
-        ffmpeg.wait()
+        ffexit = ffmpeg.finish()
+        logger.debug(f'FFmpeg exited with code {ffexit}')
 
     return Ok(img)
 
