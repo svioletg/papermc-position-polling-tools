@@ -67,7 +67,7 @@ def get_ffmpeg_args(
     ) -> tuple[str, ...]:
     """Returns a tuple of arguments to spawn an FFmpeg process reading RGBA video data from stdin.
 
-    This function will call :func:`util.require_ffmpeg`.
+    |requires-ffmpeg|
     """
     # If /dev/null is given FFmpeg needs a format specified
     out_format_args: tuple[str, ...] = ('-f', 'null') if str(video_path) == devnull else ()
