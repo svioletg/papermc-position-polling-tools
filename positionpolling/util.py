@@ -8,8 +8,9 @@ from ast import literal_eval
 from collections import OrderedDict
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
+from io import TextIOWrapper
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, Self, TypeGuard, cast, overload
+from typing import IO, TYPE_CHECKING, Any, ClassVar, Literal, Self, TypeGuard, cast, overload
 
 import numpy as np
 import webcolors
@@ -689,6 +690,17 @@ def log_progress(
         + (f' ({completed:>{total_width}}/{total})' if show_count else '')
         + ' complete',
     )
+
+def log_stream(stream: IO[bytes], level: str = 'INFO', *, name: str | None = None) -> None:
+    """Redirects a stream's contents to ``logger`` calls.
+
+    :param name: Prefixes all lines from the stream with ``'[name] '``.
+    """
+    prefix: str = f'[{name}] ' if name else ''
+    wrapped_stream = TextIOWrapper(stream, encoding='utf-8', newline=None)
+
+    for line in wrapped_stream:
+        logger.log(level, f'{prefix}{line.strip()}')
 
 def parse_players(
         players: Sequence[str],
