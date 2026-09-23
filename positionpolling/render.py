@@ -3,7 +3,7 @@ import subprocess
 import time
 from collections.abc import Iterable, Sequence
 from itertools import pairwise
-from math import floor
+from math import ceil, floor
 from os import devnull
 from pathlib import Path
 from subprocess import Popen
@@ -261,8 +261,8 @@ def paste_with_world_coords(
     im2_br_in_im1: Coord2 = ((im2_br_block - im2_tl_block) * im1_world_scale) + im2_tl_in_im1
 
     im2_box: Tuple4[int] = (
-        *im2_tl_in_im1.as_tuple(int),
-        *im2_br_in_im1.as_tuple(int),
+        *im2_tl_in_im1.as_tuple(ceil),
+        *im2_br_in_im1.as_tuple(ceil),
     )
 
     im1.paste(im2, im2_box, mask=im2)
