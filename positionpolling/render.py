@@ -1,10 +1,14 @@
 """Common functionality used by most render modules."""
+import subprocess
 import time
 from collections.abc import Iterable, Sequence
 from itertools import pairwise
 from math import floor
 from os import devnull
 from pathlib import Path
+from subprocess import Popen
+from threading import Thread
+from typing import IO
 
 from geometry import Coord2, Grid2, Tuple4
 from loguru import logger
@@ -14,8 +18,70 @@ from rich.progress import Column, Progress, TaskProgressColumn, TextColumn
 from positionpolling.const import console
 from positionpolling.models import Entry, PlayerPositions, RenderOpt
 from positionpolling.rich import CustomBarColumn
-from positionpolling.util import Color, require_ffmpeg
+from positionpolling.util import Color, expect, log_stream, require_ffmpeg, void_stream
 
+
+class FFmpegWriter:
+    """Wrapper around an FFmpeg process accepting data on stdin.
+
+    ``__init__`` handles setting up pipes and making sure FFmpeg did not immediately close. If it did,
+    :class:`subprocess.CalledProcessError` is raised.
+    """
+
+    proc: Popen[bytes]
+    """The FFmpeg process."""
+    stderr: IO[bytes]
+    stdin: IO[bytes]
+
+    def __init__(self, args: Sequence[str], log_level: str | None = 'DEBUG') -> None:
+        """Spawns a new FFmpeg process with the given args (see :func:`get_ffmpeg_args`) and ensure it is open.
+
+        If the process exited right after it was started (specifically, the waiting period is currently 0.2 seconds),
+        :class:`subprocess.CalledProcessError` is raised with the process' return code, arguments, stdout, and stderr
+        contents.
+
+        :param log_level: Log level that FFmpeg's stderr stream will be redirected to. If ``None``, FFmpeg's output is
+            discarded. Note that this is separate from the log level of FFmpeg itself; that must be set in ``args``.
+        """
+        logger.info(f'Run: {' '.join(args)}')
+        logger.debug(f'Run: {args}')
+
+        ffmpeg = subprocess.Popen(  # noqa: S603
+            args,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+        )
+
+        logger.debug('Waiting for 0.2s to poll FFmpeg...')
+        time.sleep(0.2)
+
+        if ffmpeg.poll() is not None:
+            ffout, fferr = expect(ffmpeg.stdout).read().decode('utf-8'), expect(ffmpeg.stderr).read().decode('utf-8')
+            logger.error(f'FFmpeg exited immediately with code {ffmpeg.returncode}:\n{fferr}')
+
+            raise subprocess.CalledProcessError(
+                ffmpeg.returncode,
+                ffmpeg.args,
+                ffout,
+                fferr,
+            )
+
+        if log_level is not None:
+            Thread(target=log_stream, args=[ffmpeg.stderr, log_level], daemon=True).start()
+        else:
+            Thread(target=void_stream, daemon=True).start()
+
+        self.stderr = expect(ffmpeg.stderr)
+        self.stdin = expect(ffmpeg.stdin)
+
+        self.proc = ffmpeg
+
+    def finish(self) -> int:
+        """Closes the stdin stream and waits for FFmpeg to exit, returning its exit code."""
+        self.stdin.close()
+
+        return self.proc.wait()
 
 def apply_background_image(
         data_img: Image.Image,
