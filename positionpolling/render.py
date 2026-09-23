@@ -5,7 +5,6 @@ from itertools import pairwise
 from os import devnull
 from pathlib import Path
 
-import cv2
 from geometry import Grid2
 from loguru import logger
 from rich.progress import Column, Progress, TaskProgressColumn, TextColumn
@@ -136,21 +135,6 @@ def prepare_entries(
     entries: list[Entry] = [entry for entry in data if (not players) or (entry.player_uuid in players)]
 
     return entries
-
-def prepare_video_writer(
-        video_path: str | Path | None,
-        size: tuple[float, float],
-        *,
-        fourcc: str = 'mp4v',
-        fps: int = 60,
-    ) -> cv2.VideoWriter | None:
-    """Returns a :class:`cv2.VideoWriter` with the given options if ``video_path`` is not empty or ``None``."""
-    return cv2.VideoWriter(
-        video_path,
-        cv2.VideoWriter.fourcc(*fourcc),
-        fps,
-        (int(size[0]), int(size[1])),
-    ) if video_path else None
 
 def progress_bar(*, disable: bool = True, mofn_m_width: int = 0) -> Progress:
     """Returns a standard render progress bar.
