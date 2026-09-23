@@ -376,7 +376,7 @@ def _heatmap_video(  # noqa: C901, PLR0915
                         frame = alpha_composite(bg, data_img)
 
                     try:
-                        ffmpeg_stdin.write(np.array(frame).tobytes())
+                        ffmpeg_stdin.write(frame.tobytes())
                     except Exception as e:
                         logger.error(f'An exception occurred while sending data to FFmpeg: {e}')
                         logger.error(f'Captured FFmpeg output:\n{expect(ffmpeg.stderr).read().decode('utf-8')}')
