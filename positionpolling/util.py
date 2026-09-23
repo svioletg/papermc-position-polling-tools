@@ -15,7 +15,6 @@ import numpy as np
 import webcolors
 from geometry import Grid2
 from loguru import logger
-from maybetype import Err, Ok, Result
 from PIL import Image
 
 from positionpolling.const import UUID4_REGEX
@@ -523,51 +522,6 @@ def expect[T](value: T | None, *exc_args: object) -> T:
         return value
 
     raise ValueError(*exc_args or ('None',))
-
-# Videos made with opencv seem to be unable to play in browsers or other applications unless reprocessed via ffmpeg
-def fix_opencv_video(src: str | Path, dest: str | Path, *, same_file_ok: bool = False) \
-    -> Result[Path, subprocess.CompletedProcess]:
-    """Runs a video created with ``cv2`` through FFmpeg to make it compatible with more players.
-
-    .. important::
-        |requires-ffmpeg|
-
-    :param same_file_ok: Whether ``src`` and ``dest`` are allowed to be the same path. If ``False``,
-        ``shutil.SameFileError`` is raised, otherwise the source file is overwritten. Note that nothing is done to
-        prevent overwriting ``dest`` if it exists but is not the same path as ``src``, check for this before calling the
-        function if needed.
-    """
-    ffmpeg: str = require_ffmpeg()
-
-    src = Path(src).absolute()
-    dest = Path(dest).absolute()
-
-    if src == dest:
-        if not same_file_ok:
-            raise shutil.SameFileError(f"'overwrite' is False and the destination path exists: {dest}")
-        # Write to a temporary new file in case something goes wrong
-        dest = src.with_suffix('.tmp' + src.suffix)
-
-    assert_true(src.is_file(), f'Source path does not exist or is not a file: {src}')
-
-    proc = run(
-        ffmpeg, '-hide_banner', '-v', 'warning', '-y',
-        '-i', str(src), '-vcodec', 'libx264', '-pix_fmt', 'yuv420p', str(dest),
-        capture_output=False,
-        raise_nonzero=False,
-    )
-
-    if proc.returncode != 0:
-        return Err(proc)
-
-    assert_true(dest.is_file(), f'Expected destination file at "{dest}"')
-
-    if same_file_ok:
-        shutil.move(dest, src)
-        # So that we return the right destination path if we're overwriting
-        dest = src
-
-    return Ok(dest)
 
 def flatten(it: Iterable, *, iter_str: bool = False) -> list:
     """Flattens a multi-dimensional iterable into a flat list.

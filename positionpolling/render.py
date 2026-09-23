@@ -4,18 +4,16 @@ from collections.abc import Iterable, Sequence
 from itertools import pairwise
 from os import devnull
 from pathlib import Path
-from subprocess import CompletedProcess
 
 import cv2
 from geometry import Grid2
 from loguru import logger
-from maybetype import Err, Ok, Result
 from rich.progress import Column, Progress, TaskProgressColumn, TextColumn
 
 from positionpolling.const import console
 from positionpolling.models import Entry, PlayerPositions, RenderOpt
 from positionpolling.rich import CustomBarColumn
-from positionpolling.util import fix_opencv_video, require_ffmpeg
+from positionpolling.util import require_ffmpeg
 
 
 def check_video_path(video_path: str | Path | None) -> Path | None:
@@ -32,26 +30,6 @@ def check_video_path(video_path: str | Path | None) -> Path | None:
         raise FileNotFoundError(f'Directory does not exist: {video_path.parent}')
 
     return video_path
-
-def fix_video(video_path: str | Path) -> None:
-    """Reprocess the video at ``video_path`` with FFmpeg to a more widely compatible format, logging any issues."""
-    fix_result: Result[Path, CompletedProcess]
-    try:
-        fix_result = fix_opencv_video(video_path, video_path, same_file_ok=True)
-    except FileNotFoundError as e:
-        # Log warning and continue on if FFmpeg isn't installed instead of raising an error
-        if 'ffmpeg could not be found' in str(e):
-            logger.warning('FFmpeg is not installed, skipping fix_opencv_video step')
-            return
-        else:
-            raise
-
-    match fix_result:
-        case Ok(dest):
-            logger.info(f'Video reprocessed successfully and saved to {dest}')
-        case Err(proc):
-            logger.error(f'FFmpeg process failed with status {proc.returncode}')
-            logger.info('Video reprocessing failed, the original video is unmodified')
 
 def ffmpeg_size_in_range(size: tuple[int, int]) -> bool:
     """Returns whether the given size is within FFmpeg's picture size limit."""
