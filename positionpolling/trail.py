@@ -8,7 +8,7 @@ from io import TextIOWrapper
 from math import ceil
 from pathlib import Path
 from threading import Thread
-from typing import IO, Any
+from typing import IO
 
 from geometry import Coord2, Grid2
 from loguru import logger
@@ -18,7 +18,16 @@ from PIL import Image, ImageDraw, ImageEnhance
 from positionpolling import render
 from positionpolling.cli import abort
 from positionpolling.models import RENDER_OPT_DEFAULT, Entry, PlayerPositions, RenderOpt
-from positionpolling.util import ask, ask_overwrite, expect, grid_from_entries, log_progress, time_this
+from positionpolling.util import (
+    Color,
+    ColorSource,
+    ask,
+    ask_overwrite,
+    expect,
+    grid_from_entries,
+    log_progress,
+    time_this,
+)
 
 
 def draw_pos_line(
@@ -27,14 +36,15 @@ def draw_pos_line(
         img_grid: Grid2,
         a: Coord2,
         b: Coord2,
-        **kwargs,
+        *,
+        opt: RenderOpt,
+        fill: Color | ColorSource | str,
     ) -> None:
     """Uses ``draw`` to draw a line from one Minecraft coordinate to another by projecting them onto ``img_grid``."""
-    line_kwargs: dict[str, Any] = {'fill': 0xff0000, 'width': 4} | kwargs
-
     draw.line(
         (pos_grid.project(a, img_grid).as_tuple(), pos_grid.project(b, img_grid).as_tuple()),
-        **line_kwargs,
+        fill=fill if isinstance(fill, str) else Color(fill).value,
+        width=max(1, int(4 * opt.scale)),
     )
 
 # TODO(svioletg): #6 Support multiple player trails
@@ -75,9 +85,12 @@ def trail(  # noqa: C901, PLR0915
     )[0] if video_path else 1
 
     datagrid = grid_from_entries(entries)
-    imgrid = datagrid.translate_to((0, 0)).round()
 
-    logger.info(f'Image size: {imgrid.size}')
+    logger.debug(f'Data grid: {datagrid!r} {datagrid.size}')
+
+    imgrid = datagrid.translate_to((0, 0)).map(lambda n: n * opt.scale).round()
+
+    logger.debug(f'Image grid: {imgrid!r} {imgrid.size}')
 
     if confirm and (ask('Start render? (y/n) ', 'yn') != 'y'):
         logger.info('Render cancelled by user')
@@ -148,7 +161,16 @@ def trail(  # noqa: C901, PLR0915
             with time_this(itimes):
                 color = 'red'
 
-                draw_pos_line(ImageDraw.Draw(frame), datagrid, imgrid, a.xy, b.xy, fill=color)
+                draw_pos_line(
+                    ImageDraw.Draw(frame),
+                    datagrid,
+                    imgrid,
+                    a.xy,
+                    b.xy,
+                    opt=opt,
+                    fill=color,
+                )
+
                 if ffmpeg_stdin:
                     duration: int = round((b.timestamp - a.timestamp) * opt.v_fps * opt.v_time_factor) \
                         if opt.v_time_factor else 1
