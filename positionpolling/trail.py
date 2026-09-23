@@ -1,14 +1,15 @@
 """Visualizes logged positions as a trail, with lines connecting each pair of points."""
 import itertools as it
+import subprocess
 import time
 from argparse import Namespace
 from collections.abc import Sequence
+from io import TextIOWrapper
 from math import ceil
 from pathlib import Path
-from typing import Any
+from threading import Thread
+from typing import IO, Any
 
-import cv2
-import numpy as np
 from geometry import Coord2, Grid2
 from loguru import logger
 from maybetype import Err, Ok, Result
@@ -17,7 +18,7 @@ from PIL import Image, ImageDraw, ImageEnhance
 from positionpolling import render
 from positionpolling.cli import abort
 from positionpolling.models import RENDER_OPT_DEFAULT, Entry, PlayerPositions, RenderOpt
-from positionpolling.util import ask, ask_overwrite, grid_from_entries, log_progress, time_this
+from positionpolling.util import ask, ask_overwrite, expect, grid_from_entries, log_progress, time_this
 
 
 def draw_pos_line(
@@ -46,11 +47,12 @@ def trail(  # noqa: C901, PLR0915
         video_path: str | Path | None = None,
         opt: RenderOpt = RENDER_OPT_DEFAULT,
         confirm: bool = False,
-    ) -> Result[tuple[Image.Image, cv2.VideoWriter | None], str]:
+    ) -> Result[Image.Image, str]:
     """Generates a "trail" of position logs as both a final image and a video file.
 
-    Returns an ``Ok`` with a tuple of the final image and ``cv2.VideoWriter`` object (if a video was made, otherwise
-    ``None``), or an ``Err`` with a string message if the render was cancelled or could not be completed.
+    Returns ``Ok`` with the final image.
+
+    |requires-ffmpeg|
 
     :param data: A :class:`PlayerPositions` instance holding entries to use for the visualization.
     :param player: UUID of the player whose trail should be rendered. If ``None`` and there is only one player key, it
@@ -61,6 +63,7 @@ def trail(  # noqa: C901, PLR0915
     :param video_path: A file path to save the created video to. If ``None``, no video is generated.
     :param opt: Additional rendering options. See: :class:`positionpolling.const.RenderOpt`
     :param confirm: Whether to ask the user for confirmation before beginning the render.
+
     """
     video_path: Path | None = render.check_video_path(video_path)
     entries: list[Entry] = render.prepare_entries(data, players)
@@ -83,9 +86,36 @@ def trail(  # noqa: C901, PLR0915
 
     img = img or Image.new('RGBA', size=(ceil(imgrid.width), ceil(imgrid.height)))
 
-    video: cv2.VideoWriter | None = render.prepare_video_writer(video_path, img.size, fps=opt.v_fps)
+    ffmpeg = None
+    ffmpeg_stdin = None
 
-    if video:
+    def log_stream(stream: IO[bytes]) -> None:
+        wrapped_stream = TextIOWrapper(stream, encoding='utf-8', newline=None)
+
+        for line in wrapped_stream:
+            logger.debug(f'[ffmpeg] {line.strip()}')
+
+    if video_path:
+        if not render.ffmpeg_size_in_range(img.size):
+            raise ValueError(f'Image size exceeds FFmpeg limits: {img.size}')
+
+        ffmpeg_args = render.get_ffmpeg_args(video_path, img.size, fps=opt.v_fps)
+
+        logger.info(f'Run: {' '.join(ffmpeg_args)}')
+        logger.debug(f'Run: {ffmpeg_args}')
+
+        ffmpeg = subprocess.Popen(  # noqa: S603
+            ffmpeg_args,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+        )
+
+        Thread(target=log_stream, args=[ffmpeg.stderr], daemon=True).start()
+
+        ffmpeg_stdin: IO[bytes] = expect(ffmpeg.stdin)
+
+    if ffmpeg:
         logger.info('Rendering image and video...')
     else:
         logger.info('Rendering image...')
@@ -119,12 +149,12 @@ def trail(  # noqa: C901, PLR0915
                 color = 'red'
 
                 draw_pos_line(ImageDraw.Draw(frame), datagrid, imgrid, a.xy, b.xy, fill=color)
-                if video:
+                if ffmpeg_stdin:
                     duration: int = round((b.timestamp - a.timestamp) * opt.v_fps * opt.v_time_factor) \
                         if opt.v_time_factor else 1
 
                     while duration:
-                        video.write(cv2.cvtColor(np.array(frame), cv2.COLOR_RGB2BGR))
+                        ffmpeg_stdin.write(frame.tobytes())
                         if task_video is not None:
                             pbar.update(task_video, advance=1)
                         if desat_per_frame < 1:
@@ -145,7 +175,7 @@ def trail(  # noqa: C901, PLR0915
                         progress_log_thresh_video += opt.progress_log_interval
 
     logger.info('Render finished')
-    if video:
+    if ffmpeg:
         render.report_frame_estimate_diff(frame_estimate, frame_count)
 
     logger.info(f'Took {time.perf_counter() - total_time:.4f}s for {len(entries)} data points'
@@ -153,13 +183,12 @@ def trail(  # noqa: C901, PLR0915
 
     img = frame
 
-    if video and video_path:
+    if ffmpeg and ffmpeg_stdin:
         logger.info(f'Saving video to: {video_path}')
-        video.release()
-        if opt.v_fix:
-           render.fix_video(video_path)
+        ffmpeg_stdin.close()
+        ffmpeg.wait()
 
-    return Ok((img, video))
+    return Ok(img)
 
 def cli(render_opt: RenderOpt, args: Namespace) -> int:  # noqa: C901
     """Function to be called when using the CLI interface launched by :func:`positionpolling.cli.main`.
@@ -207,7 +236,7 @@ def cli(render_opt: RenderOpt, args: Namespace) -> int:  # noqa: C901
             if e == 'Cancelled':
                 return 1
             abort(f'Render failed: {e}')
-        case Ok((img, _video_writer)):
+        case Ok(img):
             if img_dest:
                 logger.info(f'Saving image to: {img_dest}')
                 img.save(img_dest)
