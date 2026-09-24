@@ -17,8 +17,11 @@ Documentation: <https://papermc-position-polling-tools.readthedocs.io/en/stable>
 - [Library](#library)
 - [Configuration](#configuration)
 - [Commands](#commands)
+- [Option rectangles](#option-rectangles)
 - [Commands: `render`](#commands-render)
   - [Render options](#render-options)
+  - [Scaling output](#scaling-output)
+  - [Backgrounds](#backgrounds)
   - [`render heatmap`](#render-heatmap)
   - [`render trail`](#render-trail)
 - [Commands: `inspect`](#commands-inspect)
@@ -116,6 +119,14 @@ be any of these values:
 - `CRITICAL`: The highest log level, currently unused. Setting your log level
   to this will result in no logs being printed whatsoever.
 
+## Option rectangles
+
+Options that expect a "RECTANGLE" or "RECT" value expect a string in the format
+`X1,Y1,X2,Y2`, where, `X1,Y1` is the top-left coordinate of the rectangle, and
+`X2,Y2` is the bottom-left coordinate. Note that in the context of a Minecraft
+world, the Y coordinate here should actually be the Z coordinate. If an option
+expects an actual Y Minecraft coordinate, it will be specified.
+
 ## Commands: `render`
 
 `render` is the primary subcommand for this package, providing the ability to
@@ -136,6 +147,45 @@ will always take precedence over JSON, e.g. if your JSON file defines `"v_fps":
 
 If a file called `render.json` exists in the current directory, it will be
 automatically used if `--render-json` was not specified otherwise.
+
+### Scaling output
+
+By default, renders are made with a 1:1 pixel per block ratio, meaning if the
+total area your position data covers is a 2,000 by 2,000 square, the output
+render will be a 2,000 by 2,000 pixel image/video. This ratio can be changed
+with the `--scale/-s` option, which accepts a positive float value and defaults
+to 1.0. The final render size is the area the data covers multiplied by this
+value, so for the same 2,000 by 2,000 area, `--scale 0.5` produces a 1,000 by
+1,000 pixel image, `--scale 0.25`, produces a 500 by 500 pixel image, and so
+on. You can also specify values larger than 1, which can be useful if you're
+rendering a very small area and need a much larger render.
+
+This value is required to be greater than 0.
+
+### Backgrounds
+
+By default, image renders are saved with a transparent background, and video
+renders are saved with a black background. The `--bg-color` option can be used
+to override this, and accepts either an integer representing a 32-bit color
+(alpha value is always 255 for video renders), a hexadecimal color code
+starting with `0x` or `#`, a CSS3 color name, or any other format supported by
+the `util.Color` class.
+
+> [!NOTE]
+> CSS3 color names: <https://www.w3.org/TR/css-color-3/#colorunits>
+>
+> `util.Color` documentation: <https://papermc-position-polling-tools.readthedocs.io/en/stable/reference/util.html#positionpolling.util.Color>
+
+The `--bg-img` and `--bg-area` options are used to overlay a render on top of a
+Minecraft world map image. `--bg-img` accepts a file path to the image to use.
+`--bg-area` expects a rectangle value and must be used to specify the area that
+this map image covers, and is used to properly align renders in regards to the
+map image so that each position is where it's supposed to be. The scale of the
+map relative to the world area it covers does not need to be given, it will be
+calculated automatically from `--bg-area` and the image's size.
+
+If the background image given has a transparent background, `--bg-color` is
+applied behind it.
 
 ### `render heatmap`
 
