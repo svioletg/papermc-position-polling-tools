@@ -134,7 +134,6 @@ def trail(  # noqa: C901, PLR0915
         logger.info('Rendering image...')
 
     itimes: list[float] = []
-    total_time = time.perf_counter()
 
     frame = img.copy()
     frame_count: int = 0
@@ -154,6 +153,8 @@ def trail(  # noqa: C901, PLR0915
         ))
         progress_log_thresh_data: float = opt.progress_log_interval
         progress_log_thresh_video: float = opt.progress_log_interval
+
+        time_started = time.perf_counter()
 
         for n, (a, b) in enumerate(it.pairwise(entries)):
             logger.trace(f'{n}: (X {a.x:.1f} Z {a.z:.1f}) -> (X {b.x:.1f} Z {b.z:.1f})')
@@ -200,8 +201,7 @@ def trail(  # noqa: C901, PLR0915
     if ffmpeg:
         render.report_frame_estimate_diff(frame_estimate, frame_count)
 
-    logger.info(f'Took {time.perf_counter() - total_time:.4f}s for {len(entries)} data points'
-          + f' (average iteration {sum(itimes) / len(itimes):.4f}s; min {min(itimes):.4f}s; max {max(itimes):.4f}s)')
+    render.report_itimes(itimes, time_started)
 
     img = frame
 
