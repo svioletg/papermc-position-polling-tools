@@ -1,17 +1,13 @@
 """Visualizes player position data as a grid-based heatmap."""
-import subprocess
 import time
 from argparse import Namespace
 from collections.abc import Iterable, Sequence
 from colorsys import hsv_to_rgb
 from dataclasses import dataclass
-from io import TextIOWrapper
 from itertools import pairwise
 from math import ceil, floor
 from pathlib import Path
-from subprocess import CalledProcessError
-from threading import Thread
-from typing import IO, Literal, cast
+from typing import Literal, cast
 
 import numpy as np
 from geometry import Coord2, Grid2, Rect
@@ -25,7 +21,7 @@ from PIL.ImageDraw import ImageDraw
 from positionpolling import render
 from positionpolling.cli import abort
 from positionpolling.models import RENDER_OPT_DEFAULT, Entry, PlayerPositions, RenderOpt
-from positionpolling.render import apply_background_image, ffmpeg_size_in_range, get_ffmpeg_args
+from positionpolling.render import FFmpegWriter, apply_background_image, ffmpeg_size_in_range, get_ffmpeg_args
 from positionpolling.util import (
     Color,
     ask,
@@ -243,7 +239,7 @@ def _fade_regions(
 
     return img
 
-def _heatmap_video(  # noqa: C901, PLR0915
+def _heatmap_video(  # noqa: PLR0915
         entries: list[Entry],
         players: Sequence[str] | set[str],
         data_grid: Grid2,
@@ -279,40 +275,7 @@ def _heatmap_video(  # noqa: C901, PLR0915
     logger.info('Rendering video...')
 
     ffmpeg_args: tuple[str, ...] = get_ffmpeg_args(video_path, final_size, fps=opt.v_fps)
-
-    logger.debug(f'Run: {ffmpeg_args}')
-
-    def log_stream(stream: IO[bytes]) -> None:
-        wrapped_stream = TextIOWrapper(stream, encoding='utf-8', newline=None)
-
-        for line in wrapped_stream:
-            logger.debug(f'[ffmpeg] {line.strip()}')
-
-    ffmpeg = subprocess.Popen(  # noqa: S603
-        ffmpeg_args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
-    )
-
-    logger.debug('Sleeping for 0.2s so we can poll FFmpeg...')
-    time.sleep(0.2)
-
-    if ffmpeg.poll() is not None:
-        # FFmpeg exited already, which is a problem
-        ffout, fferr = expect(ffmpeg.stdout).read().decode('utf-8'), expect(ffmpeg.stderr).read().decode('utf-8')
-        logger.error(f'FFmpeg exited immediately with code {ffmpeg.returncode}:\n{fferr}')
-
-        raise CalledProcessError(
-            ffmpeg.returncode,
-            ffmpeg.args,
-            ffout,
-            fferr,
-        )
-
-    ffmpeg_stdin: IO[bytes] = expect(ffmpeg.stdin)
-
-    Thread(target=log_stream, args=[ffmpeg.stderr], daemon=True).start()
+    ffmpeg = FFmpegWriter(ffmpeg_args)
 
     mofn_m_width: int = max(
         len(str(frame_estimate)),
@@ -376,7 +339,7 @@ def _heatmap_video(  # noqa: C901, PLR0915
                         frame = alpha_composite(bg, data_img)
 
                     try:
-                        ffmpeg_stdin.write(frame.tobytes())
+                        ffmpeg.stdin.write(frame.tobytes())
                     except Exception as e:
                         logger.error(f'An exception occurred while sending data to FFmpeg: {e}')
                         logger.error(f'Captured FFmpeg output:\n{expect(ffmpeg.stderr).read().decode('utf-8')}')
@@ -415,8 +378,8 @@ def _heatmap_video(  # noqa: C901, PLR0915
     render.report_itimes(itimes, time_started)
 
     logger.info(f'Saving video to: {video_path}')
-    ffmpeg_stdin.close()
-    ffmpeg.wait()
+    ffexit = ffmpeg.finish()
+    logger.debug(f'FFmpeg exited with code {ffexit}')
 
     return Path(video_path)
 
