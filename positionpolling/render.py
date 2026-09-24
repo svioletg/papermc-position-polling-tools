@@ -2,6 +2,7 @@
 import subprocess
 import time
 from collections.abc import Iterable, Sequence
+from datetime import timedelta
 from itertools import pairwise
 from math import ceil, floor
 from os import devnull
@@ -288,6 +289,12 @@ def prepare_entries(
         logger.info('Using data for all players')
 
     entries: list[Entry] = [entry for entry in data if (not players) or (entry.player_uuid in players)]
+    entry_time_span = timedelta(seconds=entries[-1].timestamp - entries[0].timestamp)
+
+    logger.info(
+        f'Using {len(entries)} entries,'
+        + f' covering a total span of {entry_time_span} ({entry_time_span.total_seconds():.1f}s)',
+    )
 
     return entries
 
