@@ -166,7 +166,6 @@ def get_ffmpeg_args(
         '-stats_period', '2',
         '-f', 'rawvideo',
         '-pix_fmt', 'rgba',
-        '-vsync', '0',
         '-s', f'{size[0]}x{size[1]}',
         '-r', str(fps),
         '-i', '-',
