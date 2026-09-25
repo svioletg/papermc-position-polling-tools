@@ -69,7 +69,7 @@ class FFmpegWriter:
             )
 
         if log_level is not None:
-            Thread(target=log_stream, args=[ffmpeg.stderr, log_level], daemon=True).start()
+            Thread(target=log_stream, args=[ffmpeg.stderr, log_level], kwargs={'name': 'ffmpeg'}, daemon=True).start()
         else:
             Thread(target=void_stream, daemon=True).start()
 
