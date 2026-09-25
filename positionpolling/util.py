@@ -1,16 +1,14 @@
 """Miscellaneous common members used by various scripts."""
 import colorsys
-import re
 import shutil
 import subprocess
 import time
-from ast import literal_eval
 from collections import OrderedDict
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from io import TextIOWrapper
 from pathlib import Path
-from typing import IO, TYPE_CHECKING, Any, ClassVar, Literal, Self, TypeGuard, cast, overload
+from typing import IO, TYPE_CHECKING, Any, Literal, Self, TypeGuard, overload
 
 import numpy as np
 import webcolors
@@ -23,25 +21,30 @@ from positionpolling.const import UUID4_REGEX
 if TYPE_CHECKING:
     from positionpolling.models import Entry
 
-type ColorSource = Color | str | int | tuple[int, int, int] | tuple[int, int, int, int]
+type ColorSource = \
+    Color \
+    | str \
+    | int \
+    | tuple[int, int, int] \
+    | tuple[int, int, int, int] \
+    | tuple[int, int, int, float]
 """Type alias for valid :class:`Color` constructor inputs."""
 
 class Color:
     """Class representing a color which can be constructed from and converted back out to various formats."""
 
-    HSL_HSV_REGEX: ClassVar[re.Pattern[str]] = re.compile(r'^(hsl|hsv)\(.*\)$')
-    """Matches an ``hsl(...)`` or ``hsv(...)`` string, capturing ``'hsl'`` or ``'hsv'``."""
-
     _value: int
 
-    def __init__(self, source: ColorSource) -> None:
+    def __init__(self, source: ColorSource, space: Literal['rgb', 'hsl', 'hsv'] = 'rgb') -> None:
         """Construct a color from one of various formats.
 
         >>> assert Color(0xff0000ff) == 0xff0000ff
-        >>> assert Color((255, 0, 0, 255)) == 0xff0000ff
         >>> assert Color((255, 0, 0)) == 0xff0000ff
-        >>> assert Color('hsv(0, 100, 100)') == 0xff0000ff
-        >>> assert Color('hsv(0, 100, 100, 0.5)') == 0xff000080
+        >>> assert Color((255, 0, 0, 255)) == 0xff0000ff
+        >>> assert Color((0, 100, 50), 'hsl') == 0xff0000ff
+        >>> assert Color((0, 100, 50, 0.5), 'hsl') == 0xff00007f
+        >>> assert Color((0, 100, 100), 'hsv') == 0xff0000ff
+        >>> assert Color((0, 100, 100, 0.5), 'hsv') == 0xff00007f
         >>> assert Color('red') == 0xff0000ff
         >>> assert Color('red#aa') == 0xff0000aa
         >>> assert Color(Color('red')) == 0xff0000ff
@@ -52,14 +55,22 @@ class Color:
             ``0, 255, 255``, with an alpha value of ``255``. Make sure to include the last alpha byte if passing
             integers in this way.
 
-        :param source: Either a string, a positive 32-bit integer, an RGB tuple (values 0-255), an RGBA tuple, or
-            another :class:`Color` instance. If only RGB values are given (an RGB tuple, or a 24-bit hexadecimal value),
-            the alpha value defaults to 255. If given a string, it can be either a hexadecimal color starting with ``#``
-            or ``0x``, a CSS3 color keyword (see https://www.w3.org/TR/css-color-3/#colorunits), or a CSS-style
-            ``hsl(...)`` or ``hsv(...)`` string.
+        :param source:
+            - A positive 32-bit integer
+            - An RGB/RGBA tuple (values 0-255)
+            - An HSL/HSLA tuple (CSS-style: values 0-360, 0-100, 0-100, and 0-1)
+            - An HSV/HSVA tuple (CSS-style: values 0-360, 0-100, 0-100, and 0-1)
+            - Another ``Color`` instance (effectively makes a copy)
+            - A string of a CSS3 color name (see https://www.w3.org/TR/css-color-3/#colorunits)
+            - A string prefixed with ``#`` or ``0x`` containing a hex code for a color
 
-            Since all named colors have an alpha value of 255, you can optionally suffix the name with ``#XX`` where
-            ``XX`` is the hexadecimal alpha value to set for this color, e.g. ``'darkorchid#7f'``.
+            If there are only three values given for a tuple, the alpha value defaults to 255.
+
+            Since all CSS3 named colors do not specify an alpha value and thus default to 255, you can optionally suffix
+            the name with ``#XX`` where ``XX`` is the hexadecimal alpha value to set for this color, e.g.
+            ``'darkorchid#7f'``.
+        :param space: If ``source`` is a tuple, ``space`` will determine what color space its values are in, which can
+            be ``'rgb'``, ``'hsl'``, or ``'hsv'``.
 
         :raises ValueError:
             - ``source`` is a tuple with less than 3 or greater than 4 items
@@ -68,6 +79,10 @@ class Color:
 
         .. include
         """
+        if isinstance(source, int):
+            self.value = source
+            return
+
         if isinstance(source, Color):
             source = source.value
 
@@ -75,7 +90,7 @@ class Color:
             source = self._parse_from_str(source)
 
         if isinstance(source, tuple):
-            source = self._parse_from_tuple(source)
+            source = self._parse_from_tuple(source, space)
 
         if not isinstance(source, int):
             raise TypeError(f'Unsupported Color source: {source!r}')
@@ -98,7 +113,7 @@ class Color:
         if new < 0:
             raise ValueError(f'Color value cannot be negative: {new!r}')
         if new > 0xffffffff:  # noqa: PLR2004
-            raise ValueError(f'Color value cannot be larger than {0xffffffff}: {new!r}')
+            raise ValueError(f'Color value cannot be larger than 32 bits (max {0xffffffff}): {new!r}')
 
         self._value = new
 
@@ -189,9 +204,6 @@ class Color:
 
     @staticmethod
     def _parse_from_str(source: str) -> int | tuple[int, int, int, int]:
-        if isinstance(source, str) and Color.HSL_HSV_REGEX.match(source):
-            return Color._parse_hsl_hsv(source)
-
         if (source[0] != '#') and (not source.startswith('0x')):
             # Check if alpha was specified
             name, *extra = source.split('#', maxsplit=1)
@@ -208,60 +220,36 @@ class Color:
         if len(source) != 10:  # noqa: PLR2004
             raise ValueError(f'Expected 6 or 8 hexadecimal characters for color value: {source!r}')
 
-        return int(literal_eval(source.replace('#', '0x')))
+        return int(source, 16)
 
     @staticmethod
-    def _parse_from_tuple(source: tuple[int, int, int] | tuple[int, int, int, int]) -> int:
+    def _parse_from_tuple(
+            source: tuple[int, int, int] | tuple[int, int, int, int] | tuple[int, int, int, float],
+            space: Literal['rgb', 'hsl', 'hsv'],
+        ) -> int:
+        if space == 'rgb':
+            # If the possible fourth value is a float it'll raise an error trying to do bitwise OR on it
+            return Color.pack_rgba(source)  # ty: ignore[invalid-argument-type]
+
         if len(source) not in (3, 4):
             raise ValueError(f'Color tuple must be either 3 or 4 values: {source!r}')
+        if len(source) == 4:  # noqa: PLR2004
+            a, b, c, alpha = source
         if len(source) == 3:  # noqa: PLR2004
-            source = (*source, 255)
+            a, b, c = source
+            alpha = 255 if space == 'rgb' else 1
 
-        # Lazy way to do this but it works
-        return int(literal_eval(f'0x{source[0]:02x}{source[1]:02x}{source[2]:02x}{source[3]:02x}'))
-
-    @staticmethod
-    def _parse_hsl_hsv(string: str) -> tuple[int, int, int, int]:
-        """Parses an ``hsl(...)`` or ``hsv(...)`` string to RGBA values.
-
-        3 or 4 number values must be given, where the 4th is used as the alpha value. If a 4th value is not given, the
-        alpha value defaults to 1 (255). The converted values are rounded according to the built-in :func:`round`.
-        """
-        if not (m := Color.HSL_HSV_REGEX.match(string)):
-            raise ValueError(f'Expected HSL/HSV string to be in format "hsl(...)" or "hsv(...)": {string!r}')
-        mode = cast('Literal["hsl", "hsv"]', m.groups(0)[0])
-
-        ns: list[float] = [float(m) for m in re.findall(r'(\d+(?:\.\d+)?)', string)]
-        if len(ns) not in (3, 4):
-            raise ValueError(f'Expected 3 or 4 number values for HSV/HSL string: {string!r}')
-
-        h, s, vl, a, *_ = [*ns, 1] # Default alpha to 1
-        if not (0 <= h <= 360):  # noqa: PLR2004
-            raise ValueError(f'Hue value not in range 0-360: {h!r}')
-        if not (0 <= s <= 100):  # noqa: PLR2004
-            raise ValueError(f'Saturation value not in range 0-100: {s!r}')
-        if not (0 <= vl <= 100):  # noqa: PLR2004
-            raise ValueError(f'{'Lightness' if mode == 'hsl' else 'Brightness'} value not in range 0-100: {vl!r}')
-        if not (0 <= a <= 1):
-            raise ValueError(f'Alpha value not in range 0-1: {a!r}')
-
-        match mode:
+        match space:
             case 'hsl':
-                r, g, b = colorsys.hls_to_rgb(
-                    convert_range(h, (0, 360), (0, 1)),
-                    convert_range(vl, (0, 100), (0, 1)),
-                    convert_range(s, (0, 100), (0, 1)),
-                )
+                r, g, b = (int(n * 255) for n in colorsys.hls_to_rgb(a / 360, c / 100, b / 100))
+                alpha *= 255
             case 'hsv':
-                r, g, b = colorsys.hsv_to_rgb(
-                    convert_range(h, (0, 360), (0, 1)),
-                    convert_range(s, (0, 100), (0, 1)),
-                    convert_range(vl, (0, 100), (0, 1)),
-                )
+                r, g, b = (int(n * 255) for n in colorsys.hsv_to_rgb(a / 360, b / 100, c / 100))
+                alpha *= 255
             case _:
-                raise ValueError(f'Unexpected mode: {mode!r}')
+                raise ValueError(f'Unsupported space: {space!r}')
 
-        return (round(r * 255), round(g * 255), round(b * 255), round(convert_range(a, (0, 1), (0, 255))))
+        return Color.pack_rgba((r, g, b, int(alpha)))
 
     @staticmethod
     def pack_rgba(rgba: tuple[int, int, int] | tuple[int, int, int, int]) -> int:
@@ -288,9 +276,9 @@ class Color:
         h, l, s = colorsys.rgb_to_hls(self.r / 255, self.g / 255, self.b / 255)  # noqa: E741
 
         return (
-            convert_range(h, (0, 1), (0, 360)) if css else h,
-            convert_range(s, (0, 1), (0, 100)) if css else s,
-            convert_range(l, (0, 1), (0, 100)) if css else l,
+            (h * 360) if css else h,
+            (s * 100) if css else s,
+            (l * 100) if css else l,
         )
 
     def hsla(self, *, css: bool = False) -> tuple[float, float, float, float]:
@@ -310,9 +298,9 @@ class Color:
         h, s, v = colorsys.rgb_to_hsv(self.r / 255, self.g / 255, self.b / 255)
 
         return (
-            convert_range(h, (0, 1), (0, 360)) if css else h,
-            convert_range(s, (0, 1), (0, 100)) if css else s,
-            convert_range(v, (0, 1), (0, 100)) if css else v,
+            (h * 360) if css else h,
+            (s * 100) if css else s,
+            (v * 100) if css else v,
         )
 
     def hsva(self, *, css: bool = False) -> tuple[float, float, float, float]:
@@ -824,6 +812,24 @@ def try_next[T, U](it: Iterator[T], default: U | None = None) -> T | U | None:
         return next(it)
     except StopIteration:
         return default
+
+def uncons[T](it: Iterable[T]) -> tuple[T, list[T]]:
+    """Separates ``it`` into its first item and a list of all following items.
+
+    Equivalent to ``a, *b = it``, where this function returns ``(a, b)``.
+    """
+    a, *b = it
+
+    return (a, b)
+
+def unsnoc[T](it: Iterable[T]) -> tuple[list[T], T]:
+    """Separates ``it`` into all its items except the last, and the last item.
+
+    Equivalent to ``*a, b = it``, where this function returns ``(a, b)``.
+    """
+    *a, b = it
+
+    return (a, b)
 
 def void_stream(stream: IO[bytes]) -> None:
     """Consume all lines from ``stream`` and do nothing with them."""
