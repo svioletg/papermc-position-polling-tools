@@ -16,7 +16,8 @@ from pydantic import ValidationError
 from tabulate import tabulate
 
 from positionpolling import __version__
-from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogLevel, console, setup_logger
+from positionpolling.const import DEFAULT_LOGS_DIR, NO_COLOR, PACKAGE_ROOT, LogLevel, console
+from positionpolling.logging import setup_logger
 from positionpolling.models import RENDER_OPT_DEFAULT, CliOpt, PlayerPositions, RenderOpt
 from positionpolling.util import parse_players
 

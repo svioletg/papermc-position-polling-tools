@@ -9,7 +9,8 @@ from geometry import Tuple4
 from loguru import logger
 
 from positionpolling import util
-from positionpolling.const import LogLevel, setup_logger
+from positionpolling.const import LogLevel
+from positionpolling.logging import setup_logger
 from positionpolling.util import assert_all
 from tests import TESTS_DATA_TMP_DIR, gen_pos_logs
 
