@@ -65,6 +65,15 @@ LOG_FILE_FORMAT_UTC: str = '{time:YYYY-MM-DDTHHmmssZZ!UTC}.log'
 LOG_FILE_FORMAT: str = '{time:YYYY-MM-DDTHHmmssZZ}.log'
 LOG_FILE_REGEX: re.Pattern[str] = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{6}\+\d{4}\.log$')
 
+FILE_INCREMENT_REGEX: re.Pattern[str] = re.compile(r'^(?P<pre>.*\.)(?P<n>\d+)(?P<suffix>\..+)?$')
+"""Matches a file with a ``.N`` suffix, where N is any number of digits, as well as the extension following it.
+
+Groups:
+    - ``pre``: The content leading up to the rest of the match, including the dot before the digit
+    - ``n``: The number suffix
+    - ``suffix``: (Optional) The final extension of the file (including leading ``.``), if present
+"""
+
 Y_RANGE: dict[str, tuple[int, int]] = {
     'minecraft:overworld': (-64, 320),
     'minecraft:the_nether': (0, 127),
