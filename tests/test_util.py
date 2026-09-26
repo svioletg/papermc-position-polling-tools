@@ -185,6 +185,19 @@ def test_group_by_attr() -> None:
 
     assert isinstance(util.group_by_attr(entries, 'player_uuid', ordered=True), OrderedDict)
 
+@pytest.mark.parametrize(('fp', 'expected'),
+    [
+        ('file', 'file'),
+        ('file.1', 'file.1'),
+        ('file.log', 'file.1.log'),
+        ('file.1.log', 'file.2.log'),
+        ('file.10.log', 'file.11.log'),
+    ],
+)
+def test_increment_path(fp: str, expected: str) -> None:
+    assert util.increment_path(fp) == Path(expected)
+    assert util.increment_path(f'a/b/c/{fp}') == Path(f'a/b/c/{expected}')
+
 @pytest.mark.parametrize('pct_digits', [0, 1, 2, 3, 4])
 @pytest.mark.parametrize('level', [i.name for i in LogLevel])
 def test_log_progress(monkeypatch: pytest.MonkeyPatch, pct_digits: int, level: str) -> None:

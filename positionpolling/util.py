@@ -16,7 +16,7 @@ from geometry import Grid2
 from loguru import logger
 from PIL import Image
 
-from positionpolling.const import UUID4_REGEX
+from positionpolling.const import FILE_INCREMENT_REGEX, UUID4_REGEX
 
 if TYPE_CHECKING:
     from positionpolling.models import Entry
@@ -640,6 +640,29 @@ def group_by_attr[T, U](
         d.setdefault(val, []).append(i)
 
     return d
+
+def increment_path(fp: str | Path) -> Path:
+    """Adds or increments a number suffix before the file path's final suffix.
+
+    ``render.log`` -> ``render.1.log``, ``render.1.log`` -> ``render.2.log``, etc.
+
+    Since a file ending with only a number suffix, e.g. ``file.1``, is ambiguous as to whether the final suffix is meant
+    to be incremented or is meant to be the file's extension, only paths with a final suffix that is not entirely digits
+    are accepted—otherwise, the path is returned without modification, e.g. ``file.1`` -> ``file.1`` or ``file`` ->
+    ``file``.
+    """
+    fp = Path(fp)
+
+    if fp.suffix.lstrip('.').isdigit() or not fp.suffix:
+        return fp
+
+    if m := FILE_INCREMENT_REGEX.match(fp.name):
+        n: int = int(m.group('n'))
+        suffix: str | None = m.group('suffix')
+
+        return fp.with_name(f'{m.group('pre')}{n + 1}{suffix or ''}')
+
+    return fp.with_name(f'{fp.stem}.1{fp.suffix}')
 
 def log_progress(
         completed: float,
