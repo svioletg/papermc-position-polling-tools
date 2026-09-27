@@ -329,7 +329,7 @@ class RenderOpt(BaseModel):
 
     See :data:`bg_img_map` and :data:`bg_img_scale` to make full use of this.
     """
-    bg_img_area: Annotated[Tuple4[int] | None, CliOpt(['--bg-area'])] = None
+    bg_img_area: Annotated[Tuple4[int] | None, CliOpt(['--bg-area'], {'metavar': 'RECT'})] = None
     """The world area that the background image covers, using in-game coordinates.
 
     .. note::
@@ -349,7 +349,7 @@ class RenderOpt(BaseModel):
     large areas, this can be used to scale the render down (e.g. 0.5 for half scale, 2^2 blocks per pixel), or
     alternatively scale up a render of a very small area.
     """
-    world_crop: Tuple4[float] | None = None
+    world_crop: Annotated[Tuple4[float] | None, CliOpt(['--world-crop'], {'metavar': 'RECT'})] = None
     """A rectangle of the Minecraft world (use in-game coordinates) to crop the visualization to."""
     v_fix: Annotated[bool, CliOpt(['--fix-vid'])] = True
     """Whether to use FFmpeg to reprocess the rendered video from mp4v into avc1.
