@@ -8,6 +8,7 @@ API Reference
     cli
     const
     heatmap
+    logging
     models
     render
     rich
