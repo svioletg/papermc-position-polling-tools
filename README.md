@@ -16,15 +16,16 @@ Documentation: <https://papermc-position-polling-tools.readthedocs.io/en/stable>
 - [Setup](#setup)
 - [Library](#library)
 - [Configuration](#configuration)
-- [Commands](#commands)
-- [Option rectangles](#option-rectangles)
-- [Commands: `render`](#commands-render)
+- [Logging](#logging)
+- [Command-line interface](#command-line-interface)
+- [CLI: Option rectangles](#cli-option-rectangles)
+- [CLI: `render` command](#cli-render-command)
   - [Render options](#render-options)
   - [Scaling output](#scaling-output)
   - [Backgrounds](#backgrounds)
   - [`render heatmap`](#render-heatmap)
   - [`render trail`](#render-trail)
-- [Commands: `inspect`](#commands-inspect)
+- [CLI: `inspect` command](#cli-inspect-command)
   - [`inspect count`](#inspect-count)
 
 ## Setup
@@ -84,28 +85,19 @@ To customize render output, see the documentation for
 [RenderOpt](https://papermc-position-polling-tools.readthedocs.io/en/stable/reference/models.html#positionpolling.models.RenderOpt)
 or use `mcposlog render --help`.
 
-## Commands
+## Logging
 
-The commands `positionpolling` and `mcposlog` are both available, they are
-aliases for eachother and will do the same thing. This documentation will use
-`mcposlog` for the sake of brevity.
+Logs for this project are handled with [Loguru](https://github.com/Delgan/loguru).
+Logging is disabled by default when not running the CLI and can be configured
+with the [`logging.setup_logger()`](https://papermc-position-polling-tools.readthedocs.io/en/stable/reference/logging.html#positionpolling.logging.setup_logger)
+function when using this package as an API, or with the `--loglevel` and
+`--logfile` options when using commands.
 
-Use `mcposlog --help`/`mcposlog -h` to see a list of all arguments and options.
-`--help` can also be used after the action or render type to get help on those
-topics specifically (e.g. `mcposlog render --help`, `mcposlog render trail
---help`)
+Available log levels are:
 
-Using `mcposlog --version` or `mcposlog -V` with no other arguments will print
-out the currently installed version number and exit. When given with other
-arguments/options, this does nothing.
-
-The logging level can be set with `--log-level` or `-l`. Only logs that are at
-a level equal to or higher than the set level are shown in terminal output. Can
-be any of these values:
-
-- `TRACE`: The lowest and most verbose log level. This can output a large volume
-  of logs and generally shouldn't have to be used unless DEBUG isn't giving
-  enough information to solve the issue, or you want very meticulous details.
+- `TRACE`: The lowest and most verbose log level. This can output a large
+  volume of logs and generally shouldn't have to be used unless you're either
+  developing the project or trying to troubleshoot something *very* specific.
 - `DEBUG`: Information that isn't typically relevant to the user, but may help
   diagnose issues. Log files always operate at this level unless the log level
   is set to TRACE, where it will use the TRACE level.
@@ -116,18 +108,33 @@ be any of these values:
   resulting video file size may be very large.
 - `ERROR`: An error log indicates that something failed, usually resulting in
   exiting the script.
-- `CRITICAL`: The highest log level, currently unused. Setting your log level
-  to this will result in no logs being printed whatsoever.
+- `CRITICAL`: The highest log level. Currently never used, so using this level
+  effectively disables logging entirely.
 
-## Option rectangles
+## Command-line interface
+
+The commands `positionpolling` and `mcposlog` are both available, they are
+aliases for eachother and will do the same thing. This documentation will use
+`mcposlog` for the sake of brevity.
+
+Use `mcposlog --help`/`mcposlog -h` to see a list of all arguments and options.
+`--help` can also be used after the action or render type to get help on those
+topics specifically (e.g. `mcposlog render --help`, `mcposlog render trail
+--help`)
+
+`mcposlog --version` or `mcposlog -V` with no other arguments will print out
+the currently installed version number and exit. When given with other
+arguments/options, this does nothing.
+
+## CLI: Option rectangles
 
 Options that expect a "RECTANGLE" or "RECT" value expect a string in the format
-`X1,Y1,X2,Y2`, where, `X1,Y1` is the top-left coordinate of the rectangle, and
+`X1,Y1,X2,Y2`, where `X1,Y1` is the top-left coordinate of the rectangle, and
 `X2,Y2` is the bottom-left coordinate. Note that in the context of a Minecraft
 world, the Y coordinate here should actually be the Z coordinate. If an option
 expects an actual Y Minecraft coordinate, it will be specified.
 
-## Commands: `render`
+## CLI: `render` command
 
 `render` is the primary subcommand for this package, providing the ability to
 render position data into various formats.
@@ -135,15 +142,14 @@ render position data into various formats.
 ### Render options
 
 Rendering options can be provided either with command-line options or from a
-JSON file. Use `mcposlog --help` to see all available options. To use a JSON
-file, use the option `--render-json=<PATH>` or `-j <PATH>`. CLI render options
-will always take precedence over JSON, e.g. if your JSON file defines `"v_fps":
-30`, but you run the command with `--fps 60`, the value will be 60.
+JSON file. Use `mcposlog render --help` to see all available options. To use a
+JSON file, use the option `--render-json=<PATH>` or `-j <PATH>`. CLI render
+options will always take precedence over JSON, e.g. if your JSON file defines
+`"v_fps": 30`, but you run the command with `--fps 60`, the value will be 60.
 
-> [!NOTE]
-> Some render options differ slightly in name from their JSON keys, e.g. most
-> `v_`-prefixed keys do not have this prefix in CLI option form. Use `--help`
-> to list out all options.
+> [!NOTE] Some render options differ slightly in name from their JSON keys,
+> e.g. most `v_`-prefixed keys do not have this prefix in CLI option form. Use
+> `--help` to list out all options.
 
 If a file called `render.json` exists in the current directory, it will be
 automatically used if `--render-json` was not specified otherwise.
@@ -195,7 +201,7 @@ Examples: `mcposlog render heatmap -i data.db -o heatmap.png -v heatmap.mp4`
 
 Example: `mcposlog render trail -i data.db -v trail.mp4`
 
-## Commands: `inspect`
+## CLI: `inspect` command
 
 `inspect` allows you to query certain aspects of position data, like printing
 how many entries are in a database for all or a given player.
