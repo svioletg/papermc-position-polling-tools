@@ -2,7 +2,7 @@
 .. py:currentmodule:: positionpolling.cli
 
 :py:mod:`~positionpolling.cli` module
-========================================
+=====================================
 
 .. automodule:: positionpolling.cli
    :members:

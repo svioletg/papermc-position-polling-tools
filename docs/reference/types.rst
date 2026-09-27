@@ -2,7 +2,7 @@
 .. py:currentmodule:: positionpolling.types
 
 :py:mod:`~positionpolling.types` module
-========================================
+=======================================
 
 .. automodule:: positionpolling.types
    :members:

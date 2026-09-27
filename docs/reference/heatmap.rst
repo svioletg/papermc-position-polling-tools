@@ -2,7 +2,7 @@
 .. py:currentmodule:: positionpolling.heatmap
 
 :py:mod:`~positionpolling.heatmap` module
-========================================
+=========================================
 
 .. automodule:: positionpolling.heatmap
    :members:
