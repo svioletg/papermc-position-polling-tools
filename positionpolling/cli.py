@@ -131,7 +131,8 @@ def parse_players_or_abort(players: list[str], player_map: Mapping[str, str]) ->
 main_parser = ArgumentParser(exit_on_error=False)
 main_parser.add_argument('--version', '-V', action='store_true',
     help='Shows the installed version and exits.')
-main_parser.add_argument('--log-level', '-l', type=lambda s: s.upper(), choices=[i.name for i in LogLevel],
+main_parser.add_argument('--loglevel', '-l', dest='log_level', type=lambda s: s.upper(),
+    choices=[i.name for i in LogLevel],
     default='INFO',
     help='The logging level for this session. "DEBUG" shows more output and can be useful for diagnosing issues.'
         + ' "TRACE" is the most verbose setting and may result in a very large volume of logs, only use this if'

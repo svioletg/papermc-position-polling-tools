@@ -94,7 +94,7 @@ MAIN_PARSER_DEFAULTS: dict[str, Any] = {
 @pytest.mark.parametrize(('args', 'parsed_expected'),
     [
         ([], {}),
-        (['--log-level', 'debug'], {'log_level': 'DEBUG'}),
+        (['--loglevel', 'debug'], {'log_level': 'DEBUG'}),
         (['--logfile', 'mylogs'], {'log_file': Path('mylogs')}),
         (['--no-logfile'], {'log_file': False}),
     ],
